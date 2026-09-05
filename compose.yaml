@@ -1,0 +1,166 @@
+# Serviços para desenvolvimento local.
+# Este compose é opcional e prescindível: em produção o Laravel Cloud gerencia
+# runtime, banco (Postgres), cache (Valkey/Redis), filas e armazenamento.
+name: sistema-finan
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: sistema-finan:app
+    container_name: sistema-finan-app
+    working_dir: /var/www
+    user: "1000:1000"
+    entrypoint: ["/usr/local/bin/dev-entrypoint.sh"]
+    volumes:
+      - .:/var/www
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-app.ini
+      - ./docker/php/dev-entrypoint.sh:/usr/local/bin/dev-entrypoint.sh
+    environment:
+      # Apenas o wiring de rede do Docker. As demais variáveis (APP_ENV, DB_*,
+      # CACHE_STORE, SESSION_DRIVER, etc.) vivem no .env do projeto — injetá-las
+      # aqui contamina $_SERVER e impede o PHPUnit de sobrescrevê-las.
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: cache
+      REDIS_PORT: "6379"
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - sistema-finan
+    ports:
+      - "8000:8000"
+
+  db:
+    image: postgres:17-bookworm
+    container_name: sistema-finan-db
+    environment:
+      POSTGRES_USER: sistema_finan
+      POSTGRES_PASSWORD: sistema_finan
+      POSTGRES_DB: sistema_finan
+      TZ: America/Sao_Paulo
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sistema_finan -d sistema_finan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sistema-finan
+
+  cache:
+    image: redis:7-alpine
+    container_name: sistema-finan-cache
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - cache_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - sistema-finan
+
+  # Node que executa Vite (hot reload) e as tarefas de build/front.
+  node:
+    image: node:22-bookworm-slim
+    container_name: sistema-finan-node
+    working_dir: /var/www
+    user: "1000:1000"
+    volumes:
+      - .:/var/www
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      VITE_HOST: "0.0.0.0"
+    command: ["tail", "-f", "/dev/null"]
+
+  queue:
+    image: sistema-finan:app
+    container_name: sistema-finan-queue
+    working_dir: /var/www
+    user: "1000:1000"
+    entrypoint: ["php", "artisan", "queue:work", "--queue=default", "--sleep=3", "--tries=6", "--timeout=60"]
+    volumes:
+      - .:/var/www
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-app.ini
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: cache
+      REDIS_PORT: "6379"
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - sistema-finan
+
+  scheduler:
+    image: sistema-finan:app
+    container_name: sistema-finan-scheduler
+    working_dir: /var/www
+    user: "1000:1000"
+    entrypoint: ["php", "artisan", "schedule:work"]
+    volumes:
+      - .:/var/www
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-app.ini
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: cache
+      REDIS_PORT: "6379"
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - sistema-finan
+
+  # Servidor FrankenPHP + Octane (workers persistentes) com HTTPS auto-assinado
+  # em https://localhost — o servidor usado em desenvolvimento.
+  frankenphp:
+    build:
+      context: .
+      dockerfile: docker/frankenphp/Dockerfile
+    image: sistema-finan:frankenphp
+    container_name: sistema-finan-frankenphp
+    working_dir: /var/www
+    entrypoint: ["/frankenphp-entrypoint.sh"]
+    volumes:
+      - .:/var/www
+      - ./docker/frankenphp/frankenphp-entrypoint.sh:/frankenphp-entrypoint.sh
+      - ./frankenphp/Caddyfile:/frankenphp/Caddyfile:ro
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: cache
+      REDIS_PORT: "6379"
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - sistema-finan
+    ports:
+      - "443:443"
+      - "80:80"
+      - "2019:2019"
+
+networks:
+  sistema-finan:
+    driver: bridge
+
+volumes:
+  db_data:
+  cache_data:

@@ -1,0 +1,41 @@
+# Configuração do FrankenPHP (worker Octane + HTTPS auto-assinado local).
+# Usada tanto no desenvolvimento local quanto como referência para produção.
+{
+	# API de monitoramento do Caddy (Octane usa para reload/start/stop).
+	admin localhost:2019
+
+	# Certificado local auto-assinado (sem Let's Encrypt em dev).
+	auto_https disable_redirects
+
+	frankenphp {
+		worker {
+			file /var/www/public/frankenphp-worker.php
+			num 0
+		}
+	}
+}
+
+https://localhost:443 {
+	# Gera automaticamente um certificado auto-assinado (tls internal).
+	tls internal
+
+	log {
+		level ERROR
+		output discard
+	}
+
+	route {
+		root * /var/www/public
+		encode zstd gzip
+
+		php_server {
+			index frankenphp-worker.php
+			try_files {path} frankenphp-worker.php
+			resolve_root_symlink
+		}
+	}
+}
+
+http://localhost:80 {
+	redir https://localhost:443{uri} permanent
+}

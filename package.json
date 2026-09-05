@@ -1,0 +1,44 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "engines": {
+        "node": ">=22 <25",
+        "npm": ">=10"
+    },
+    "scripts": {
+        "dev": "vite",
+        "build": "vue-tsc && vite build",
+        "type-check": "vue-tsc --noEmit",
+        "lint": "eslint resources/js --max-warnings=0",
+        "lint:fix": "eslint resources/js --fix"
+    },
+    "dependencies": {
+        "@inertiajs/vue3": "^3.7.0",
+        "@lucide/vue": "^1.41.0",
+        "axios": "^1.20.0",
+        "dayjs": "^1.11.13",
+        "echarts": "^6.1.0",
+        "vue": "^3.5.42",
+        "vue-echarts": "^8.2.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@tailwindcss/forms": "^0.5.10",
+        "@tailwindcss/vite": "^4.3.3",
+        "@types/node": "^26.0.0",
+        "@vitejs/plugin-vue": "^6.0.8",
+        "eslint": "^10.10.0",
+        "eslint-plugin-vue": "^10.10.0",
+        "globals": "^17.12.0",
+        "laravel-vite-plugin": "^3.1.0",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.0",
+        "typescript-eslint": "^8.69.0",
+        "vite": "^8.0.0",
+        "vue-tsc": "^2.2.0"
+    },
+    "optionalDependencies": {
+        "@laravel/multiplex": "^0.4.1"
+    }
+}

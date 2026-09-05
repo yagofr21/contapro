@@ -1,0 +1,21 @@
+includes:
+    - vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - bootstrap
+        - config
+        - database
+        - routes
+        - tests
+
+    # Level 6 + imprisões próprias do Larastan.
+    level: 6
+    phpVersion: 80500
+
+    tmpDir: storage/logs/phpstan
+
+    treatPhpDocTypesAsCertain: false
+
+    checkOctaneCompatibility: true
