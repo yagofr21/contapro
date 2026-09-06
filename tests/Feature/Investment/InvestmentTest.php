@@ -97,6 +97,57 @@ class InvestmentTest extends TestCase
         ]);
     }
 
+    public function test_brazilian_decimals_are_accepted_and_asset_can_be_preselected(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create();
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($user)->post(route('investment-transactions.store', $portfolio), [
+            'asset_id' => $asset->id,
+            'type' => 'buy',
+            'quantity' => '1.250,5',
+            'unit_price' => '10,25',
+            'fees' => '2,50',
+            'transaction_date' => '2026-09-05',
+        ])->assertRedirect(route('portfolios.show', $portfolio));
+
+        $this->assertDatabaseHas('asset_transactions', [
+            'asset_id' => $asset->id,
+            'quantity' => '1250.50000000',
+            'unit_price' => '10.25000000',
+            'fees' => '2.5000',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('investment-transactions.create', [
+                'portfolio' => $portfolio,
+                'asset' => $asset->id,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('selectedAssetId', $asset->id)
+                ->where('assets.0.available_quantity', '1250.50000000'));
+    }
+
+    public function test_trade_requires_a_positive_unit_price(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create();
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($user)->post(route('investment-transactions.store', $portfolio), [
+            'asset_id' => $asset->id,
+            'type' => 'buy',
+            'quantity' => '10',
+            'unit_price' => '0,00',
+            'fees' => '0,00',
+            'transaction_date' => '2026-09-05',
+        ])->assertSessionHasErrors('unit_price');
+
+        $this->assertDatabaseCount('asset_transactions', 0);
+    }
+
     public function test_oversell_rolls_back_the_operation_and_preserves_the_position(): void
     {
         $user = User::factory()->create();

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Http\Requests;
 
+use App\Http\Requests\NormalizesDecimalInput;
 use App\Modules\Finance\Enums\BudgetPeriod;
 use App\Modules\Finance\Enums\CategoryType;
 use App\Modules\Finance\Models\Budget;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class BudgetRequest extends FormRequest
 {
+    use NormalizesDecimalInput;
+
     public function authorize(): bool
     {
         $budget = $this->route('budget');
@@ -36,5 +39,10 @@ class BudgetRequest extends FormRequest
             'starts_on' => ['required', 'date_format:Y-m-d'],
             'ends_on' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d', 'after_or_equal:starts_on'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizeDecimalInput(['limit_amount']);
     }
 }

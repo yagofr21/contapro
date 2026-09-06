@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Http\Requests;
 
+use App\Http\Requests\NormalizesDecimalInput;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Validator;
 
 class TransactionRequest extends FormRequest
 {
+    use NormalizesDecimalInput;
+
     public function authorize(): bool
     {
         $transaction = $this->route('transaction');
@@ -55,6 +58,11 @@ class TransactionRequest extends FormRequest
             'transaction_date' => ['required', 'date_format:Y-m-d'],
             'description' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizeDecimalInput(['amount']);
     }
 
     /** @return array<int, callable> */

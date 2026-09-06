@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import InputError from '@/Components/InputError.vue';
 import SelectInput from '@/Components/SelectInput.vue';
+import { formatDecimal, parseDecimalInput } from '@/lib/format';
 import type { Account, Option } from '@/types/finance';
 import { Link, useForm } from '@inertiajs/vue3';
 import { Save } from '@lucide/vue';
@@ -15,11 +16,16 @@ const form = useForm({
     name: props.account?.name ?? '',
     type: props.account?.type ?? 'checking',
     currency: props.account?.currency ?? 'BRL',
-    initial_balance: props.account?.initial_balance ?? '0.0000',
+    initial_balance: formatDecimal(props.account?.initial_balance ?? '0', 2, 4),
     is_archived: props.account?.is_archived ?? false,
 });
 
 const submit = () => {
+    form.transform((data) => ({
+        ...data,
+        initial_balance: parseDecimalInput(data.initial_balance),
+    }));
+
     if (props.account) {
         form.put(route('accounts.update', props.account.id));
     } else {
@@ -53,7 +59,7 @@ const submit = () => {
       <label class="sm:col-span-2">
         <span class="mb-2 block text-sm font-semibold">Saldo inicial</span>
         <input v-model="form.initial_balance" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
-        <p class="mt-2 text-xs text-stone-400">Use ponto como separador decimal. O saldo atual inclui todos os lancamentos.</p>
+        <p class="mt-2 text-xs text-stone-400">Use virgula para centavos, por exemplo: 1.250,50. O saldo atual inclui todos os lancamentos.</p>
         <InputError class="mt-2" :message="form.errors.initial_balance" />
       </label>
       <label v-if="account" class="flex items-center gap-3 sm:col-span-2">

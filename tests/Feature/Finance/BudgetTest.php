@@ -27,7 +27,7 @@ class BudgetTest extends TestCase
 
         $this->actingAs($user)->post(route('budgets.store'), [
             'category_id' => $category->id,
-            'limit_amount' => '1500.0000',
+            'limit_amount' => '1.500,25',
             'period' => BudgetPeriod::Monthly->value,
             'starts_on' => '2026-09-01',
         ])->assertRedirect(route('budgets.index'));
@@ -35,7 +35,7 @@ class BudgetTest extends TestCase
         $this->assertDatabaseHas('budgets', [
             'user_id' => $user->id,
             'category_id' => $category->id,
-            'limit_amount' => '1500.0000',
+            'limit_amount' => '1500.2500',
         ]);
     }
 

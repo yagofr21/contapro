@@ -3,6 +3,7 @@
 namespace App\Modules\Finance\Http\Requests;
 
 use App\Enums\Currency;
+use App\Http\Requests\NormalizesDecimalInput;
 use App\Modules\Finance\Enums\FinancialAccountType;
 use App\Modules\Finance\Models\FinancialAccount;
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class FinancialAccountRequest extends FormRequest
 {
+    use NormalizesDecimalInput;
+
     public function authorize(): bool
     {
         $account = $this->route('account');
@@ -29,5 +32,10 @@ class FinancialAccountRequest extends FormRequest
             'initial_balance' => ['required', 'decimal:0,4', 'between:-999999999999999.9999,999999999999999.9999'],
             'is_archived' => ['sometimes', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizeDecimalInput(['initial_balance']);
     }
 }

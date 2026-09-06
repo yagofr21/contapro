@@ -36,7 +36,7 @@ class FinancialAccountTest extends TestCase
             'name' => 'Reserva',
             'type' => FinancialAccountType::Savings->value,
             'currency' => 'BRL',
-            'initial_balance' => '1000.5000',
+            'initial_balance' => '1.000,50',
         ])->assertRedirect(route('accounts.index'));
 
         $account = $user->financialAccounts()->sole();
@@ -46,13 +46,14 @@ class FinancialAccountTest extends TestCase
             'name' => 'Reserva de emergencia',
             'type' => FinancialAccountType::Savings->value,
             'currency' => 'BRL',
-            'initial_balance' => '1250.5000',
+            'initial_balance' => '1.250,50',
             'is_archived' => true,
         ])->assertRedirect(route('accounts.index'));
 
         $this->assertDatabaseHas('financial_accounts', [
             'id' => $account->id,
             'name' => 'Reserva de emergencia',
+            'initial_balance' => '1250.5000',
             'is_archived' => true,
         ]);
     }

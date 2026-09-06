@@ -10,6 +10,8 @@ export type PortfolioSummary = {
 
 export type Portfolio = { id: number; name: string; currency: string };
 
+export type PortfolioOption = Portfolio;
+
 export type Holding = {
     id: number;
     asset_id: number;
@@ -47,6 +49,7 @@ export type AssetOption = {
     name: string;
     currency: string;
     market: string;
+    available_quantity: string;
 };
 
 export type MarketAsset = {

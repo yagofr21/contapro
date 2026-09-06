@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import InputError from '@/Components/InputError.vue';
 import SelectInput from '@/Components/SelectInput.vue';
+import { formatDecimal, parseDecimalInput } from '@/lib/format';
 import type { Category, Transaction } from '@/types/finance';
 import { Link, useForm } from '@inertiajs/vue3';
 import { Save } from '@lucide/vue';
@@ -19,7 +20,7 @@ const form = useForm({
     account_id: props.transaction ? String(props.transaction.account_id) : '',
     destination_account_id: props.transaction?.destination_account_id ? String(props.transaction.destination_account_id) : '',
     category_id: props.transaction?.category_id ? String(props.transaction.category_id) : '',
-    amount: props.transaction?.amount ?? '',
+    amount: formatDecimal(props.transaction?.amount ?? '', 2, 4),
     transaction_date: props.transaction?.transaction_date ?? new Date().toISOString().slice(0, 10),
     description: props.transaction?.description ?? '',
 });
@@ -30,6 +31,7 @@ const isTransfer = computed(() => form.type === 'transfer');
 const submit = () => {
     form.transform((data) => ({
         ...data,
+        amount: parseDecimalInput(data.amount),
         category_id: isTransfer.value || !data.category_id ? null : data.category_id,
         destination_account_id: isTransfer.value ? data.destination_account_id : null,
     }));
@@ -69,7 +71,8 @@ const submit = () => {
       </label>
       <label>
         <span class="mb-2 block text-sm font-semibold">Valor</span>
-        <input v-model="form.amount" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0.00" />
+        <input v-model="form.amount" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
+        <p class="mt-2 text-xs text-stone-400">Use virgula para os centavos, por exemplo: 89,90.</p>
         <InputError class="mt-2" :message="form.errors.amount" />
       </label>
       <label>

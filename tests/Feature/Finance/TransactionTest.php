@@ -27,7 +27,7 @@ class TransactionTest extends TestCase
             'type' => 'expense',
             'account_id' => $account->id,
             'category_id' => $category->id,
-            'amount' => '89.9000',
+            'amount' => '1.289,90',
             'transaction_date' => '2026-09-04',
             'description' => 'Mercado',
         ])->assertRedirect(route('transactions.index'));
@@ -36,6 +36,7 @@ class TransactionTest extends TestCase
             'user_id' => $user->id,
             'account_id' => $account->id,
             'type' => TransactionType::Expense->value,
+            'amount' => '1289.9000',
             'description' => 'Mercado',
         ]);
     }

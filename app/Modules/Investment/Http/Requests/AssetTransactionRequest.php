@@ -2,6 +2,7 @@
 
 namespace App\Modules\Investment\Http\Requests;
 
+use App\Http\Requests\NormalizesDecimalInput;
 use App\Modules\Investment\Enums\AssetTransactionType;
 use App\Modules\Investment\Models\AssetTransaction;
 use App\Modules\Investment\Models\Portfolio;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class AssetTransactionRequest extends FormRequest
 {
+    use NormalizesDecimalInput;
+
     public function authorize(): bool
     {
         $transaction = $this->route('investment_transaction');
@@ -60,7 +63,9 @@ class AssetTransactionRequest extends FormRequest
             'quantity' => $isTrade
                 ? ['required', 'decimal:0,8', 'gt:0', 'max:999999999999.99999999']
                 : ['required', 'decimal:0,8', 'in:0'],
-            'unit_price' => ['required', 'decimal:0,8', 'gte:0', 'max:999999999999.99999999'],
+            'unit_price' => $isTrade
+                ? ['required', 'decimal:0,8', 'gt:0', 'max:999999999999.99999999']
+                : ['required', 'decimal:0,8', 'in:0'],
             'fees' => ['required', 'decimal:0,4', 'gte:0', 'max:999999999999999.9999'],
             'gross_amount' => $isIncome
                 ? ['required', 'decimal:0,4', 'gt:0', 'max:999999999999999.9999']
@@ -83,6 +88,14 @@ class AssetTransactionRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->normalizeDecimalInput([
+            'quantity',
+            'unit_price',
+            'fees',
+            'gross_amount',
+            'net_amount',
+        ]);
+
         $isIncome = in_array($this->input('type'), [
             AssetTransactionType::Dividend->value,
             AssetTransactionType::Interest->value,

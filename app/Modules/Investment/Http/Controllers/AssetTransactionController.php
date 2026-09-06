@@ -6,23 +6,34 @@ use App\Http\Controllers\Controller;
 use App\Modules\Investment\Actions\CreateAssetTransaction;
 use App\Modules\Investment\Actions\DeleteAssetTransaction;
 use App\Modules\Investment\Actions\UpdateAssetTransaction;
+use App\Modules\Investment\Enums\AssetTransactionType;
 use App\Modules\Investment\Http\Requests\AssetTransactionRequest;
 use App\Modules\Investment\Models\Asset;
 use App\Modules\Investment\Models\AssetTransaction;
 use App\Modules\Investment\Models\Portfolio;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AssetTransactionController extends Controller
 {
-    public function create(Portfolio $portfolio): Response
+    public function create(Request $request, Portfolio $portfolio): Response
     {
         $this->authorize('view', $portfolio);
+        $assets = $this->assets($portfolio);
+        $requestedAssetId = $request->integer('asset');
 
         return Inertia::render('InvestmentTransactions/Create', [
-            'portfolio' => ['id' => $portfolio->id, 'name' => $portfolio->name],
-            'assets' => $this->assets($portfolio->currency->value),
+            'portfolio' => [
+                'id' => $portfolio->id,
+                'name' => $portfolio->name,
+                'currency' => $portfolio->currency->value,
+            ],
+            'assets' => $assets,
+            'selectedAssetId' => in_array($requestedAssetId, array_column($assets, 'id'), true)
+                ? $requestedAssetId
+                : null,
         ]);
     }
 
@@ -44,8 +55,9 @@ class AssetTransactionController extends Controller
             'portfolio' => [
                 'id' => $investmentTransaction->portfolio_id,
                 'name' => $investmentTransaction->portfolio->name,
+                'currency' => $investmentTransaction->portfolio->currency->value,
             ],
-            'assets' => $this->assets($investmentTransaction->portfolio->currency->value),
+            'assets' => $this->assets($investmentTransaction->portfolio, $investmentTransaction),
             'transaction' => [
                 'id' => $investmentTransaction->id,
                 'asset_id' => $investmentTransaction->asset_id,
@@ -83,21 +95,33 @@ class AssetTransactionController extends Controller
         return to_route('portfolios.show', $portfolioId)->with('success', 'Operacao removida com sucesso.');
     }
 
-    /** @return array<int, array{id: int, symbol: string, name: string, currency: string, market: string}> */
-    private function assets(string $currency): array
+    /** @return array<int, array{id: int, symbol: string, name: string, currency: string, market: string, available_quantity: string}> */
+    private function assets(Portfolio $portfolio, ?AssetTransaction $transaction = null): array
     {
+        $availableQuantities = $portfolio->holdings()->pluck('quantity', 'asset_id');
+
         return Asset::query()
             ->where('is_active', true)
-            ->where('currency', $currency)
+            ->where('currency', $portfolio->currency->value)
             ->orderBy('symbol')
             ->get(['id', 'symbol', 'name', 'currency', 'market'])
-            ->map(fn (Asset $asset) => [
-                'id' => $asset->id,
-                'symbol' => $asset->symbol,
-                'name' => $asset->name,
-                'currency' => $asset->currency->value,
-                'market' => $asset->market->value,
-            ])
+            ->map(function (Asset $asset) use ($availableQuantities, $transaction): array {
+                $availableQuantity = (string) ($availableQuantities->get($asset->id) ?? '0');
+
+                if ($transaction?->asset_id === $asset->id
+                    && $transaction->type === AssetTransactionType::Sell) {
+                    $availableQuantity = bcadd($availableQuantity, $transaction->quantity, 8);
+                }
+
+                return [
+                    'id' => $asset->id,
+                    'symbol' => $asset->symbol,
+                    'name' => $asset->name,
+                    'currency' => $asset->currency->value,
+                    'market' => $asset->market->value,
+                    'available_quantity' => $availableQuantity,
+                ];
+            })
             ->all();
     }
 }

@@ -20,6 +20,14 @@ class AssetController extends Controller
         $this->authorize('viewAny', Asset::class);
 
         return Inertia::render('Assets/Index', [
+            'portfolios' => $request->user()->portfolios()
+                ->orderBy('name')
+                ->get(['id', 'name', 'currency'])
+                ->map(fn ($portfolio) => [
+                    'id' => $portfolio->id,
+                    'name' => $portfolio->name,
+                    'currency' => $portfolio->currency->value,
+                ]),
             'assets' => Asset::query()
                 ->with('latestPrice')
                 ->withExists(['holdings as can_refresh' => fn ($query) => $query
