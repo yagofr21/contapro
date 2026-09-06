@@ -94,10 +94,20 @@ erDiagram
         timestamps
     }
 
+    BROKERS {
+        bigint id PK
+        bigint user_id FK
+        varchar name
+        boolean is_active
+        timestamp deleted_at
+        timestamps
+    }
+
     PORTFOLIO_HOLDINGS {
         bigint id PK
         bigint portfolio_id FK
         bigint asset_id FK
+        bigint broker_id FK "nullable"
         numeric(20,8) quantity
         numeric(20,8) average_cost "per unit"
         timestamps
@@ -111,8 +121,12 @@ erDiagram
         numeric(20,8) quantity
         numeric(20,8) unit_price
         numeric(19,4) fees
-        numeric(19,4) gross_amount "nullable; proventos"
-        numeric(19,4) net_amount "nullable; proventos"
+        numeric(20,8) split_from "nullable"
+        numeric(20,8) split_to "nullable"
+        numeric(19,4) gross_amount "nullable; venda/provento"
+        numeric(19,4) net_amount "nullable; venda/provento"
+        numeric(19,4) realized_cost_basis "nullable; venda"
+        numeric(19,4) realized_profit_loss "nullable; venda"
         date transaction_date
         text note
         timestamps
@@ -130,11 +144,40 @@ erDiagram
         bigint volume
     }
 
+    IMPORT_BATCHES {
+        bigint id PK
+        uuid public_id UK
+        bigint user_id FK
+        bigint portfolio_id FK "nullable"
+        varchar kind "financial|investment"
+        varchar status "previewed|confirmed|failed"
+        varchar original_filename
+        char file_sha256
+        json summary
+        timestamp confirmed_at "nullable"
+        timestamps
+    }
+
+    IMPORT_ROWS {
+        bigint id PK
+        bigint import_batch_id FK
+        integer row_number
+        json raw
+        json normalized "nullable"
+        char fingerprint "nullable"
+        varchar status "valid|invalid|duplicate|imported"
+        json errors "nullable"
+        varchar importable_type "nullable"
+        bigint importable_id "nullable"
+        timestamps
+    }
+
     USERS ||--o{ FINANCIAL_ACCOUNTS : "owns"
     USERS ||--o{ CATEGORIES : "owns"
     USERS ||--o{ TRANSACTIONS : "owns"
     USERS ||--o{ BUDGETS : ""
     USERS ||--o{ PORTFOLIOS : "owns"
+    USERS ||--o{ BROKERS : "owns"
     FINANCIAL_ACCOUNTS ||--o{ TRANSACTIONS : "has"
     CATEGORIES ||--o{ TRANSACTIONS : "classifies"
     BUDGETS }o--|| CATEGORIES : "targets"
@@ -142,7 +185,11 @@ erDiagram
     PORTFOLIO_HOLDINGS }o--|| ASSETS : "holds"
     PORTFOLIOS ||--o{ ASSET_TRANSACTIONS : "records"
     ASSET_TRANSACTIONS }o--|| ASSETS : "relates"
+    ASSET_TRANSACTIONS }o--o| BROKERS : "executed at"
     ASSETS ||--o{ PRICE_HISTORY : "prices"
+    USERS ||--o{ IMPORT_BATCHES : "uploads"
+    PORTFOLIOS ||--o{ IMPORT_BATCHES : "targets"
+    IMPORT_BATCHES ||--o{ IMPORT_ROWS : "contains"
 ```
 
 ## Índices implementados
@@ -153,6 +200,9 @@ erDiagram
 - `budgets` por `(user_id, category_id, period)`.
 - `assets` único por `(market, symbol)`; ativos são globais e o ownership começa na carteira.
 - `portfolio_holdings` único por `(portfolio_id, asset_id)`.
+- `brokers` por `(user_id, name)`; a corretora é opcional em cada operação.
+- `import_batches` por `(user_id, created_at)`, `(user_id, kind, status)` e hash do arquivo.
+- `import_rows` único por `(import_batch_id, row_number)` e indexado por `fingerprint`.
 
 ## Migrações (Fase 1)
 

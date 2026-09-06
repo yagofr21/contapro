@@ -22,12 +22,21 @@ class PortfolioController extends Controller
         $this->authorize('viewAny', Portfolio::class);
 
         $portfolios = $request->user()->portfolios()
-            ->with('holdings.asset.latestPrice')
+            ->with([
+                'holdings.asset.latestPrice',
+                'transactions' => fn ($query) => $query->whereIn('type', [
+                    AssetTransactionType::Sell->value,
+                    AssetTransactionType::Dividend->value,
+                    AssetTransactionType::Interest->value,
+                ]),
+            ])
             ->orderBy('name')
             ->get()
             ->map(function (Portfolio $portfolio): array {
                 $cost = '0.0000';
                 $currentValue = '0.0000';
+                $realizedProfitLoss = '0.0000';
+                $netIncome = '0.0000';
 
                 foreach ($portfolio->holdings as $holding) {
                     $cost = bcadd($cost, bcmul($holding->quantity, $holding->average_cost, 4), 4);
@@ -38,6 +47,25 @@ class PortfolioController extends Controller
                     $currentValue = bcadd($currentValue, bcmul($holding->quantity, $price, 4), 4);
                 }
 
+                foreach ($portfolio->transactions as $transaction) {
+                    if ($transaction->type === AssetTransactionType::Sell) {
+                        $realizedProfitLoss = bcadd(
+                            $realizedProfitLoss,
+                            $transaction->realized_profit_loss ?? '0',
+                            4,
+                        );
+                    }
+
+                    if (in_array($transaction->type, [
+                        AssetTransactionType::Dividend,
+                        AssetTransactionType::Interest,
+                    ], true)) {
+                        $netIncome = bcadd($netIncome, $transaction->net_amount ?? '0', 4);
+                    }
+                }
+
+                $marketReturn = bcsub($currentValue, $cost, 4);
+
                 return [
                     'id' => $portfolio->id,
                     'name' => $portfolio->name,
@@ -45,7 +73,10 @@ class PortfolioController extends Controller
                     'holdings_count' => $portfolio->holdings->count(),
                     'cost' => $cost,
                     'current_value' => $currentValue,
-                    'return' => bcsub($currentValue, $cost, 4),
+                    'market_return' => $marketReturn,
+                    'realized_profit_loss' => $realizedProfitLoss,
+                    'net_income' => $netIncome,
+                    'total_return' => bcadd(bcadd($marketReturn, $realizedProfitLoss, 4), $netIncome, 4),
                 ];
             });
 
@@ -71,7 +102,10 @@ class PortfolioController extends Controller
         $this->authorize('view', $portfolio);
         $portfolio->load([
             'holdings.asset.latestPrice',
-            'transactions' => fn ($query) => $query->with('asset:id,symbol,name,currency')->latest('transaction_date')->latest('id'),
+            'transactions' => fn ($query) => $query
+                ->with(['asset:id,symbol,name,currency', 'broker:id,name'])
+                ->latest('transaction_date')
+                ->latest('id'),
         ]);
         $holdings = $portfolio->holdings->map(fn (PortfolioHolding $holding) => $this->serializeHolding($holding));
         $summary = $holdings->reduce(fn (array $total, array $holding): array => [
@@ -79,12 +113,25 @@ class PortfolioController extends Controller
             'current_value' => bcadd($total['current_value'], $holding['current_value'], 4),
             'return' => bcadd($total['return'], $holding['return'], 4),
         ], ['cost' => '0.0000', 'current_value' => '0.0000', 'return' => '0.0000']);
+        $summary['market_return'] = $summary['return'];
+        unset($summary['return']);
+        $summary['realized_profit_loss'] = $portfolio->transactions
+            ->where('type', AssetTransactionType::Sell)
+            ->reduce(
+                fn (string $total, $transaction): string => bcadd($total, $transaction->realized_profit_loss ?? '0', 4),
+                '0.0000',
+            );
         $summary['net_income'] = $portfolio->transactions
             ->whereIn('type', [AssetTransactionType::Dividend, AssetTransactionType::Interest])
             ->reduce(
                 fn (string $total, $transaction): string => bcadd($total, $transaction->net_amount ?? '0', 4),
                 '0.0000',
             );
+        $summary['total_return'] = bcadd(
+            bcadd($summary['market_return'], $summary['realized_profit_loss'], 4),
+            $summary['net_income'],
+            4,
+        );
 
         return Inertia::render('Portfolios/Show', [
             'portfolio' => [
@@ -98,12 +145,27 @@ class PortfolioController extends Controller
                 'id' => $transaction->id,
                 'asset_symbol' => $transaction->asset->symbol,
                 'asset_name' => $transaction->asset->name,
+                'broker_name' => $transaction->broker?->name,
                 'type' => $transaction->type->value,
                 'quantity' => $transaction->quantity,
                 'unit_price' => $transaction->unit_price,
                 'fees' => $transaction->fees,
+                'split_from' => $transaction->split_from,
+                'split_to' => $transaction->split_to,
                 'gross_amount' => $transaction->gross_amount,
                 'net_amount' => $transaction->net_amount,
+                'realized_cost_basis' => $transaction->realized_cost_basis,
+                'realized_profit_loss' => $transaction->realized_profit_loss,
+                'total_amount' => match ($transaction->type) {
+                    AssetTransactionType::Buy => bcround(bcadd(
+                        bcmul($transaction->quantity, $transaction->unit_price, 12),
+                        $transaction->fees,
+                        12,
+                    ), 4),
+                    AssetTransactionType::Sell => $transaction->net_amount,
+                    AssetTransactionType::Dividend, AssetTransactionType::Interest => $transaction->net_amount,
+                    AssetTransactionType::Split => null,
+                },
                 'date' => $transaction->transaction_date->format('Y-m-d'),
                 'note' => $transaction->note,
             ]),

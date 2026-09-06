@@ -26,7 +26,6 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('verification.notice', absolute: false));
-        $this->assertFalse(auth()->user()->hasVerifiedEmail());
+        $response->assertRedirect(route('dashboard', absolute: false));
     }
 }

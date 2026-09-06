@@ -45,6 +45,7 @@ class AssetTransactionRequest extends FormRequest
             AssetTransactionType::Dividend->value,
             AssetTransactionType::Interest->value,
         ], true);
+        $isSplit = $this->input('type') === AssetTransactionType::Split->value;
 
         return [
             'asset_id' => [
@@ -54,11 +55,19 @@ class AssetTransactionRequest extends FormRequest
                     ->where('currency', $portfolio?->currency->value)
                     ->whereNull('deleted_at'),
             ],
+            'broker_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('brokers', 'id')
+                    ->where('user_id', $this->user()?->id)
+                    ->whereNull('deleted_at'),
+            ],
             'type' => ['required', Rule::in([
                 AssetTransactionType::Buy->value,
                 AssetTransactionType::Dividend->value,
                 AssetTransactionType::Interest->value,
                 AssetTransactionType::Sell->value,
+                AssetTransactionType::Split->value,
             ])],
             'quantity' => $isTrade
                 ? ['required', 'decimal:0,8', 'gt:0', 'max:999999999999.99999999']
@@ -67,6 +76,12 @@ class AssetTransactionRequest extends FormRequest
                 ? ['required', 'decimal:0,8', 'gt:0', 'max:999999999999.99999999']
                 : ['required', 'decimal:0,8', 'in:0'],
             'fees' => ['required', 'decimal:0,4', 'gte:0', 'max:999999999999999.9999'],
+            'split_from' => $isSplit
+                ? ['required', 'decimal:0,8', 'gt:0', 'max:999999999999.99999999', 'different:split_to']
+                : ['nullable'],
+            'split_to' => $isSplit
+                ? ['required', 'decimal:0,8', 'gt:0', 'max:999999999999.99999999', 'different:split_from']
+                : ['nullable'],
             'gross_amount' => $isIncome
                 ? ['required', 'decimal:0,4', 'gt:0', 'max:999999999999999.9999']
                 : ['nullable'],
@@ -83,6 +98,9 @@ class AssetTransactionRequest extends FormRequest
         return [
             'asset_id.exists' => 'O ativo deve existir e usar a mesma moeda da carteira.',
             'net_amount.lte' => 'O valor liquido nao pode ser maior que o valor bruto.',
+            'broker_id.exists' => 'A corretora deve pertencer ao seu cadastro.',
+            'split_from.different' => 'A proporcao deve alterar a quantidade do ativo.',
+            'split_to.different' => 'A proporcao deve alterar a quantidade do ativo.',
         ];
     }
 
@@ -94,15 +112,37 @@ class AssetTransactionRequest extends FormRequest
             'fees',
             'gross_amount',
             'net_amount',
+            'split_from',
+            'split_to',
         ]);
 
         $isIncome = in_array($this->input('type'), [
             AssetTransactionType::Dividend->value,
             AssetTransactionType::Interest->value,
         ], true);
+        $isSplit = $this->input('type') === AssetTransactionType::Split->value;
 
-        $this->merge($isIncome
-            ? ['quantity' => '0', 'unit_price' => '0', 'fees' => '0']
-            : ['gross_amount' => null, 'net_amount' => null]);
+        $this->merge(match (true) {
+            $isIncome => [
+                'quantity' => '0',
+                'unit_price' => '0',
+                'fees' => '0',
+                'split_from' => null,
+                'split_to' => null,
+            ],
+            $isSplit => [
+                'quantity' => '0',
+                'unit_price' => '0',
+                'fees' => '0',
+                'gross_amount' => null,
+                'net_amount' => null,
+            ],
+            default => [
+                'gross_amount' => null,
+                'net_amount' => null,
+                'split_from' => null,
+                'split_to' => null,
+            ],
+        });
     }
 }

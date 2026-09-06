@@ -5,13 +5,16 @@ investimentos. Desenvolvido com PHP 8.5, Laravel 13, PostgreSQL, Inertia + Vue 3
 (Composition API, `<script setup>`, TypeScript), Tailwind CSS 4, ECharts e
 Octane/FrankenPHP, com deploy alvo em Laravel Cloud.
 
-> **Status atual:** Fases 0 a 5 concluídas; Fase 6 preparada no repositorio.
+> **Status atual:** Fases 0 a 5, 7 e 8 concluídas; Fase 6 preparada no repositorio e
+> aguardando apenas o provisionamento externo no Laravel Cloud.
 > Carteiras, catalogo de ativos, compras, vendas, proventos, posicoes e custo medio
 > possuem policies, validacao, actions transacionais, telas responsivas e testes
 > multiusuario. A integração brapi.dev atualiza cotações e histórico por filas com
 > cache, retries, rate limit e sincronização agendada. Dashboard e relatorios mantem
 > moedas isoladas, exibem graficos ECharts e exportam lancamentos em CSV.
-> Verificacao de e-mail, headers, health/readiness, CI PostgreSQL e guia operacional
+> Importacoes CSV financeiras e de investimentos possuem previa por linha,
+> deteccao de duplicidades, confirmacao atomica e exports round-trip.
+> Headers, health/readiness, CI PostgreSQL e guia operacional
 > preparam o deploy; secrets e recursos Cloud ainda devem ser configurados no painel.
 
 ---
@@ -116,6 +119,7 @@ npm run build           # vue-tsc + vite build
 - [Cálculos financeiros](docs/financial-calculations.md)
 - [Dados de mercado](docs/market-data.md)
 - [Relatorios e agregacoes](docs/reports.md)
+- [Importacoes CSV](docs/imports.md)
 - [Deploy no Laravel Cloud](docs/laravel-cloud-deploy.md)
 - [Segurança](docs/security.md)
 
@@ -128,3 +132,5 @@ npm run build           # vue-tsc + vite build
 5. **Fase 4 — Cotações & Mercado** (concluída): integração brapi.dev, cache, histórico, atualização manual e agendada.
 6. **Fase 5 — Dashboard & Relatórios** (concluída): ECharts, agregações por moeda e exportação CSV.
 7. **Fase 6 — Produção** (preparada): hardenização, CI, health/readiness e runbook Cloud; provisionamento depende do painel Laravel Cloud.
+8. **Fase 7 — Investimentos Avançados** (concluída): corretoras, desdobramentos e grupamentos, resultado realizado, replay contábil e retorno total.
+9. **Fase 8 — Importacao e conciliacao** (concluída): CSV financeiro e de investimentos, previa validada, duplicidades, confirmacao atomica e exportacao round-trip.

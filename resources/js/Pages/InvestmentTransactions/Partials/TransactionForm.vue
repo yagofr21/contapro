@@ -2,7 +2,7 @@
 import InputError from '@/Components/InputError.vue';
 import SelectInput from '@/Components/SelectInput.vue';
 import { formatDecimal, formatMoney, parseDecimalInput } from '@/lib/format';
-import type { AssetOption, InvestmentTransaction, Portfolio } from '@/types/investment';
+import type { AssetOption, BrokerOption, InvestmentTransaction, Portfolio } from '@/types/investment';
 import { Link, useForm } from '@inertiajs/vue3';
 import { Calculator, Save } from '@lucide/vue';
 import { computed } from 'vue';
@@ -10,6 +10,7 @@ import { computed } from 'vue';
 const props = defineProps<{
     portfolio: Portfolio;
     assets: AssetOption[];
+    brokers: BrokerOption[];
     transaction?: InvestmentTransaction;
     selectedAssetId?: number | null;
 }>();
@@ -18,10 +19,13 @@ const now = new Date();
 const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 const form = useForm({
     asset_id: String(props.transaction?.asset_id ?? props.selectedAssetId ?? props.assets[0]?.id ?? ''),
+    broker_id: String(props.transaction?.broker_id ?? ''),
     type: props.transaction?.type ?? 'buy',
     quantity: formatDecimal(props.transaction?.quantity ?? '', 0, 8),
     unit_price: formatDecimal(props.transaction?.unit_price ?? '', 2, 8),
     fees: formatDecimal(props.transaction?.fees ?? '0', 2, 4),
+    split_from: formatDecimal(props.transaction?.split_from ?? '', 0, 8),
+    split_to: formatDecimal(props.transaction?.split_to ?? '', 0, 8),
     gross_amount: formatDecimal(props.transaction?.gross_amount ?? '', 2, 4),
     net_amount: formatDecimal(props.transaction?.net_amount ?? '', 2, 4),
     transaction_date: props.transaction?.transaction_date ?? today,
@@ -29,6 +33,8 @@ const form = useForm({
 });
 
 const isIncome = computed(() => form.type === 'dividend' || form.type === 'interest');
+const isSplit = computed(() => form.type === 'split');
+const isTrade = computed(() => form.type === 'buy' || form.type === 'sell');
 const selectedAsset = computed(() => props.assets.find((asset) => String(asset.id) === form.asset_id));
 const availableQuantity = computed(() => formatDecimal(selectedAsset.value?.available_quantity ?? '0', 0, 8));
 const operationTotal = computed(() => {
@@ -46,6 +52,8 @@ const submit = () => {
         quantity: parseDecimalInput(data.quantity),
         unit_price: parseDecimalInput(data.unit_price),
         fees: parseDecimalInput(data.fees),
+        split_from: parseDecimalInput(data.split_from),
+        split_to: parseDecimalInput(data.split_to),
         gross_amount: parseDecimalInput(data.gross_amount),
         net_amount: parseDecimalInput(data.net_amount),
     }));
@@ -74,6 +82,16 @@ const submit = () => {
         <p v-if="!assets.length" class="mt-2 text-xs text-amber-600">Cadastre um ativo no catalogo antes de registrar a operacao.</p>
       </label>
 
+      <label class="sm:col-span-2">
+        <span class="mb-2 block text-sm font-semibold">Corretora <span class="font-normal text-stone-400">(opcional)</span></span>
+        <SelectInput v-model="form.broker_id">
+          <option value="">Sem corretora informada</option>
+          <option v-for="broker in brokers" :key="broker.id" :value="String(broker.id)">{{ broker.name }}{{ broker.is_active ? '' : ' (inativa)' }}</option>
+        </SelectInput>
+        <p v-if="!brokers.length" class="mt-2 text-xs text-stone-400">Cadastre corretoras pelo menu para identifica-las nas operacoes.</p>
+        <InputError class="mt-2" :message="form.errors.broker_id" />
+      </label>
+
       <label>
         <span class="mb-2 block text-sm font-semibold">Tipo de operacao</span>
         <SelectInput v-model="form.type">
@@ -81,6 +99,7 @@ const submit = () => {
           <option value="sell">Venda</option>
           <option value="dividend">Dividendo</option>
           <option value="interest">Juros</option>
+          <option value="split">Desdobramento / grupamento</option>
         </SelectInput>
         <InputError class="mt-2" :message="form.errors.type" />
       </label>
@@ -90,7 +109,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.transaction_date" />
       </label>
 
-      <template v-if="!isIncome">
+      <template v-if="isTrade">
         <label>
           <span class="mb-2 flex items-center justify-between gap-2 text-sm font-semibold">
             Quantidade
@@ -116,7 +135,22 @@ const submit = () => {
         </div>
       </template>
 
-      <template v-else>
+      <template v-else-if="isSplit">
+        <div class="sm:col-span-2 rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-3 text-sm text-violet-800 dark:border-violet-900 dark:bg-violet-950/30 dark:text-violet-200">Informe a proporcao do evento. Exemplo: em um desdobramento de 1 para 5, cada unidade antiga passa a representar 5 novas. O custo total e preservado.</div>
+        <label>
+          <span class="mb-2 block text-sm font-semibold">Quantidade antiga na proporcao</span>
+          <input v-model="form.split_from" type="text" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="1" />
+          <InputError class="mt-2" :message="form.errors.split_from" />
+        </label>
+        <label>
+          <span class="mb-2 block text-sm font-semibold">Nova quantidade na proporcao</span>
+          <input v-model="form.split_to" type="text" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="5" />
+          <InputError class="mt-2" :message="form.errors.split_to" />
+        </label>
+        <p class="sm:col-span-2 text-xs text-stone-500">Posicao atual do ativo: <strong>{{ availableQuantity }}</strong> unidades.</p>
+      </template>
+
+      <template v-else-if="isIncome">
         <div class="sm:col-span-2 rounded-2xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-brand-800 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-200">Proventos nao alteram a quantidade nem o custo medio. Informe os valores totais recebidos.</div>
         <label>
           <span class="mb-2 block text-sm font-semibold">Valor bruto</span>
@@ -132,7 +166,7 @@ const submit = () => {
 
       <label class="sm:col-span-2">
         <span class="mb-2 block text-sm font-semibold">Observacao <span class="font-normal text-stone-400">(opcional)</span></span>
-        <textarea v-model="form.note" rows="3" class="w-full resize-none rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="Corretora, estrategia ou detalhes da operacao" />
+        <textarea v-model="form.note" rows="3" class="w-full resize-none rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="Estrategia ou detalhes da operacao" />
         <InputError class="mt-2" :message="form.errors.note" />
       </label>
     </div>

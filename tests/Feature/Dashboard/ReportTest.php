@@ -46,6 +46,11 @@ class ReportTest extends TestCase
             'net_amount' => '10',
             'transaction_date' => '2026-02-20',
         ]);
+        AssetTransaction::factory()->sell()->for($portfolio)->for($asset)->create([
+            'realized_cost_basis' => '50',
+            'realized_profit_loss' => '25',
+            'transaction_date' => '2026-03-20',
+        ]);
 
         $this->actingAs($user)->get(route('reports.index', [
             'from' => '2026-01-01',
@@ -58,6 +63,8 @@ class ReportTest extends TestCase
             ->where('summary.net', '700.0000')
             ->where('summary.transaction_count', 4)
             ->where('summary.net_investment_income', '10.0000')
+            ->where('summary.realized_profit_loss', '25.0000')
+            ->where('summary.net_investment_result', '35.0000')
             ->has('monthly', 3)
             ->where('monthly.1.income', '0.0000')
             ->has('categories', 2)

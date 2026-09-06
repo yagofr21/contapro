@@ -36,7 +36,11 @@ class DomainSchemaTest extends TestCase
             'portfolio_id', 'asset_id', 'quantity', 'average_cost',
         ]));
         $this->assertTrue(Schema::hasColumns('asset_transactions', [
-            'portfolio_id', 'asset_id', 'gross_amount', 'net_amount',
+            'portfolio_id', 'asset_id', 'broker_id', 'gross_amount', 'net_amount',
+            'split_from', 'split_to', 'realized_cost_basis', 'realized_profit_loss',
+        ]));
+        $this->assertTrue(Schema::hasColumns('brokers', [
+            'user_id', 'name', 'is_active', 'deleted_at',
         ]));
         $this->assertTrue(Schema::hasColumns('price_history', [
             'asset_id', 'price_date', 'close', 'adjusted_close',

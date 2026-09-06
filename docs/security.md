@@ -4,7 +4,8 @@
 
 - **Breeze (Laravel 13)** com email+senha (web), CSRF habilitado por padrão.
 - Senhas com `bcrypt` (`BCRYPT_ROUNDS=12`).
-- Verificação de e-mail implementada (`User` recebe `Notification` de verificação).
+- Verificacao de e-mail temporariamente desabilitada; novos usuarios acessam o sistema
+  imediatamente apos o cadastro.
 - Sessões em **Redis** (`SESSION_DRIVER=redis`), com cookie `Secure`, `HttpOnly` e
   `SameSite=Lax`. O payload permanece no servidor.
 - HTTPS forçado em produção (`APP_URL` https + middleware trust proxies conforme
@@ -23,8 +24,7 @@
 
 ## Autorização
 
-- TODAS as rotas de recursos exigem autenticação (`auth`) + verificação de email
-  (`verified` em rota relevante).
+- Todas as rotas de recursos exigem autenticacao (`auth`).
 - **Polícies** (`App\Policies\*`) em cada recurso — checagem por `user_id` do dono
   (e, quando aplicável, ownership indireto por `portfolio->user_id`).
 - Regra de escopo: consultas sempre filtradas por `user_id` (jamais por ID global).

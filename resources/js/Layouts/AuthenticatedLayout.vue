@@ -3,6 +3,7 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import {
     ArrowLeftRight,
+    Building2,
     CandlestickChart,
     ChartNoAxesCombined,
     ChevronDown,
@@ -12,6 +13,7 @@ import {
     Moon,
     PieChart,
     Tags,
+    Upload,
     Sun,
     WalletCards,
     X,
@@ -32,6 +34,8 @@ const navigation = [
     { label: 'Lancamentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
     { label: 'Carteiras', route: 'portfolios.index', pattern: 'portfolios.*', icon: PieChart },
     { label: 'Ativos', route: 'assets.index', pattern: 'assets.*', icon: CandlestickChart },
+    { label: 'Corretoras', route: 'brokers.index', pattern: 'brokers.*', icon: Building2 },
+    { label: 'Importacoes', route: 'imports.index', pattern: 'imports.*', icon: Upload },
     { label: 'Relatorios', route: 'reports.index', pattern: 'reports.*', icon: ChartNoAxesCombined },
 ];
 
@@ -61,7 +65,7 @@ onMounted(() => {
         </span>
       </Link>
 
-      <nav class="flex-1 space-y-1 px-3 py-6">
+      <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-6">
         <p class="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-600">Navegacao</p>
         <Link
           v-for="item in navigation"
@@ -131,7 +135,7 @@ onMounted(() => {
           <div class="flex items-center gap-3 text-lg font-bold text-white"><WalletCards :size="22" class="text-brand-400" />Conta Pro</div>
           <button class="rounded-xl p-2 hover:bg-slate-800" @click="menuOpen = false"><X :size="20" /></button>
         </div>
-        <nav class="space-y-1">
+        <nav class="space-y-1 overflow-y-auto">
           <Link v-for="item in navigation" :key="item.route" :href="route(item.route)" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium" :class="route().current(item.pattern) ? 'bg-brand-500 text-white' : 'text-slate-400'" @click="menuOpen = false">
             <component :is="item.icon" :size="19" />{{ item.label }}
           </Link>

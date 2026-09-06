@@ -97,6 +97,158 @@ class InvestmentTest extends TestCase
         ]);
     }
 
+    public function test_sale_persists_realized_result_using_weighted_average_cost(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create();
+        $asset = Asset::factory()->create();
+
+        $this->storeOperation($user, $portfolio, $asset, 'buy', '10', '10', '2', '2026-01-01');
+        $this->storeOperation($user, $portfolio, $asset, 'sell', '4', '20', '1', '2026-01-02');
+
+        $sale = AssetTransaction::query()->where('type', AssetTransactionType::Sell)->sole();
+        $this->assertSame('80.0000', $sale->gross_amount);
+        $this->assertSame('79.0000', $sale->net_amount);
+        $this->assertSame('40.8000', $sale->realized_cost_basis);
+        $this->assertSame('38.2000', $sale->realized_profit_loss);
+        $this->assertDatabaseHas('portfolio_holdings', [
+            'portfolio_id' => $portfolio->id,
+            'asset_id' => $asset->id,
+            'quantity' => 6,
+            'average_cost' => 10.2,
+        ]);
+
+        $this->actingAs($user)->get(route('portfolios.show', $portfolio))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('summary.market_return', '0.0000')
+                ->where('summary.realized_profit_loss', '38.2000')
+                ->where('summary.total_return', '38.2000')
+                ->where('transactions.0.total_amount', '79.0000'));
+    }
+
+    public function test_backdated_buy_recalculates_a_later_sale_result(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create();
+        $asset = Asset::factory()->create();
+        $this->storeOperation($user, $portfolio, $asset, 'buy', '10', '10', '0', '2026-01-02');
+        $this->storeOperation($user, $portfolio, $asset, 'sell', '5', '20', '0', '2026-01-03');
+
+        $sale = AssetTransaction::query()->where('type', AssetTransactionType::Sell)->sole();
+        $this->assertSame('50.0000', $sale->realized_profit_loss);
+
+        $this->storeOperation($user, $portfolio, $asset, 'buy', '10', '30', '0', '2026-01-01');
+
+        $this->assertSame('0.0000', $sale->refresh()->realized_profit_loss);
+        $this->assertDatabaseHas('portfolio_holdings', [
+            'portfolio_id' => $portfolio->id,
+            'asset_id' => $asset->id,
+            'quantity' => 15,
+            'average_cost' => 20,
+        ]);
+    }
+
+    public function test_accounting_rebuild_command_populates_legacy_sales(): void
+    {
+        $portfolio = Portfolio::factory()->create();
+        $asset = Asset::factory()->create();
+        $portfolio->transactions()->create([
+            'asset_id' => $asset->id,
+            'type' => 'buy',
+            'quantity' => '10',
+            'unit_price' => '10',
+            'fees' => '0',
+            'transaction_date' => '2026-01-01',
+        ]);
+        $sale = $portfolio->transactions()->create([
+            'asset_id' => $asset->id,
+            'type' => 'sell',
+            'quantity' => '2',
+            'unit_price' => '15',
+            'fees' => '1',
+            'transaction_date' => '2026-01-02',
+        ]);
+
+        $this->artisan('investments:rebuild-accounting')->assertSuccessful();
+
+        $this->assertSame('9.0000', $sale->refresh()->realized_profit_loss);
+    }
+
+    public function test_splits_and_reverse_splits_preserve_the_position_cost(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create();
+        $asset = Asset::factory()->create();
+        $this->storeOperation($user, $portfolio, $asset, 'buy', '10', '10', '0', '2026-01-01');
+
+        $this->actingAs($user)->post(route('investment-transactions.store', $portfolio), [
+            'asset_id' => $asset->id,
+            'type' => 'split',
+            'split_from' => '1',
+            'split_to' => '5',
+            'transaction_date' => '2026-02-01',
+        ])->assertRedirect(route('portfolios.show', $portfolio));
+
+        $this->assertDatabaseHas('portfolio_holdings', [
+            'portfolio_id' => $portfolio->id,
+            'asset_id' => $asset->id,
+            'quantity' => 50,
+            'average_cost' => 2,
+        ]);
+
+        $this->actingAs($user)->post(route('investment-transactions.store', $portfolio), [
+            'asset_id' => $asset->id,
+            'type' => 'split',
+            'split_from' => '10',
+            'split_to' => '1',
+            'transaction_date' => '2026-03-01',
+        ])->assertRedirect(route('portfolios.show', $portfolio));
+
+        $this->assertDatabaseHas('portfolio_holdings', [
+            'portfolio_id' => $portfolio->id,
+            'asset_id' => $asset->id,
+            'quantity' => 5,
+            'average_cost' => 20,
+        ]);
+    }
+
+    public function test_split_without_an_open_position_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create();
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($user)->post(route('investment-transactions.store', $portfolio), [
+            'asset_id' => $asset->id,
+            'type' => 'split',
+            'split_from' => '1',
+            'split_to' => '5',
+            'transaction_date' => '2026-02-01',
+        ])->assertSessionHasErrors('split_from');
+
+        $this->assertDatabaseCount('asset_transactions', 0);
+    }
+
+    public function test_sale_fees_cannot_exceed_gross_proceeds(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create();
+        $asset = Asset::factory()->create();
+        $this->storeOperation($user, $portfolio, $asset, 'buy', '1', '10', '0', '2026-01-01');
+
+        $this->actingAs($user)->post(route('investment-transactions.store', $portfolio), [
+            'asset_id' => $asset->id,
+            'type' => 'sell',
+            'quantity' => '1',
+            'unit_price' => '10',
+            'fees' => '11',
+            'transaction_date' => '2026-02-01',
+        ])->assertSessionHasErrors('fees');
+
+        $this->assertDatabaseCount('asset_transactions', 1);
+    }
+
     public function test_brazilian_decimals_are_accepted_and_asset_can_be_preselected(): void
     {
         $user = User::factory()->create();
@@ -215,7 +367,7 @@ class InvestmentTest extends TestCase
             'portfolio_id' => $portfolio->id,
             'asset_id' => $asset->id,
             'quantity' => 15,
-            'average_cost' => 16.66666666,
+            'average_cost' => 16.66666667,
         ]);
 
         $this->actingAs($user)->delete(route('investment-transactions.destroy', $transaction))
@@ -358,7 +510,7 @@ class InvestmentTest extends TestCase
             ->assertSessionHasErrors('net_amount');
         $this->actingAs($user)->post(route('investment-transactions.store', $portfolio), [
             ...$payload,
-            'type' => 'split',
+            'type' => 'bonus',
         ])->assertSessionHasErrors('type');
 
         $this->assertDatabaseCount('asset_transactions', 0);

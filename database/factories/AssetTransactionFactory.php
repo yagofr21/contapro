@@ -50,4 +50,28 @@ class AssetTransactionFactory extends Factory
             'net_amount' => '80.0000',
         ]);
     }
+
+    public function sell(): static
+    {
+        return $this->state(fn (): array => [
+            'type' => AssetTransactionType::Sell,
+            'quantity' => '1.00000000',
+            'unit_price' => '100.00000000',
+            'fees' => '1.0000',
+            'gross_amount' => '100.0000',
+            'net_amount' => '99.0000',
+        ]);
+    }
+
+    public function split(): static
+    {
+        return $this->state(fn (): array => [
+            'type' => AssetTransactionType::Split,
+            'quantity' => '0',
+            'unit_price' => '0',
+            'fees' => '0',
+            'split_from' => '1.00000000',
+            'split_to' => '5.00000000',
+        ]);
+    }
 }

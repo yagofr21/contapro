@@ -8,8 +8,8 @@ nunca sao somados sem uma taxa de cambio explicita.
 - Saldos, receitas, despesas e resultado mensal sao agrupados por moeda.
 - O periodo mensal inclui somente o primeiro e o ultimo dia do mes corrente no fuso
   do usuario.
-- A posicao de investimentos consolida custo, valor atual, resultado de mercado e
-  proventos liquidos por moeda.
+- A posicao de investimentos consolida custo, valor atual, resultado não realizado,
+  resultado realizado, proventos líquidos e retorno total por moeda.
 - Posicoes sem cotacao usam o custo medio como fallback e sao sinalizadas.
 
 ## Relatorios
@@ -19,8 +19,10 @@ Os filtros `from`, `to` e `currency` controlam todas as agregacoes da pagina:
 - fluxo mensal de receitas e despesas;
 - despesas por categoria, incluindo `Sem categoria`;
 - proventos liquidos no periodo;
+- resultado realizado por vendas no período;
 - alocacao atual por tipo de ativo;
 - resumo da posicao atual na moeda selecionada.
+- retorno total, composto pelo resultado não realizado, realizado e proventos.
 
 O periodo padrao cobre os ultimos doze meses e a moeda padrao e BRL.
 

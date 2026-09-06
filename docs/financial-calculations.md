@@ -42,7 +42,35 @@ custo_medio_novo =
 ```
 
 Venda **não altera** o custo médio (apenas reduz a quantidade). Proventos em dinheiro
-requerem decisão de reinvestimento declarada na Fase 4.
+não alteram posição ou custo médio.
+
+### Venda e resultado realizado (Fase 7)
+
+Os valores da venda são derivados no servidor durante o replay cronológico:
+
+```
+valor_bruto_venda = quantidade_vendida * preco_unitario
+valor_liquido_venda = valor_bruto_venda - taxas_venda
+custo_baixado = quantidade_vendida * custo_medio_antes_da_venda
+resultado_realizado = valor_liquido_venda - custo_baixado
+```
+
+O valor bruto, líquido, custo baixado e resultado realizado são persistidos com quatro
+casas para auditoria. Uma alteração retroativa recalcula todas as vendas posteriores.
+
+### Desdobramentos e grupamentos (Fase 7)
+
+A proporção é armazenada como quantidade antiga (`split_from`) para quantidade nova
+(`split_to`):
+
+```
+fator = split_to / split_from
+nova_quantidade = quantidade_anterior * fator
+novo_custo_medio = custo_total_anterior / nova_quantidade
+```
+
+O evento exige posição aberta e preserva o custo total. Proporções maiores aumentam a
+quantidade (desdobramento); proporções menores a reduzem (grupamento).
 
 ### Rentabilidade da carteira
 
@@ -50,6 +78,16 @@ requerem decisão de reinvestimento declarada na Fase 4.
   `retorno = (valor_atual − valor_compra) / valor_compra`.
 - Rentabilidade de carteira: XIRR (excel-compatible) com fluxo de caixa por operação.
 - Comparativo de performance relativa a benchmark (ex.: CDI para renda fixa).
+
+O resumo monetário implementado separa:
+
+```
+resultado_nao_realizado = valor_atual - custo_das_posicoes_abertas
+retorno_total = resultado_nao_realizado + resultado_realizado + proventos_liquidos
+```
+
+Percentuais ponderados por tempo e aportes continuam reservados para uma implementação
+de XIRR; o sistema não usa o custo atual como denominador enganoso.
 
 ### Proventos e dividendos
 

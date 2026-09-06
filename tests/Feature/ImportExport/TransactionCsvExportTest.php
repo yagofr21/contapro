@@ -23,14 +23,18 @@ class TransactionCsvExportTest extends TestCase
             'description' => '=FORMULA()',
             'transaction_date' => '2026-01-01',
         ]);
-        Transaction::factory()->for($user)->for($account, 'account')->create([
+        $transferId = fake()->uuid();
+        $destination = FinancialAccount::factory()->for($user)->create(['name' => 'Reserva', 'currency' => 'BRL']);
+        Transaction::factory()->for($user)->for($destination, 'account')->create([
             'type' => TransactionType::TransferIn,
+            'transfer_id' => $transferId,
             'amount' => '50',
             'description' => 'Entrada duplicada',
             'transaction_date' => '2026-01-02',
         ]);
         Transaction::factory()->for($user)->for($account, 'account')->create([
             'type' => TransactionType::TransferOut,
+            'transfer_id' => $transferId,
             'amount' => '50',
             'description' => 'Transferencia unica',
             'transaction_date' => '2026-01-02',
@@ -51,9 +55,10 @@ class TransactionCsvExportTest extends TestCase
             ->assertHeader('content-type', 'text/csv; charset=UTF-8')
             ->assertDownload('transacoes-2026-01-01-a-2026-01-31-BRL.csv');
         $csv = $response->streamedContent();
-        $this->assertStringStartsWith("\xEF\xBB\xBFData;Tipo;Descricao;Conta;Categoria;Valor;Moeda\r\n", $csv);
-        $this->assertStringContainsString("2026-01-01;Receita;'=FORMULA();\"Conta principal\";;100.5000;BRL", $csv);
+        $this->assertStringStartsWith("\xEF\xBB\xBFData;Tipo;Descricao;Conta;\"Conta destino\";Categoria;Valor;Moeda\r\n", $csv);
+        $this->assertStringContainsString("2026-01-01;Receita;'=FORMULA();\"Conta principal\";;;100.5000;BRL", $csv);
         $this->assertStringContainsString('Transferencia unica', $csv);
+        $this->assertStringContainsString('Reserva', $csv);
         $this->assertStringNotContainsString('Entrada duplicada', $csv);
         $this->assertStringNotContainsString('Registro de terceiro', $csv);
     }

@@ -94,6 +94,8 @@ class DashboardTest extends TestCase
                 ->where('investments.0.cost', '200.0000')
                 ->where('investments.0.current_value', '240.0000')
                 ->where('investments.0.market_return', '40.0000')
-                ->where('investments.0.net_income', '10.0000'));
+                ->where('investments.0.realized_profit_loss', '0.0000')
+                ->where('investments.0.net_income', '10.0000')
+                ->where('investments.0.total_return', '50.0000'));
     }
 }

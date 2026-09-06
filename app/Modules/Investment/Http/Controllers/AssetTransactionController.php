@@ -10,6 +10,7 @@ use App\Modules\Investment\Enums\AssetTransactionType;
 use App\Modules\Investment\Http\Requests\AssetTransactionRequest;
 use App\Modules\Investment\Models\Asset;
 use App\Modules\Investment\Models\AssetTransaction;
+use App\Modules\Investment\Models\Broker;
 use App\Modules\Investment\Models\Portfolio;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class AssetTransactionController extends Controller
                 'currency' => $portfolio->currency->value,
             ],
             'assets' => $assets,
+            'brokers' => $this->brokers((int) $request->user()->id),
             'selectedAssetId' => in_array($requestedAssetId, array_column($assets, 'id'), true)
                 ? $requestedAssetId
                 : null,
@@ -58,13 +60,20 @@ class AssetTransactionController extends Controller
                 'currency' => $investmentTransaction->portfolio->currency->value,
             ],
             'assets' => $this->assets($investmentTransaction->portfolio, $investmentTransaction),
+            'brokers' => $this->brokers(
+                $investmentTransaction->portfolio->user_id,
+                $investmentTransaction->broker_id,
+            ),
             'transaction' => [
                 'id' => $investmentTransaction->id,
                 'asset_id' => $investmentTransaction->asset_id,
+                'broker_id' => $investmentTransaction->broker_id,
                 'type' => $investmentTransaction->type->value,
                 'quantity' => $investmentTransaction->quantity,
                 'unit_price' => $investmentTransaction->unit_price,
                 'fees' => $investmentTransaction->fees,
+                'split_from' => $investmentTransaction->split_from,
+                'split_to' => $investmentTransaction->split_to,
                 'gross_amount' => $investmentTransaction->gross_amount,
                 'net_amount' => $investmentTransaction->net_amount,
                 'transaction_date' => $investmentTransaction->transaction_date->format('Y-m-d'),
@@ -122,6 +131,24 @@ class AssetTransactionController extends Controller
                     'available_quantity' => $availableQuantity,
                 ];
             })
+            ->all();
+    }
+
+    /** @return array<int, array{id: int, name: string, is_active: bool}> */
+    private function brokers(int $userId, ?int $currentBrokerId = null): array
+    {
+        return Broker::query()
+            ->where('user_id', $userId)
+            ->where(fn ($query) => $query
+                ->where('is_active', true)
+                ->when($currentBrokerId !== null, fn ($query) => $query->orWhereKey($currentBrokerId)))
+            ->orderBy('name')
+            ->get(['id', 'name', 'is_active'])
+            ->map(fn (Broker $broker) => [
+                'id' => $broker->id,
+                'name' => $broker->name,
+                'is_active' => $broker->is_active,
+            ])
             ->all();
     }
 }

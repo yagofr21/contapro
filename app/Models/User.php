@@ -6,9 +6,10 @@ use App\Modules\Finance\Models\Budget;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\Transaction;
+use App\Modules\ImportExport\Models\ImportBatch;
+use App\Modules\Investment\Models\Broker;
 use App\Modules\Investment\Models\Portfolio;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'email', 'password', 'locale', 'timezone'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -51,6 +52,18 @@ class User extends Authenticatable implements MustVerifyEmail
     public function portfolios(): HasMany
     {
         return $this->hasMany(Portfolio::class);
+    }
+
+    /** @return HasMany<Broker, $this> */
+    public function brokers(): HasMany
+    {
+        return $this->hasMany(Broker::class);
+    }
+
+    /** @return HasMany<ImportBatch, $this> */
+    public function importBatches(): HasMany
+    {
+        return $this->hasMany(ImportBatch::class);
     }
 
     /**

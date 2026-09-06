@@ -11,7 +11,7 @@ class FinancialReportQuery
 {
     /**
      * @return array{
-     *     summary: array{income: string, expenses: string, net: string, transaction_count: int, net_investment_income: string},
+     *     summary: array{income: string, expenses: string, net: string, transaction_count: int, net_investment_income: string, realized_profit_loss: string, net_investment_result: string},
      *     monthly: list<array{month: string, income: string, expenses: string}>,
      *     categories: list<array{name: string, color: string, total: string}>
      * }
@@ -68,6 +68,14 @@ class FinancialReportQuery
                 ->whereDate('transaction_date', '<=', $to)], 'net_amount')
             ->get()
             ->reduce(fn (string $total, $portfolio): string => bcadd($total, (string) ($portfolio->getAttribute('report_net_income') ?? 0), 4), '0.0000');
+        $realizedProfitLoss = $user->portfolios()
+            ->where('currency', $currency)
+            ->withSum(['transactions as report_realized_result' => fn ($query) => $query
+                ->where('type', AssetTransactionType::Sell->value)
+                ->whereDate('transaction_date', '>=', $from)
+                ->whereDate('transaction_date', '<=', $to)], 'realized_profit_loss')
+            ->get()
+            ->reduce(fn (string $total, $portfolio): string => bcadd($total, (string) ($portfolio->getAttribute('report_realized_result') ?? 0), 4), '0.0000');
 
         return [
             'summary' => [
@@ -76,6 +84,8 @@ class FinancialReportQuery
                 'net' => bcsub($income, $expenses, 4),
                 'transaction_count' => $transactions->count(),
                 'net_investment_income' => $netInvestmentIncome,
+                'realized_profit_loss' => $realizedProfitLoss,
+                'net_investment_result' => bcadd($netInvestmentIncome, $realizedProfitLoss, 4),
             ],
             'monthly' => array_values($months),
             'categories' => array_values($categories),

@@ -18,6 +18,7 @@ use App\Modules\Investment\Enums\AssetType;
 use App\Modules\Investment\Enums\Market;
 use App\Modules\Investment\Models\Asset;
 use App\Modules\Investment\Models\AssetTransaction;
+use App\Modules\Investment\Models\Broker;
 use App\Modules\Investment\Models\Portfolio;
 use App\Modules\MarketData\Models\PriceHistory;
 use Illuminate\Database\Seeder;
@@ -99,8 +100,12 @@ class DemoDataSeeder extends Seeder
             ['user_id' => $user->id, 'name' => 'Carteira principal'],
             ['currency' => Currency::BRL],
         );
+        $broker = Broker::query()->updateOrCreate(
+            ['user_id' => $user->id, 'name' => 'Corretora Demo'],
+            ['is_active' => true],
+        );
 
-        AssetTransaction::query()->firstOrCreate(
+        AssetTransaction::query()->updateOrCreate(
             [
                 'portfolio_id' => $portfolio->id,
                 'asset_id' => $asset->id,
@@ -108,6 +113,7 @@ class DemoDataSeeder extends Seeder
             ],
             [
                 'type' => AssetTransactionType::Buy,
+                'broker_id' => $broker->id,
                 'quantity' => '100.00000000',
                 'unit_price' => '35.50000000',
                 'fees' => '4.9000',
@@ -115,7 +121,7 @@ class DemoDataSeeder extends Seeder
             ],
         );
 
-        AssetTransaction::query()->firstOrCreate(
+        AssetTransaction::query()->updateOrCreate(
             [
                 'portfolio_id' => $portfolio->id,
                 'asset_id' => $asset->id,
@@ -124,6 +130,7 @@ class DemoDataSeeder extends Seeder
             ],
             [
                 'quantity' => '0',
+                'broker_id' => $broker->id,
                 'unit_price' => '0',
                 'fees' => '0',
                 'gross_amount' => '85.0000',

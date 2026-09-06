@@ -15,7 +15,11 @@ class TransactionCsvExportController extends Controller
         $filters = $request->validated();
         $filename = sprintf('transacoes-%s-a-%s-%s.csv', $filters['from'], $filters['to'], $filters['currency']);
         $transactions = $request->user()->transactions()
-            ->with(['account:id,name,currency', 'category:id,name'])
+            ->with([
+                'account:id,name,currency',
+                'category:id,name',
+                'transferCounterpart.account:id,name,currency',
+            ])
             ->whereHas('account', fn ($query) => $query->where('currency', $filters['currency']))
             ->whereDate('transaction_date', '>=', $filters['from'])
             ->whereDate('transaction_date', '<=', $filters['to'])
@@ -31,7 +35,7 @@ class TransactionCsvExportController extends Controller
             }
 
             fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, ['Data', 'Tipo', 'Descricao', 'Conta', 'Categoria', 'Valor', 'Moeda'], ';', '"', '', "\r\n");
+            fputcsv($stream, ['Data', 'Tipo', 'Descricao', 'Conta', 'Conta destino', 'Categoria', 'Valor', 'Moeda'], ';', '"', '', "\r\n");
 
             foreach ($transactions->cursor() as $transaction) {
                 fputcsv($stream, [
@@ -39,6 +43,7 @@ class TransactionCsvExportController extends Controller
                     $this->typeLabel($transaction),
                     $this->safeCell($transaction->description ?? ''),
                     $this->safeCell($transaction->account->name),
+                    $this->safeCell($transaction->transferCounterpart?->account->name ?? ''),
                     $this->safeCell($transaction->category_id !== null ? $transaction->category->name : ''),
                     $transaction->amount,
                     $transaction->account->currency->value,

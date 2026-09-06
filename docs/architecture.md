@@ -16,8 +16,8 @@ mercado, dashboard, importação/exportação, notificações), organizados em m
                                         │
                               ┌─────────▼──────────┐
                               │  Rotas (web)       │
-                              │  Middleware (auth, │
-                              │  Inertia, verified)│
+                               │  Middleware (auth, │
+                               │  Inertia)          │
                               └─────────┬──────────┘
                                         │
                          ┌──────────────▼──────────────┐
@@ -92,3 +92,15 @@ sao gravadas em transacao de banco como dois lancamentos ligados pelo mesmo UUID
 O dashboard usa `AccountSummaryQuery` para consolidar saldo inicial, receitas,
 despesas e transferencias sem armazenar saldo derivado. Orcamentos comparam o limite
 da categoria ao total de despesas dentro do periodo mensal, anual ou personalizado.
+
+## Módulo Investment (Fases 3, 4 e 7)
+
+`asset_transactions` é o razão cronológico e a fonte de verdade. Toda criação,
+alteração ou remoção executa `RebuildPortfolioHolding` dentro de transação, bloqueando
+a carteira e reconstruindo quantidade, custo médio e resultados realizados. Isso faz
+com que compras retroativas e desdobramentos recalculam corretamente vendas futuras.
+
+Corretoras pertencem ao usuário e são metadados opcionais da operação. Holdings seguem
+consolidadas por carteira e ativo, independentemente da instituição. Cotações são dados
+de mercado separados do razão e nunca substituem preço ou quantidade informados pelo
+usuário.

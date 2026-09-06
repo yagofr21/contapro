@@ -74,7 +74,7 @@ composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction &
 Comando de deploy:
 
 ```bash
-php artisan migrate --force
+php artisan migrate --force && php artisan investments:rebuild-accounting
 ```
 
 `APP_KEY`, `BRAPI_TOKEN` e credenciais de e-mail devem viver no Secrets Manager e

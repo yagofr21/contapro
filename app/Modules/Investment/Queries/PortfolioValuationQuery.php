@@ -9,7 +9,7 @@ class PortfolioValuationQuery
 {
     /**
      * @return array{
-     *     summaries: list<array{currency: string, cost: string, current_value: string, market_return: string, market_return_percentage: string, net_income: string, unpriced_holdings: int, price_date: string|null}>,
+     *     summaries: list<array{currency: string, cost: string, current_value: string, market_return: string, market_return_percentage: string, realized_profit_loss: string, net_income: string, total_return: string, unpriced_holdings: int, price_date: string|null}>,
      *     allocation: list<array{currency: string, type: string, value: string}>
      * }
      */
@@ -21,6 +21,7 @@ class PortfolioValuationQuery
                 'transactions' => fn ($query) => $query->whereIn('type', [
                     AssetTransactionType::Dividend->value,
                     AssetTransactionType::Interest->value,
+                    AssetTransactionType::Sell->value,
                 ]),
             ])
             ->get();
@@ -36,6 +37,8 @@ class PortfolioValuationQuery
                 'market_return' => '0.0000',
                 'market_return_percentage' => '0.0000',
                 'net_income' => '0.0000',
+                'realized_profit_loss' => '0.0000',
+                'total_return' => '0.0000',
                 'unpriced_holdings' => 0,
                 'price_date' => null,
             ];
@@ -64,11 +67,19 @@ class PortfolioValuationQuery
             }
 
             foreach ($portfolio->transactions as $transaction) {
-                $summaries[$currency]['net_income'] = bcadd(
-                    $summaries[$currency]['net_income'],
-                    $transaction->net_amount ?? '0',
-                    4,
-                );
+                if ($transaction->type === AssetTransactionType::Sell) {
+                    $summaries[$currency]['realized_profit_loss'] = bcadd(
+                        $summaries[$currency]['realized_profit_loss'],
+                        $transaction->realized_profit_loss ?? '0',
+                        4,
+                    );
+                } else {
+                    $summaries[$currency]['net_income'] = bcadd(
+                        $summaries[$currency]['net_income'],
+                        $transaction->net_amount ?? '0',
+                        4,
+                    );
+                }
             }
         }
 
@@ -77,6 +88,11 @@ class PortfolioValuationQuery
             $summary['market_return_percentage'] = bccomp($summary['cost'], '0', 4) === 0
                 ? '0.0000'
                 : bcround(bcmul(bcdiv($summary['market_return'], $summary['cost'], 12), '100', 12), 4);
+            $summary['total_return'] = bcadd(
+                bcadd($summary['market_return'], $summary['realized_profit_loss'], 4),
+                $summary['net_income'],
+                4,
+            );
         }
         unset($summary);
 
