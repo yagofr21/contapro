@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Modules\Finance\Models\Budget;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\FinancialAccount;
+use App\Modules\Finance\Models\Installment;
 use App\Modules\Finance\Models\Transaction;
+use App\Modules\Finance\Models\TransactionSchedule;
 use App\Modules\ImportExport\Models\ImportBatch;
 use App\Modules\Investment\Models\Broker;
 use App\Modules\Investment\Models\Portfolio;
@@ -64,6 +66,18 @@ class User extends Authenticatable
     public function importBatches(): HasMany
     {
         return $this->hasMany(ImportBatch::class);
+    }
+
+    /** @return HasMany<TransactionSchedule, $this> */
+    public function transactionSchedules(): HasMany
+    {
+        return $this->hasMany(TransactionSchedule::class);
+    }
+
+    /** @return HasMany<Installment, $this> */
+    public function installments(): HasMany
+    {
+        return $this->hasMany(Installment::class);
     }
 
     /**

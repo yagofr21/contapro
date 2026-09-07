@@ -4,9 +4,12 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReadinessController;
 use App\Modules\Dashboard\Http\Controllers\DashboardController;
 use App\Modules\Dashboard\Http\Controllers\ReportController;
+use App\Modules\Finance\Http\Controllers\AgendaController;
 use App\Modules\Finance\Http\Controllers\BudgetController;
 use App\Modules\Finance\Http\Controllers\CategoryController;
 use App\Modules\Finance\Http\Controllers\FinancialAccountController;
+use App\Modules\Finance\Http\Controllers\InstallmentController;
+use App\Modules\Finance\Http\Controllers\RecurringScheduleController;
 use App\Modules\Finance\Http\Controllers\TransactionController;
 use App\Modules\ImportExport\Http\Controllers\CsvImportController;
 use App\Modules\ImportExport\Http\Controllers\ImportTemplateController;
@@ -41,6 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('categories', CategoryController::class)->except('show');
     Route::resource('budgets', BudgetController::class)->except('show');
     Route::resource('transactions', TransactionController::class)->except('show');
+    Route::get('agenda', AgendaController::class)->name('agenda.index');
+    Route::resource('recurring', RecurringScheduleController::class)->except('show');
+    Route::resource('installments', InstallmentController::class)->except(['show', 'edit', 'update']);
     Route::get('portfolios/{portfolio}/operations.csv', InvestmentCsvExportController::class)
         ->name('portfolios.operations.export');
     Route::resource('portfolios', PortfolioController::class);

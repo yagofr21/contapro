@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Finance\Actions\GenerateScheduledTransactions;
+use App\Modules\Finance\Actions\ProcessInstallments;
 use App\Modules\Investment\Enums\Market;
 use App\Modules\Investment\Models\Asset;
 use App\Modules\MarketData\Jobs\SyncQuote;
@@ -23,8 +25,30 @@ Artisan::command('market-data:sync', function (): void {
         });
 })->purpose('Agenda a atualizacao de cotacoes dos ativos suportados');
 
+Artisan::command('recurring:generate', function (): void {
+    $created = app(GenerateScheduledTransactions::class)->handle();
+    $this->info("Recorrencias geradas: {$created}");
+})->purpose('Materializa transacoes de recorrencias vencidas');
+
+Artisan::command('installments:process', function (): void {
+    $created = app(ProcessInstallments::class)->handle();
+    $this->info("Parcelas processadas: {$created}");
+})->purpose('Materializa transacoes de parcelas vencidas');
+
 Schedule::command('market-data:sync')
     ->dailyAt('19:00')
+    ->timezone('America/Sao_Paulo')
+    ->onOneServer()
+    ->withoutOverlapping();
+
+Schedule::command('recurring:generate')
+    ->dailyAt('02:30')
+    ->timezone('America/Sao_Paulo')
+    ->onOneServer()
+    ->withoutOverlapping();
+
+Schedule::command('installments:process')
+    ->dailyAt('02:40')
     ->timezone('America/Sao_Paulo')
     ->onOneServer()
     ->withoutOverlapping();
