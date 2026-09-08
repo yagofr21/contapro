@@ -23,6 +23,7 @@ class FinancialAccountController extends Controller
 
         return Inertia::render('Accounts/Index', [
             'accounts' => $query->forUser($request->user()),
+            ...$this->formOptions(),
         ]);
     }
 

@@ -22,8 +22,50 @@
     --color-muted: #78716c;
 }
 
-/* Base do tema escuro via variável medias de preferencia. */
+/* Base do tema escuro via variavel de preferencia. */
 @custom-variant dark (&:where(.dark, .dark *));
+
+body {
+    background-color: var(--color-surface);
+    background-image:
+        radial-gradient(
+            70rem 50rem at 115% -12%,
+            color-mix(in oklab, var(--color-brand-500) 8%, transparent),
+            transparent 60%
+        ),
+        radial-gradient(
+            55rem 45rem at -12% 18%,
+            color-mix(in oklab, var(--color-brand-500) 6%, transparent),
+            transparent 60%
+        ),
+        radial-gradient(
+            40rem 30rem at 50% 120%,
+            color-mix(in oklab, var(--color-brand-400) 5%, transparent),
+            transparent 60%
+        );
+    background-attachment: fixed;
+}
+
+.dark body {
+    background-color: var(--color-slate-950);
+    background-image:
+        radial-gradient(
+            70rem 50rem at 115% -12%,
+            color-mix(in oklab, var(--color-brand-500) 12%, transparent),
+            transparent 60%
+        ),
+        radial-gradient(
+            55rem 45rem at -12% 18%,
+            color-mix(in oklab, var(--color-brand-500) 9%, transparent),
+            transparent 60%
+        ),
+        radial-gradient(
+            40rem 30rem at 50% 120%,
+            color-mix(in oklab, var(--color-brand-400) 7%, transparent),
+            transparent 60%
+        );
+    background-attachment: fixed;
+}
 
 @media (prefers-color-scheme: dark) {
     :root:not(.light) {
@@ -38,7 +80,12 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Acessibilidade: foco visível e redução de movimento. */
+::selection {
+    background-color: var(--color-brand-500);
+    color: white;
+}
+
+/* Acessibilidade: foco visivel e reducao de movimento. */
 :focus-visible {
     outline: 2px solid var(--color-brand-500);
     outline-offset: 2px;

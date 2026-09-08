@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import Modal from '@/Components/Modal.vue';
 import SelectInput from '@/Components/SelectInput.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
 import type { Category, Paginated, Transaction } from '@/types/finance';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Filter, Pencil, Plus, ReceiptText, Search, Trash2 } from '@lucide/vue';
-import { reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+import TransactionForm from './Partials/TransactionForm.vue';
 
 type AccountOption = { id: number; name: string; currency: string };
 type Filters = { account_id?: number; category_id?: number; type?: string; from?: string; to?: string; search?: string };
@@ -16,6 +18,33 @@ const props = defineProps<{
     categories: Category[];
     filters: Filters;
 }>();
+
+const modalOpen = ref(false);
+const editing = ref<Transaction | null>(null);
+
+const openCreate = () => {
+    editing.value = null;
+    modalOpen.value = true;
+};
+
+const openEdit = (transaction: Transaction) => {
+    editing.value = transaction;
+    modalOpen.value = true;
+};
+
+const closeModal = () => {
+    modalOpen.value = false;
+    editing.value = null;
+};
+
+onMounted(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('create') === '1') {
+        url.searchParams.delete('create');
+        window.history.replaceState({}, '', url.toString());
+        openCreate();
+    }
+});
 
 const form = reactive({
     account_id: props.filters.account_id ? String(props.filters.account_id) : '',
@@ -51,13 +80,13 @@ const typePresentation = (transaction: Transaction) => {
     <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Fluxo de caixa</p>
-        <h1 class="mt-2 text-3xl font-bold tracking-tight">Lancamentos</h1>
-        <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Receitas, despesas e transferencias reunidas em uma linha do tempo.</p>
+        <h1 class="mt-2 text-2xl font-bold tracking-tight">Lancamentos</h1>
+        <p class="mt-1 text-sm text-stone-500 dark:text-slate-400">Receitas, despesas e transferencias reunidas em uma linha do tempo.</p>
       </div>
-      <Link :href="route('transactions.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Novo lancamento</Link>
+      <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Novo lancamento</button>
     </section>
 
-    <form class="mt-8 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" @submit.prevent="applyFilters">
+    <form class="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" @submit.prevent="applyFilters">
       <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <label class="relative xl:col-span-2"><Search :size="16" class="absolute left-3 top-3 text-stone-400" /><input v-model="form.search" class="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="Buscar descricao" /></label>
         <SelectInput v-model="form.account_id"><option value="">Todas as contas</option><option v-for="account in accounts" :key="account.id" :value="String(account.id)">{{ account.name }}</option></SelectInput>
@@ -83,7 +112,10 @@ const typePresentation = (transaction: Transaction) => {
         <p class="text-sm text-stone-500 dark:text-slate-400">{{ transaction.account_name }}</p>
         <p class="text-sm text-stone-500 dark:text-slate-400">{{ formatDate(transaction.transaction_date) }}</p>
         <p class="text-left text-sm font-bold md:text-right" :class="transaction.type === 'income' ? 'text-emerald-600' : transaction.is_transfer ? 'text-brand-600' : 'text-rose-600'">{{ transaction.type === 'income' ? '+' : transaction.is_transfer ? '' : '-' }}{{ formatMoney(transaction.amount, transaction.currency) }}</p>
-        <div class="flex justify-end gap-1"><Link :href="route('transactions.edit', transaction.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800"><Pencil :size="15" /></Link><button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" @click="remove(transaction)"><Trash2 :size="15" /></button></div>
+        <div class="flex justify-end gap-1">
+          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" @click="openEdit(transaction)"><Pencil :size="15" /></button>
+          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" @click="remove(transaction)"><Trash2 :size="15" /></button>
+        </div>
       </article>
     </div>
 
@@ -92,5 +124,9 @@ const typePresentation = (transaction: Transaction) => {
     <nav v-if="transactions.links.length > 3" class="mt-5 flex flex-wrap items-center justify-center gap-1">
       <Link v-for="link in transactions.links" :key="link.label" :href="link.url ?? '#'" class="min-w-9 rounded-lg px-3 py-2 text-center text-xs font-semibold" :class="link.active ? 'bg-brand-600 text-white' : link.url ? 'bg-white text-stone-600 hover:bg-stone-100 dark:bg-slate-900 dark:text-slate-300' : 'pointer-events-none text-stone-300'" preserve-state>{{ paginationLabel(link.label) }}</Link>
     </nav>
+
+    <Modal :show="modalOpen" max-width="2xl" :title="editing ? 'Editar lancamento' : 'Novo lancamento'" @close="closeModal">
+      <TransactionForm v-if="modalOpen" :transaction="editing ?? undefined" :accounts="accounts" :categories="categories" @cancel="closeModal" />
+    </Modal>
   </AuthenticatedLayout>
 </template>
