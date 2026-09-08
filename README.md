@@ -5,7 +5,7 @@ investimentos. Desenvolvido com PHP 8.5, Laravel 13, PostgreSQL, Inertia + Vue 3
 (Composition API, `<script setup>`, TypeScript), Tailwind CSS 4, ECharts e
 Octane/FrankenPHP, com deploy alvo em Laravel Cloud.
 
-> **Status atual:** Fases 0 a 5, 7 e 8 concluídas; Fase 6 preparada no repositorio e
+> **Status atual:** Fases 0 a 5, 7, 8, 9, 10 e 11 concluídas; Fase 6 preparada no repositorio e
 > aguardando apenas o provisionamento externo no Laravel Cloud.
 > Carteiras, catalogo de ativos, compras, vendas, proventos, posicoes e custo medio
 > possuem policies, validacao, actions transacionais, telas responsivas e testes
@@ -14,6 +14,13 @@ Octane/FrankenPHP, com deploy alvo em Laravel Cloud.
 > moedas isoladas, exibem graficos ECharts e exportam lancamentos em CSV.
 > Importacoes CSV financeiras e de investimentos possuem previa por linha,
 > deteccao de duplicidades, confirmacao atomica e exports round-trip.
+> Recorrencias e parcelas materializam lancamentos via scheduler, e a agenda projeta
+> os proximos 60 dias com saldo previsto por conta (Fase 9).
+> Metas financeiras definem valor, moeda, prazo e contas e mostram progresso pelo
+> saldo corrente (Fase 10).
+> Conciliacao de extrato compara o declarado com o detectado por regras de
+> casamento (exata ou janela de 3 dias) e fixa o status por saldo e linhas (Fase 11).
+> A Fase 12 (alertas por e-mail) esta adiada por falta de servidor SMTP.
 > Headers, health/readiness, CI PostgreSQL e guia operacional
 > preparam o deploy; secrets e recursos Cloud ainda devem ser configurados no painel.
 
@@ -118,6 +125,9 @@ npm run build           # vue-tsc + vite build
 - [Modelo de dados (ER)](docs/data-model.md)
 - [Cálculos financeiros](docs/financial-calculations.md)
 - [Dados de mercado](docs/market-data.md)
+- [Recorrências, parcelas, agenda e projeção](docs/recurring-agenda.md)
+- [Metas financeiras](docs/financial-goals.md)
+- [Conciliacao de extrato](docs/reconciliation.md)
 - [Relatorios e agregacoes](docs/reports.md)
 - [Importacoes CSV](docs/imports.md)
 - [Deploy no Laravel Cloud](docs/laravel-cloud-deploy.md)
@@ -134,3 +144,8 @@ npm run build           # vue-tsc + vite build
 7. **Fase 6 — Produção** (preparada): hardenização, CI, health/readiness e runbook Cloud; provisionamento depende do painel Laravel Cloud.
 8. **Fase 7 — Investimentos Avançados** (concluída): corretoras, desdobramentos e grupamentos, resultado realizado, replay contábil e retorno total.
 9. **Fase 8 — Importacao e conciliacao** (concluída): CSV financeiro e de investimentos, previa validada, duplicidades, confirmacao atomica e exportacao round-trip.
+10. **Fase 9 — Recorrencias, parcelas, agenda e projecao** (concluída): schedulers `recurring:generate`/`installments:process`, agenda de 60 dias e saldo projetado por conta. Ver `docs/recurring-agenda.md`.
+11. **Fase 10 — Metas financeiras** (concluída): valor, moeda, prazo e contas com progresso pelo saldo corrente. Ver `docs/financial-goals.md`.
+12. **Fase 11 — Conciliação avançada** (concluída): extrato declarado × detectado por regras exatas ou janela de 3 dias, saldo e divergências de linhas com status `reconciled`/`divergent`. Ver `docs/reconciliation.md`.
+13. **Fase 12 — Alertas** (adiada): notificações por e-mail/webhook para saldo, orçamento e metas. Suspensa por ausência de servidor SMTP; será retomada quando houver um.
+14. **Fase 13 — Bot WhatsApp** (aguardando): integração via WhatsApp Cloud API (Meta).
