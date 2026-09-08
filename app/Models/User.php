@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Modules\Finance\Models\Budget;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\FinancialAccount;
+use App\Modules\Finance\Models\FinancialGoal;
 use App\Modules\Finance\Models\Installment;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Models\TransactionSchedule;
 use App\Modules\ImportExport\Models\ImportBatch;
+use App\Modules\ImportExport\Models\Reconciliation;
 use App\Modules\Investment\Models\Broker;
 use App\Modules\Investment\Models\Portfolio;
 use Database\Factories\UserFactory;
@@ -68,6 +70,12 @@ class User extends Authenticatable
         return $this->hasMany(ImportBatch::class);
     }
 
+    /** @return HasMany<Reconciliation, $this> */
+    public function reconciliations(): HasMany
+    {
+        return $this->hasMany(Reconciliation::class);
+    }
+
     /** @return HasMany<TransactionSchedule, $this> */
     public function transactionSchedules(): HasMany
     {
@@ -78,6 +86,12 @@ class User extends Authenticatable
     public function installments(): HasMany
     {
         return $this->hasMany(Installment::class);
+    }
+
+    /** @return HasMany<FinancialGoal, $this> */
+    public function financialGoals(): HasMany
+    {
+        return $this->hasMany(FinancialGoal::class);
     }
 
     /**
