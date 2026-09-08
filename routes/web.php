@@ -8,12 +8,14 @@ use App\Modules\Finance\Http\Controllers\AgendaController;
 use App\Modules\Finance\Http\Controllers\BudgetController;
 use App\Modules\Finance\Http\Controllers\CategoryController;
 use App\Modules\Finance\Http\Controllers\FinancialAccountController;
+use App\Modules\Finance\Http\Controllers\FinancialGoalController;
 use App\Modules\Finance\Http\Controllers\InstallmentController;
 use App\Modules\Finance\Http\Controllers\RecurringScheduleController;
 use App\Modules\Finance\Http\Controllers\TransactionController;
 use App\Modules\ImportExport\Http\Controllers\CsvImportController;
 use App\Modules\ImportExport\Http\Controllers\ImportTemplateController;
 use App\Modules\ImportExport\Http\Controllers\InvestmentCsvExportController;
+use App\Modules\ImportExport\Http\Controllers\ReconciliationController;
 use App\Modules\ImportExport\Http\Controllers\TransactionCsvExportController;
 use App\Modules\Investment\Http\Controllers\AssetController;
 use App\Modules\Investment\Http\Controllers\AssetTransactionController;
@@ -40,9 +42,20 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:10,1')
         ->name('imports.confirm');
     Route::delete('/imports/{importBatch}', [CsvImportController::class, 'destroy'])->name('imports.destroy');
+    Route::get('/reconciliations', [ReconciliationController::class, 'index'])->name('reconciliations.index');
+    Route::get('/reconciliations/template', [ReconciliationController::class, 'template'])->name('reconciliations.template');
+    Route::post('/reconciliations', [ReconciliationController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('reconciliations.store');
+    Route::get('/reconciliations/{reconciliation}', [ReconciliationController::class, 'show'])->name('reconciliations.show');
+    Route::post('/reconciliations/{reconciliation}/confirm', [ReconciliationController::class, 'confirm'])
+        ->middleware('throttle:10,1')
+        ->name('reconciliations.confirm');
+    Route::delete('/reconciliations/{reconciliation}', [ReconciliationController::class, 'destroy'])->name('reconciliations.destroy');
     Route::resource('accounts', FinancialAccountController::class)->except('show');
-    Route::resource('categories', CategoryController::class)->except('show');
+    Route::resource('categories', CategoryController::class);
     Route::resource('budgets', BudgetController::class)->except('show');
+    Route::resource('goals', FinancialGoalController::class)->except('show');
     Route::resource('transactions', TransactionController::class)->except('show');
     Route::get('agenda', AgendaController::class)->name('agenda.index');
     Route::resource('recurring', RecurringScheduleController::class)->except('show');
