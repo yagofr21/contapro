@@ -18,9 +18,10 @@ Artisan::command('market-data:sync', function (): void {
         ->where('is_active', true)
         ->whereIn('market', [Market::B3->value, Market::Crypto->value])
         ->select('id')
+        ->withExists('priceHistory')
         ->chunkById(100, function ($assets): void {
             foreach ($assets as $asset) {
-                SyncQuote::dispatch($asset->id);
+                SyncQuote::dispatch($asset->id, ! $asset->price_history_exists);
             }
         });
 })->purpose('Agenda a atualizacao de cotacoes dos ativos suportados');
@@ -36,7 +37,7 @@ Artisan::command('installments:process', function (): void {
 })->purpose('Materializa transacoes de parcelas vencidas');
 
 Schedule::command('market-data:sync')
-    ->dailyAt('19:00')
+    ->cron('0 7,12,18 * * *')
     ->timezone('America/Sao_Paulo')
     ->onOneServer()
     ->withoutOverlapping();

@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property Market $market
  * @property Currency $currency
  * @property bool $is_active
+ * @property-read bool $price_history_exists
  */
 #[Fillable(['symbol', 'name', 'type', 'market', 'currency', 'is_active'])]
 #[UseFactory(AssetFactory::class)]
