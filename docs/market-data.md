@@ -13,8 +13,10 @@ cobrindo ativos B3 (ações, FIIs, ETFs), dólar/ouro e cripto.
 - Endpoint principal:
   `GET https://brapi.dev/api/quote/{symbols}?token={TOKEN}&range=1mo&interval=1d&fundamental=true`
 - **Token:** variável de ambiente `BRAPI_TOKEN`. Sem token, a API permite um número
-  menor de requisições/minuto (rate limit). Tratar `HTTP 429/403` como rate limit e
-  agendar retry com backoff exponencial.
+  menor de requisições/minuto (rate limit) e responde `HTTP 401` quando o limite é
+  excedido. Tratar `HTTP 401/403/429` como rate limit e agendar retry com backoff
+  exponencial. Com token válido, configure `BRAPI_REQUESTS_PER_MINUTE` (default 10)
+  no `.env` para o backfill e as sincronizações diárias caberem em minutos.
 - Histórico: `range` suporta `1d` (intraday), `5d`, `1mo`, `6mo`, `1y`, `5y`, `max`.
 
 ## Padrão de integração
@@ -41,16 +43,18 @@ BrapiProvider (brapi.dev)
 3. Se `history` requerida e ausente, agenda `SyncQuoteHistory` (particionado por range).
 4. Rate limit respeitado; falhas entram em retry (Laravel jobs) e são logadas.
 
-A sincronização automática roda diariamente às 19:00 em `America/Sao_Paulo` pelo
+A sincronização automática roda às **07h, 12h e 18h** em `America/Sao_Paulo` pelo
 comando `market-data:sync`. No ambiente Docker, os serviços `queue` e `scheduler`
-mantêm esses processos ativos.
+mantêm esses processos ativos. Cada ativo usa uma única requisição (`/quote` com
+`range=1mo&interval=1d`), que alimenta tanto a cotação quanto o histórico — o
+`SyncQuoteHistory` reaproveita o cache de 5 minutos da mesma resposta.
 
 ## Tratamento de erros
 
 | Erro | Interpretação | Ação |
 | --- | --- | --- |
 | 404 | Símbolo não encontrado | Desativa ativo + notifica |
-| 429 / 403 | Rate limit / sem token | Backoff + retry job |
+| 429 / 403 / 401 | Rate limit / sem token | Backoff + retry job |
 | 5xx | API indisponível | Retry com backoff máximo |
 | Timeout | Rede/API lenta | Retry limitado e loga |
 

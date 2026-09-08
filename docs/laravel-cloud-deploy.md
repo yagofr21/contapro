@@ -74,8 +74,14 @@ composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction &
 Comando de deploy:
 
 ```bash
-php artisan migrate --force && php artisan investments:rebuild-accounting
+php artisan migrate --force && php artisan investments:rebuild-accounting && php artisan market-data:sync
 ```
+
+`market-data:sync` no deploy popula as cotações iniciais (backfill) na fila assim que o
+banco sobe, para a produção não ficar com os ativos "zerados". Sem um `BRAPI_TOKEN`
+válido o brapi.dev limita a ~1 requisição/min por IP (HTTP 401) e o backfill de ~128
+ativos leva horas; com token válido, configure também `BRAPI_REQUESTS_PER_MINUTE`
+(ex.: `50`) para o backfill terminar em poucos minutos.
 
 `APP_KEY`, `BRAPI_TOKEN` e credenciais de e-mail devem viver no Secrets Manager e
 nunca no repositorio ou no comando de build.
