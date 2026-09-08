@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import InputError from '@/Components/InputError.vue';
 import SelectInput from '@/Components/SelectInput.vue';
-import { formatDecimal, parseDecimalInput } from '@/lib/format';
+import { parseDecimalInput } from '@/lib/format';
 import type { Category, Option } from '@/types/finance';
 import { Link, useForm } from '@inertiajs/vue3';
 import { Save } from '@lucide/vue';

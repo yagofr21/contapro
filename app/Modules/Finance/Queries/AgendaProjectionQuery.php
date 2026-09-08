@@ -21,10 +21,10 @@ class AgendaProjectionQuery
      *     projection: Collection<int, array{
      *         id: int,
      *         name: string,
-     *         balance: numeric-string,
-     *         projected_balance: numeric-string,
+     *         balance: string,
+     *         projected_balance: string,
      *     }>,
-     *     horizon_days: int,
+     *     horizonDays: int,
      * }
      */
     public function forUser(User $user, int $horizonDays = 60): array
@@ -44,7 +44,7 @@ class AgendaProjectionQuery
         return [
             'events' => $events,
             'projection' => $projection,
-            'horizon_days' => $horizonDays,
+            'horizonDays' => $horizonDays,
         ];
     }
 
@@ -125,7 +125,7 @@ class AgendaProjectionQuery
      * @return Collection<int, array{
      *     id: int,
      *     name: string,
-     *     balance: numeric-string,
+     *     balance: string,
      * }>
      */
     private function currentBalances(User $user): Collection
@@ -149,52 +149,59 @@ class AgendaProjectionQuery
             ->map(fn (FinancialAccount $account): array => [
                 'id' => $account->id,
                 'name' => $account->name,
-                'balance' => bcsub(
+                'balance' => $this->stringify(bcsub(
                     bcadd((string) $account->initial_balance, (string) ($account->credits ?? 0), 4),
                     (string) ($account->debits ?? 0),
                     4,
-                ),
+                )),
             ]);
     }
 
-/**
+    /**
      * Compute the projected balance per account by applying the net effect of
      * the upcoming events to the current balance.
      *
      * @param Collection<int, array{
      *     id: int,
      *     name: string,
-     *     balance: numeric-string,
+     *     balance: string,
      * }> $currentBalances
-     * @param Collection<int, array<string, mixed>> $events
-     *
+     * @param  Collection<int, array<string, mixed>>  $events
      * @return Collection<int, array{
      *     id: int,
      *     name: string,
-     *     balance: numeric-string,
-     *     projected_balance: numeric-string,
+     *     balance: string,
+     *     projected_balance: string,
      * }>
      */
     private function projectBalances(Collection $currentBalances, Collection $events): Collection
     {
-        return $currentBalances->map(function (array $account) use ($events): array {
+        $projection = [];
+
+        foreach ($currentBalances->all() as $account) {
+            /** @var array{id: int, name: string, balance: string} $account */
             $net = $events->filter(fn (array $event): bool => $event['account_id'] === $account['id'])
-                ->reduce(function (string $carry, array $event): string {
-                    $delta = in_array($event['type'], [TransactionType::Income->value, TransactionType::TransferIn->value], true)
+                ->reduce(fn (string $carry, array $event): string => bcadd(
+                    $carry,
+                    in_array($event['type'], [TransactionType::Income->value, TransactionType::TransferIn->value], true)
                         ? $event['amount']
-                        : bcmul($event['amount'], '-1', 4);
+                        : bcmul($event['amount'], '-1', 4),
+                    4,
+                ), '0');
 
-                    return bcadd($carry, $delta, 4);
-                }, '0');
-
-            /** @var array{id: int, name: string, balance: numeric-string} $account */
-
-            return [
+            $projection[] = [
                 'id' => $account['id'],
                 'name' => $account['name'],
-                'balance' => $account['balance'],
-                'projected_balance' => $account['balance'] !== '' ? bcadd($account['balance'], $net, 4) : $net,
+                'balance' => $this->stringify($account['balance']),
+                'projected_balance' => $this->stringify(bcadd($account['balance'], $net, 4)),
             ];
-        });
+        }
+
+        return collect($projection);
+    }
+
+    private function stringify(mixed $value): string
+    {
+        return (string) $value;
     }
 }
