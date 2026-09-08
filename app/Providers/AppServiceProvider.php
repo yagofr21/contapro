@@ -5,17 +5,21 @@ namespace App\Providers;
 use App\Modules\Finance\Models\Budget;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\FinancialAccount;
+use App\Modules\Finance\Models\FinancialGoal;
 use App\Modules\Finance\Models\Installment;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Models\TransactionSchedule;
 use App\Modules\Finance\Policies\BudgetPolicy;
 use App\Modules\Finance\Policies\CategoryPolicy;
 use App\Modules\Finance\Policies\FinancialAccountPolicy;
+use App\Modules\Finance\Policies\FinancialGoalPolicy;
 use App\Modules\Finance\Policies\InstallmentPolicy;
 use App\Modules\Finance\Policies\TransactionPolicy;
 use App\Modules\Finance\Policies\TransactionSchedulePolicy;
 use App\Modules\ImportExport\Models\ImportBatch;
+use App\Modules\ImportExport\Models\Reconciliation;
 use App\Modules\ImportExport\Policies\ImportBatchPolicy;
+use App\Modules\ImportExport\Policies\ReconciliationPolicy;
 use App\Modules\Investment\Models\Asset;
 use App\Modules\Investment\Models\AssetTransaction;
 use App\Modules\Investment\Models\Broker;
@@ -53,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Category::class, CategoryPolicy::class);
         Gate::policy(Transaction::class, TransactionPolicy::class);
         Gate::policy(Budget::class, BudgetPolicy::class);
+        Gate::policy(FinancialGoal::class, FinancialGoalPolicy::class);
         Gate::policy(TransactionSchedule::class, TransactionSchedulePolicy::class);
         Gate::policy(Installment::class, InstallmentPolicy::class);
         Gate::policy(Portfolio::class, PortfolioPolicy::class);
@@ -60,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AssetTransaction::class, AssetTransactionPolicy::class);
         Gate::policy(Broker::class, BrokerPolicy::class);
         Gate::policy(ImportBatch::class, ImportBatchPolicy::class);
+        Gate::policy(Reconciliation::class, ReconciliationPolicy::class);
 
         RateLimiter::for('brapi', fn (): Limit => Limit::perMinute(
             (int) config('services.brapi.requests_per_minute'),
