@@ -1,27 +1,31 @@
 <script setup lang="ts">
 import Modal from '@/Components/Modal.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { formatDate, formatMoney } from '@/lib/format';
-import type { Account, Category } from '@/types/finance';
+import { formatDate, formatMoney, formatMonth } from '@/lib/format';
+import type { Account, Category, ExpectedIncome } from '@/types/finance';
 import { CanvasRenderer } from 'echarts/renderers';
-import { PieChart } from 'echarts/charts';
-import { LegendComponent, TooltipComponent } from 'echarts/components';
+import { BarChart, PieChart } from 'echarts/charts';
+import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
 import { use } from 'echarts/core';
 import VChart from 'vue-echarts';
-import { Head, Link } from '@inertiajs/vue3';
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Landmark, Plus, TrendingUp, WalletCards } from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CheckCircle2, Landmark, Plus, TrendingUp, WalletCards } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import ExpectedIncomeForm from './ExpectedIncomes/Partials/ExpectedIncomeForm.vue';
 import TransactionForm from './Transactions/Partials/TransactionForm.vue';
 
-use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent]);
+use([CanvasRenderer, BarChart, PieChart, TooltipComponent, LegendComponent, GridComponent]);
 
 type Summary = { currency: string; balance: string; income: string; expenses: string; net: string };
+type MonthlyTrend = { currency: string; months: { month: string; income: string; expenses: string }[] };
 type InvestmentSummary = { currency: string; cost: string; current_value: string; market_return: string; market_return_percentage: string; realized_profit_loss: string; net_income: string; total_return: string; unpriced_holdings: number; price_date: string | null };
 type RecentTransaction = { id: number; description: string; type: string; amount: string; currency: string; date: string; account: string; category: string | null; color: string | null };
 type CategoryExpense = { name: string; color: string; total: string; currency: string };
 
 const props = defineProps<{
     financialSummaries: Summary[];
+    monthlyTrends: MonthlyTrend[];
+    expectedIncomes: ExpectedIncome[];
     investments: InvestmentSummary[];
     accounts: Account[];
     recentTransactions: RecentTransaction[];
@@ -30,6 +34,8 @@ const props = defineProps<{
 }>();
 const selectedCurrency = ref(props.financialSummaries.find((summary) => summary.currency === 'BRL')?.currency ?? props.financialSummaries[0]?.currency ?? 'BRL');
 const modalOpen = ref(false);
+const incomeModalOpen = ref(false);
+const receiving = ref<number | null>(null);
 const formAccounts = computed(() =>
     props.accounts
         .filter((account) => !account.is_archived)
@@ -41,6 +47,13 @@ const openCreate = () => {
 const closeModal = () => {
     modalOpen.value = false;
 };
+const closeIncomeModal = () => {
+    incomeModalOpen.value = false;
+};
+const receiveIncome = (income: ExpectedIncome) => router.post(route('expected-incomes.receive', income.id), {}, {
+    onStart: () => receiving.value = income.id,
+    onFinish: () => receiving.value = null,
+});
 const summary = computed(() => props.financialSummaries.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, balance: '0', income: '0', expenses: '0', net: '0' });
 const investment = computed(() => props.investments.find((item) => item.currency === selectedCurrency.value));
 const selectedCategoryExpenses = computed(() => props.categoryExpenses.filter((item) => item.currency === selectedCurrency.value));
@@ -61,6 +74,20 @@ const chartOption = computed(() => ({
             itemStyle: { color: category.color },
         })),
     }],
+}));
+
+const selectedMonthlyTrend = computed(() => props.monthlyTrends.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, months: [] });
+const hasMonthlyData = computed(() => selectedMonthlyTrend.value.months.some((month) => Number(month.income) > 0 || Number(month.expenses) > 0));
+const monthlyChartOption = computed(() => ({
+    tooltip: { trigger: 'axis', valueFormatter: (value: number) => formatMoney(String(value), selectedCurrency.value) },
+    legend: { bottom: 0, icon: 'circle', textStyle: { color: '#78716c' } },
+    grid: { left: 8, right: 8, top: 24, bottom: 32, containLabel: true },
+    xAxis: { type: 'category', data: selectedMonthlyTrend.value.months.map((month) => formatMonth(month.month)), axisLabel: { color: '#a8a29e' }, axisLine: { lineStyle: { color: '#e7e5e4' } }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLabel: { color: '#a8a29e', formatter: (value: number) => (Math.abs(value) >= 1000 ? `${value / 1000}k` : String(value)) }, splitLine: { lineStyle: { color: '#f5f5f4' } } },
+    series: [
+        { name: 'Receitas', type: 'bar', barMaxWidth: 14, data: selectedMonthlyTrend.value.months.map((month) => Number(month.income)), itemStyle: { color: '#10b981', borderRadius: [6, 6, 0, 0] } },
+        { name: 'Despesas', type: 'bar', barMaxWidth: 14, data: selectedMonthlyTrend.value.months.map((month) => Number(month.expenses)), itemStyle: { color: '#f43f5e', borderRadius: [6, 6, 0, 0] } },
+    ],
 }));
 
 const summaryCards = computed(() => [
@@ -98,6 +125,28 @@ const summaryCards = computed(() => [
           <span class="grid h-9 w-9 place-items-center rounded-xl transition group-hover:-translate-y-0.5" :class="card.chip"><component :is="card.icon" :size="18" /></span>
         </div>
         <p class="mt-4 text-2xl font-bold tracking-tight" :class="card.label === 'Resultado mensal' && Number(card.value) < 0 ? 'text-rose-600 dark:text-rose-400' : card.label === 'Resultado mensal' ? 'text-emerald-700 dark:text-emerald-400' : ''">{{ formatMoney(card.value, selectedCurrency) }}</p>
+      </article>
+    </section>
+
+    <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <article class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <header class="flex items-center justify-between"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatorio</Link></header>
+        <VChart v-if="hasMonthlyData" class="mt-4 h-72" :option="monthlyChartOption" autoresize />
+        <div v-else class="grid h-72 place-items-center text-center text-sm text-stone-400 dark:text-slate-500">Sem lancamentos nos ultimos 6 meses</div>
+      </article>
+
+      <article class="flex flex-col rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <header class="flex items-center justify-between"><div><h2 class="font-semibold">Receitas futuras</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Confirme quando cair na conta</p></div><Link :href="route('expected-incomes.index')" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver todas</Link></header>
+        <div v-if="expectedIncomes.length" class="mt-3 flex-1">
+          <div v-for="income in expectedIncomes" :key="income.id" class="flex items-center gap-3 border-b border-stone-100 py-3 last:border-0 dark:border-slate-800">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"><ArrowDownLeft :size="17" /></span>
+            <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ income.description }}</p><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">previsto {{ formatDate(income.expected_date) }}</p></div>
+            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ formatMoney(income.amount, income.currency) }}</p>
+            <button type="button" :disabled="receiving === income.id" class="rounded-xl px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" :class="receiving === income.id ? 'bg-stone-300 dark:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-700'" title="Marcar como recebido" @click="receiveIncome(income)"><CheckCircle2 :size="15" /></button>
+          </div>
+        </div>
+        <div v-else class="grid flex-1 place-items-center py-8 text-center text-sm text-stone-400 dark:text-slate-500">Nenhuma receita prevista<br /><Link :href="route('expected-incomes.index')" class="mt-2 inline-flex items-center justify-center gap-2 rounded-xl border border-brand-200 px-4 py-2 text-xs font-semibold text-brand-700 dark:border-brand-800 dark:text-brand-300"><Plus :size="15" />Planejar entradas</Link></div>
+        <button type="button" class="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700" @click="incomeModalOpen = true"><Plus :size="17" />Nova receita futura</button>
       </article>
     </section>
 
@@ -155,6 +204,10 @@ const summaryCards = computed(() => [
 
     <Modal :show="modalOpen" max-width="2xl" title="Novo lancamento" @close="closeModal">
       <TransactionForm v-if="modalOpen" :accounts="formAccounts" :categories="categories" from-dashboard embedded @cancel="closeModal" />
+    </Modal>
+
+    <Modal :show="incomeModalOpen" max-width="2xl" title="Nova receita futura" @close="closeIncomeModal">
+      <ExpectedIncomeForm v-if="incomeModalOpen" :accounts="accounts" :categories="categories" embedded @cancel="closeIncomeModal" />
     </Modal>
   </AuthenticatedLayout>
 </template>

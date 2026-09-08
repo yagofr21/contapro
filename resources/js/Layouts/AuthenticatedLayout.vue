@@ -6,6 +6,7 @@ import {
     ArrowLeftRight,
     Building2,
     CalendarClock,
+    CalendarCheck2,
     CalendarRange,
     CandlestickChart,
     ChartNoAxesCombined,
@@ -52,6 +53,7 @@ const sections: NavSection[] = [
             { label: 'Orcamentos', route: 'budgets.index', pattern: 'budgets.*', icon: Gauge },
             { label: 'Lancamentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
             { label: 'Metas', route: 'goals.index', pattern: 'goals.*', icon: Target },
+            { label: 'Receitas futuras', route: 'expected-incomes.index', pattern: 'expected-incomes.*', icon: CalendarCheck2 },
         ],
     },
     {

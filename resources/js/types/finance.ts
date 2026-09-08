@@ -38,6 +38,22 @@ export type Transaction = {
     is_transfer: boolean;
 };
 
+export type ExpectedIncome = {
+    id: number;
+    description: string;
+    amount: string;
+    currency: string;
+    account_id: number;
+    account_name: string | null;
+    category_id: number | null;
+    category_name: string | null;
+    category_color: string | null;
+    expected_date: string;
+    received: boolean;
+    received_at: string | null;
+    transaction_id: number | null;
+};
+
 export type PaginationLink = {
     url: string | null;
     label: string;

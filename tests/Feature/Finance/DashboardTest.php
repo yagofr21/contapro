@@ -98,4 +98,38 @@ class DashboardTest extends TestCase
                 ->where('investments.0.net_income', '10.0000')
                 ->where('investments.0.total_return', '50.0000'));
     }
+
+    public function test_dashboard_provides_monthly_income_vs_expense_trend(): void
+    {
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $thisMonth = now()->format('Y-m');
+        $lastMonth = now()->subMonth()->format('Y-m');
+        Transaction::factory()->for($user)->for($account, 'account')->create([
+            'type' => TransactionType::Income,
+            'amount' => '700.0000',
+            'transaction_date' => now()->startOfMonth()->addDays(2),
+        ]);
+        Transaction::factory()->for($user)->for($account, 'account')->create([
+            'type' => TransactionType::Expense,
+            'amount' => '300.0000',
+            'transaction_date' => now()->startOfMonth()->addDays(3),
+        ]);
+        Transaction::factory()->for($user)->for($account, 'account')->create([
+            'type' => TransactionType::Income,
+            'amount' => '900.0000',
+            'transaction_date' => now()->subMonth()->startOfMonth(),
+        ]);
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('monthlyTrends', 3)
+                ->where('monthlyTrends.0.currency', 'BRL')
+                ->where('monthlyTrends.0.months.4.month', $lastMonth)
+                ->where('monthlyTrends.0.months.4.income', '900.0000')
+                ->where('monthlyTrends.0.months.5.month', $thisMonth)
+                ->where('monthlyTrends.0.months.5.income', '700.0000')
+                ->where('monthlyTrends.0.months.5.expenses', '300.0000'));
+    }
 }

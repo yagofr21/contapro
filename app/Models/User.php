@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Modules\Finance\Models\Budget;
 use App\Modules\Finance\Models\Category;
+use App\Modules\Finance\Models\ExpectedIncome;
 use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\FinancialGoal;
 use App\Modules\Finance\Models\Installment;
@@ -92,6 +93,12 @@ class User extends Authenticatable
     public function financialGoals(): HasMany
     {
         return $this->hasMany(FinancialGoal::class);
+    }
+
+    /** @return HasMany<ExpectedIncome, $this> */
+    public function expectedIncomes(): HasMany
+    {
+        return $this->hasMany(ExpectedIncome::class);
     }
 
     /**

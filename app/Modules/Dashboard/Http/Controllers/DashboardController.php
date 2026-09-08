@@ -8,6 +8,7 @@ use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Queries\AccountSummaryQuery;
+use App\Modules\Finance\Queries\ExpectedIncomeQuery;
 use App\Modules\Investment\Queries\PortfolioValuationQuery;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,6 +20,7 @@ class DashboardController extends Controller
         Request $request,
         AccountSummaryQuery $accountSummary,
         PortfolioValuationQuery $portfolioValuation,
+        ExpectedIncomeQuery $expectedIncome,
     ): Response {
         $user = $request->user();
         $today = now($user->timezone ?? config('app.timezone'));
@@ -50,6 +52,35 @@ class DashboardController extends Controller
                 'income' => $income,
                 'expenses' => $expenses,
                 'net' => bcsub($income, $expenses, 4),
+            ];
+        });
+
+        $trendStart = $today->copy()->startOfMonth()->subMonths(5)->toDateString();
+        $trendTransactions = $user->transactions()
+            ->with('account:id,currency')
+            ->whereIn('type', [TransactionType::Income->value, TransactionType::Expense->value])
+            ->whereDate('transaction_date', '>=', $trendStart)
+            ->get();
+        $monthlyTrends = collect(Currency::cases())->map(function (Currency $currency) use ($trendTransactions, $today): array {
+            $months = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month = $today->copy()->startOfMonth()->subMonths($i);
+                $rows = $trendTransactions->filter(
+                    fn (Transaction $transaction): bool => $transaction->account->currency === $currency
+                        && $transaction->transaction_date->format('Y-m') === $month->format('Y-m'),
+                );
+                $months[] = [
+                    'month' => $month->format('Y-m'),
+                    'income' => $rows->where('type', TransactionType::Income)
+                        ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000'),
+                    'expenses' => $rows->where('type', TransactionType::Expense)
+                        ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000'),
+                ];
+            }
+
+            return [
+                'currency' => $currency->value,
+                'months' => $months,
             ];
         });
 
@@ -93,6 +124,8 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'financialSummaries' => $financialSummaries,
+            'monthlyTrends' => $monthlyTrends,
+            'expectedIncomes' => $expectedIncome->pendingFor($user, 10),
             'investments' => $portfolioValuation->forUser($user)['summaries'],
             'accounts' => $accounts,
             'recentTransactions' => $recent,

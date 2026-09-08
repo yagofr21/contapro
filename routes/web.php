@@ -7,6 +7,7 @@ use App\Modules\Dashboard\Http\Controllers\ReportController;
 use App\Modules\Finance\Http\Controllers\AgendaController;
 use App\Modules\Finance\Http\Controllers\BudgetController;
 use App\Modules\Finance\Http\Controllers\CategoryController;
+use App\Modules\Finance\Http\Controllers\ExpectedIncomeController;
 use App\Modules\Finance\Http\Controllers\FinancialAccountController;
 use App\Modules\Finance\Http\Controllers\FinancialGoalController;
 use App\Modules\Finance\Http\Controllers\InstallmentController;
@@ -56,6 +57,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::resource('budgets', BudgetController::class)->except('show');
     Route::resource('goals', FinancialGoalController::class)->except('show');
+    Route::resource('expected-incomes', ExpectedIncomeController::class)->only(['index', 'store', 'destroy']);
+    Route::post('expected-incomes/{expectedIncome}/receive', [ExpectedIncomeController::class, 'receive'])
+        ->name('expected-incomes.receive');
     Route::resource('transactions', TransactionController::class)->except('show');
     Route::get('agenda', AgendaController::class)->name('agenda.index');
     Route::resource('recurring', RecurringScheduleController::class)->except('show');
