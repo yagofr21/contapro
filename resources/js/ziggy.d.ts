@@ -3,7 +3,63 @@ declare module 'ziggy-js' {
   interface RouteList {
     "boost.browser-logs": [],
     "sanctum.csrf-cookie": [],
+    "ready": [],
     "dashboard": [],
+    "reports.index": [],
+    "reports.transactions.export": [],
+    "imports.index": [],
+    "imports.template": [
+        {
+            "name": "kind",
+            "required": true
+        }
+    ],
+    "imports.store": [],
+    "imports.show": [
+        {
+            "name": "importBatch",
+            "required": true,
+            "binding": "public_id"
+        }
+    ],
+    "imports.confirm": [
+        {
+            "name": "importBatch",
+            "required": true,
+            "binding": "public_id"
+        }
+    ],
+    "imports.destroy": [
+        {
+            "name": "importBatch",
+            "required": true,
+            "binding": "public_id"
+        }
+    ],
+    "reconciliations.index": [],
+    "reconciliations.template": [],
+    "reconciliations.store": [],
+    "reconciliations.show": [
+        {
+            "name": "reconciliation",
+            "required": true,
+            "binding": "public_id"
+        }
+    ],
+    "reconciliations.confirm": [
+        {
+            "name": "reconciliation",
+            "required": true,
+            "binding": "public_id"
+        }
+    ],
+    "reconciliations.destroy": [
+        {
+            "name": "reconciliation",
+            "required": true,
+            "binding": "public_id"
+        }
+    ],
     "accounts.index": [],
     "accounts.create": [],
     "accounts.store": [],
@@ -31,6 +87,13 @@ declare module 'ziggy-js' {
     "categories.index": [],
     "categories.create": [],
     "categories.store": [],
+    "categories.show": [
+        {
+            "name": "category",
+            "required": true,
+            "binding": "id"
+        }
+    ],
     "categories.edit": [
         {
             "name": "category",
@@ -76,6 +139,30 @@ declare module 'ziggy-js' {
             "binding": "id"
         }
     ],
+    "goals.index": [],
+    "goals.create": [],
+    "goals.store": [],
+    "goals.edit": [
+        {
+            "name": "goal",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "goals.update": [
+        {
+            "name": "goal",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "goals.destroy": [
+        {
+            "name": "goal",
+            "required": true,
+            "binding": "id"
+        }
+    ],
     "transactions.index": [],
     "transactions.create": [],
     "transactions.store": [],
@@ -96,6 +183,48 @@ declare module 'ziggy-js' {
     "transactions.destroy": [
         {
             "name": "transaction",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "agenda.index": [],
+    "recurring.index": [],
+    "recurring.create": [],
+    "recurring.store": [],
+    "recurring.edit": [
+        {
+            "name": "recurring",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "recurring.update": [
+        {
+            "name": "recurring",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "recurring.destroy": [
+        {
+            "name": "recurring",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "installments.index": [],
+    "installments.create": [],
+    "installments.store": [],
+    "installments.destroy": [
+        {
+            "name": "installment",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "portfolios.operations.export": [
+        {
+            "name": "portfolio",
             "required": true,
             "binding": "id"
         }
@@ -134,6 +263,30 @@ declare module 'ziggy-js' {
     "assets.index": [],
     "assets.create": [],
     "assets.store": [],
+    "brokers.index": [],
+    "brokers.create": [],
+    "brokers.store": [],
+    "brokers.edit": [
+        {
+            "name": "broker",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "brokers.update": [
+        {
+            "name": "broker",
+            "required": true,
+            "binding": "id"
+        }
+    ],
+    "assets.refresh": [
+        {
+            "name": "asset",
+            "required": true,
+            "binding": "id"
+        }
+    ],
     "investment-transactions.create": [
         {
             "name": "portfolio",
@@ -180,18 +333,6 @@ declare module 'ziggy-js' {
         }
     ],
     "password.store": [],
-    "verification.notice": [],
-    "verification.verify": [
-        {
-            "name": "id",
-            "required": true
-        },
-        {
-            "name": "hash",
-            "required": true
-        }
-    ],
-    "verification.send": [],
     "password.confirm": [],
     "password.update": [],
     "logout": [],

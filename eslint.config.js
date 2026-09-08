@@ -12,6 +12,7 @@ export default tseslint.config(
             'node_modules',
             'public/hot',
             '**/*.d.ts',
+            'resources/js/ziggy.js',
         ],
     },
     js.configs.recommended,
