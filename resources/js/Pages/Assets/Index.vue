@@ -3,11 +3,23 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
 import type { MarketAsset, PortfolioOption } from '@/types/investment';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowRight, CandlestickChart, Plus, RefreshCw, WalletCards } from '@lucide/vue';
-import { ref } from 'vue';
+import { ArrowRight, CandlestickChart, Plus, RefreshCw, Search, WalletCards } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{ assets: MarketAsset[]; portfolios: PortfolioOption[] }>();
 const refreshing = ref<number | null>(null);
+const query = ref('');
+const filteredAssets = computed(() => {
+    const term = query.value.trim().toLowerCase();
+
+    if (!term) {
+        return props.assets;
+    }
+
+    return props.assets.filter((asset) => [
+        asset.symbol, asset.name, asset.market, asset.type,
+    ].some((field) => field.toLowerCase().includes(term)));
+});
 const selectedPortfolios = ref<Record<number, string>>(Object.fromEntries(
     props.assets.map((asset) => [
         asset.id,
@@ -41,8 +53,13 @@ const refresh = (asset: MarketAsset) => router.post(route('assets.refresh', asse
       <p><strong>Catalogo nao e posicao.</strong> A quantidade nasce ao registrar uma compra em uma carteira. Use o atalho de cada ativo abaixo.</p>
     </div>
 
-    <div v-if="assets.length" class="mt-6 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <article v-for="asset in assets" :key="asset.id" class="grid gap-5 border-b border-stone-100 px-5 py-5 last:border-0 dark:border-slate-800 lg:grid-cols-[1fr_auto] lg:items-center">
+    <label class="mt-6 flex items-center gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-3 shadow-sm focus-within:border-brand-400 dark:border-slate-800 dark:bg-slate-900">
+      <Search :size="18" class="shrink-0 text-stone-400" />
+      <input v-model="query" type="search" placeholder="Buscar por simbolo, nome, mercado ou tipo..." class="w-full bg-transparent text-sm outline-none placeholder:text-stone-400 dark:placeholder:text-slate-500">
+    </label>
+
+    <div v-if="assets.length && filteredAssets.length" class="mt-6 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <article v-for="asset in filteredAssets" :key="asset.id" class="grid gap-5 border-b border-stone-100 px-5 py-5 last:border-0 dark:border-slate-800 lg:grid-cols-[1fr_auto] lg:items-center">
         <div class="flex items-center gap-3">
           <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40"><CandlestickChart :size="19" /></span>
           <div>
@@ -70,6 +87,11 @@ const refresh = (asset: MarketAsset) => router.post(route('assets.refresh', asse
           <Link v-else-if="asset.is_active" :href="route('portfolios.create')" class="inline-flex items-center justify-center gap-2 rounded-xl border border-brand-200 px-4 py-2.5 text-sm font-semibold text-brand-700 dark:border-brand-800 dark:text-brand-300">Criar carteira {{ asset.currency }}</Link>
         </div>
       </article>
+    </div>
+    <div v-else-if="assets.length" class="mt-6 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900">
+      <Search :size="36" class="mx-auto text-stone-300" />
+      <h2 class="mt-4 text-lg font-semibold">Nenhum ativo encontrado</h2>
+      <p class="mt-1 text-sm text-stone-500">Ajuste o termo de busca ou cadastre o ativo no catalogo.</p>
     </div>
     <div v-else class="mt-8 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900">
       <CandlestickChart :size="36" class="mx-auto text-stone-300" />
