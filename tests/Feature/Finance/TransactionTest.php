@@ -41,6 +41,30 @@ class TransactionTest extends TestCase
         ]);
     }
 
+    public function test_quick_create_from_dashboard_redirects_back_to_dashboard(): void
+    {
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create();
+        $category = Category::factory()->for($user)->create([
+            'type' => CategoryType::Expense,
+        ]);
+
+        $this->actingAs($user)->post(route('transactions.store'), [
+            'type' => 'expense',
+            'account_id' => $account->id,
+            'category_id' => $category->id,
+            'amount' => '25.00',
+            'transaction_date' => '2026-09-04',
+            'from_dashboard' => true,
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertDatabaseHas('transactions', [
+            'user_id' => $user->id,
+            'type' => TransactionType::Expense->value,
+            'amount' => '25.0000',
+        ]);
+    }
+
     public function test_user_cannot_use_another_users_account_or_category(): void
     {
         $user = User::factory()->create();

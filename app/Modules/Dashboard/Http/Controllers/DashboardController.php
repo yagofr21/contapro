@@ -5,6 +5,7 @@ namespace App\Modules\Dashboard\Http\Controllers;
 use App\Enums\Currency;
 use App\Http\Controllers\Controller;
 use App\Modules\Finance\Enums\TransactionType;
+use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Queries\AccountSummaryQuery;
 use App\Modules\Investment\Queries\PortfolioValuationQuery;
@@ -96,6 +97,15 @@ class DashboardController extends Controller
             'accounts' => $accounts,
             'recentTransactions' => $recent,
             'categoryExpenses' => $categoryExpenses,
+            'categories' => $user->categories()
+                ->orderBy('name')
+                ->get(['id', 'name', 'type', 'color'])
+                ->map(fn (Category $category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'type' => $category->type->value,
+                    'color' => $category->color,
+                ]),
         ]);
     }
 }

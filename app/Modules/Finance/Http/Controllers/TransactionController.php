@@ -3,6 +3,7 @@
 namespace App\Modules\Finance\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Modules\Finance\Actions\CreateTransaction;
 use App\Modules\Finance\Actions\DeleteTransaction;
 use App\Modules\Finance\Actions\UpdateTransaction;
@@ -13,6 +14,8 @@ use App\Modules\Finance\Models\Transaction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -50,6 +53,8 @@ class TransactionController extends Controller
             ->withQueryString()
             ->through(fn (Transaction $transaction) => $this->serialize($transaction));
 
+        $this->hydrateDestinations($request->user(), $transactions);
+
         return Inertia::render('Transactions/Index', [
             'transactions' => $transactions,
             'filters' => $filters,
@@ -68,29 +73,20 @@ class TransactionController extends Controller
     {
         $action->handle($request->user(), $request->validated());
 
-        return to_route('transactions.index')->with('success', 'Lancamento criado com sucesso.');
+        $success = 'Lancamento criado com sucesso.';
+
+        return $request->boolean('from_dashboard')
+            ? to_route('dashboard')->with('success', $success)
+            : to_route('transactions.index')->with('success', $success);
     }
 
     public function edit(Request $request, Transaction $transaction): Response
     {
         $this->authorize('update', $transaction);
 
-        $destinationAccountId = null;
-        if ($transaction->transfer_id !== null) {
-            $destinationAccountId = Transaction::query()
-                ->where('user_id', $request->user()->id)
-                ->where('transfer_id', $transaction->transfer_id)
-                ->where('type', TransactionType::TransferIn->value)
-                ->value('account_id');
-        }
-
         return Inertia::render('Transactions/Edit', [
             ...$this->formOptions($request),
-            'transaction' => [
-                ...$this->serialize($transaction),
-                'type' => $transaction->transfer_id === null ? $transaction->type->value : 'transfer',
-                'destination_account_id' => $destinationAccountId,
-            ],
+            'transaction' => $this->serialize($transaction),
         ]);
     }
 
@@ -132,6 +128,15 @@ class TransactionController extends Controller
     /** @return array<string, mixed> */
     private function serialize(Transaction $transaction): array
     {
+        $destinationAccountId = null;
+        if ($transaction->transfer_id !== null) {
+            $destinationAccountId = Transaction::query()
+                ->where('user_id', $transaction->user_id)
+                ->where('transfer_id', $transaction->transfer_id)
+                ->where('type', TransactionType::TransferIn->value)
+                ->value('account_id');
+        }
+
         return [
             'id' => $transaction->id,
             'account_id' => $transaction->account_id,
@@ -140,11 +145,47 @@ class TransactionController extends Controller
             'category_id' => $transaction->category_id,
             'category_name' => $transaction->category?->name,
             'category_color' => $transaction->category?->color,
-            'type' => $transaction->type->value,
+            'type' => $transaction->transfer_id === null ? $transaction->type->value : 'transfer',
             'amount' => $transaction->amount,
             'transaction_date' => $transaction->transaction_date->format('Y-m-d'),
             'description' => $transaction->description,
             'is_transfer' => $transaction->transfer_id !== null,
+            'transfer_id' => $transaction->transfer_id,
+            'destination_account_id' => $destinationAccountId,
         ];
+    }
+
+    /**
+     * @param  LengthAwarePaginator<int, array<string, mixed>>  $paginator
+     */
+    private function hydrateDestinations(User $user, LengthAwarePaginator $paginator): void
+    {
+        $transferIds = collect($paginator->items())
+            ->where('is_transfer', true)
+            ->whereNotNull('transfer_id')
+            ->pluck('transfer_id')
+            ->all();
+
+        if ($transferIds === []) {
+            return;
+        }
+
+        $destinations = Transaction::query()
+            ->where('user_id', $user->id)
+            ->whereIn('transfer_id', $transferIds)
+            ->where('type', TransactionType::TransferIn->value)
+            ->pluck('account_id', 'transfer_id')
+            ->all();
+
+        $items = $paginator->getCollection()->map(function (array $item) use ($destinations): array {
+            $item['destination_account_id'] = $item['transfer_id'] !== null
+                ? ($destinations[$item['transfer_id']] ?? null)
+                : null;
+
+            return $item;
+        });
+
+        /** @var Collection<int, array<string, mixed>> $items */
+        $paginator->setCollection($items);
     }
 }
