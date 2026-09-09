@@ -26,4 +26,9 @@ class AssetPolicy
                 ->whereHas('portfolio', fn ($query) => $query->where('user_id', $user->id))
                 ->exists();
     }
+
+    public function autoUpdate(User $user, Asset $asset): bool
+    {
+        return $this->refresh($user, $asset);
+    }
 }

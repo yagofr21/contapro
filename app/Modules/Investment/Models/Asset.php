@@ -50,6 +50,12 @@ class Asset extends Model
         return $this->hasMany(PriceHistory::class);
     }
 
+    /** @return HasMany<AssetPreference, $this> */
+    public function assetPreferences(): HasMany
+    {
+        return $this->hasMany(AssetPreference::class);
+    }
+
     /** @return HasOne<PriceHistory, $this> */
     public function latestPrice(): HasOne
     {

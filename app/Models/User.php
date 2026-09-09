@@ -12,6 +12,7 @@ use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Models\TransactionSchedule;
 use App\Modules\ImportExport\Models\ImportBatch;
 use App\Modules\ImportExport\Models\Reconciliation;
+use App\Modules\Investment\Models\AssetPreference;
 use App\Modules\Investment\Models\Broker;
 use App\Modules\Investment\Models\Portfolio;
 use Database\Factories\UserFactory;
@@ -99,6 +100,12 @@ class User extends Authenticatable
     public function expectedIncomes(): HasMany
     {
         return $this->hasMany(ExpectedIncome::class);
+    }
+
+    /** @return HasMany<AssetPreference, $this> */
+    public function assetPreferences(): HasMany
+    {
+        return $this->hasMany(AssetPreference::class);
     }
 
     /**

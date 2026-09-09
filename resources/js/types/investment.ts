@@ -80,6 +80,7 @@ export type MarketAsset = {
     currency: string;
     is_active: boolean;
     can_refresh: boolean;
+    auto_update: boolean;
     price: string | null;
     price_date: string | null;
 };

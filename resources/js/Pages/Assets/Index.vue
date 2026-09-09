@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ToggleSwitch from '@/Components/ToggleSwitch.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
 import type { MarketAsset, PortfolioOption } from '@/types/investment';
@@ -8,6 +9,7 @@ import { computed, ref } from 'vue';
 
 const props = defineProps<{ assets: MarketAsset[]; portfolios: PortfolioOption[] }>();
 const refreshing = ref<number | null>(null);
+const toggling = ref<number | null>(null);
 const query = ref('');
 const filteredAssets = computed(() => {
     const term = query.value.trim().toLowerCase();
@@ -34,6 +36,18 @@ const refresh = (asset: MarketAsset) => router.post(route('assets.refresh', asse
     onStart: () => refreshing.value = asset.id,
     onFinish: () => refreshing.value = null,
 });
+const toggleAutoUpdate = (asset: MarketAsset) => {
+    const previous = asset.auto_update;
+    asset.auto_update = !previous;
+    toggling.value = asset.id;
+    router.post(route('assets.auto-update', asset.id), { auto_update: !previous }, {
+        onError: () => {
+            asset.auto_update = previous;
+            toggling.value = null;
+        },
+        onFinish: () => toggling.value = null,
+    });
+};
 </script>
 
 <template>
@@ -76,6 +90,10 @@ const refresh = (asset: MarketAsset) => router.post(route('assets.refresh', asse
           <div class="sm:min-w-32 sm:text-right">
             <p class="font-bold">{{ asset.price ? formatMoney(asset.price, asset.currency) : 'Sem cotacao' }}</p>
             <p v-if="asset.price_date" class="text-xs text-stone-400">{{ formatDate(asset.price_date) }}</p>
+          </div>
+          <div v-if="asset.can_refresh" class="flex items-center gap-2" title="Se ativado, a cotacao desse ativo e atualizada automaticamente todos os dias">
+            <ToggleSwitch :checked="asset.auto_update" :disabled="toggling === asset.id" @update:checked="toggleAutoUpdate(asset)" />
+            <span class="text-[11px] font-medium text-stone-400">Atualizar automaticamente</span>
           </div>
           <button v-if="asset.can_refresh" type="button" :disabled="refreshing === asset.id" title="Atualizar cotacao" class="rounded-xl border border-stone-200 p-2.5 text-stone-400 transition hover:border-brand-300 hover:text-brand-600 disabled:opacity-50 dark:border-slate-700" @click="refresh(asset)"><RefreshCw :size="17" :class="{ 'animate-spin': refreshing === asset.id }" /></button>
           <template v-if="asset.is_active && compatiblePortfolios(asset).length">

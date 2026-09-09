@@ -72,6 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::post('assets/{asset}/refresh', AssetQuoteController::class)
         ->middleware('throttle:5,1')
         ->name('assets.refresh');
+    Route::patch('assets/{asset}/auto-update', [AssetController::class, 'autoUpdate'])
+        ->middleware('throttle:30,1')
+        ->name('assets.auto-update');
     Route::get('portfolios/{portfolio}/operations/create', [AssetTransactionController::class, 'create'])
         ->name('investment-transactions.create');
     Route::post('portfolios/{portfolio}/operations', [AssetTransactionController::class, 'store'])

@@ -5,6 +5,7 @@ namespace Tests\Feature\MarketData;
 use App\Models\User;
 use App\Modules\Investment\Enums\Market;
 use App\Modules\Investment\Models\Asset;
+use App\Modules\Investment\Models\AssetPreference;
 use App\Modules\Investment\Models\Portfolio;
 use App\Modules\Investment\Models\PortfolioHolding;
 use App\Modules\MarketData\Actions\PersistPriceHistory;
@@ -144,6 +145,8 @@ class MarketDataTest extends TestCase
         $supported = Asset::factory()->create(['market' => Market::B3, 'is_active' => true]);
         Asset::factory()->create(['market' => Market::Nasdaq, 'is_active' => true]);
         Asset::factory()->create(['market' => Market::Crypto, 'is_active' => false]);
+        $optedOut = Asset::factory()->create(['market' => Market::B3, 'is_active' => true]);
+        AssetPreference::factory()->create(['asset_id' => $optedOut->id, 'auto_update' => false]);
 
         $this->artisan('market-data:sync')->assertSuccessful();
 

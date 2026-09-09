@@ -17,6 +17,7 @@ Artisan::command('market-data:sync', function (): void {
     Asset::query()
         ->where('is_active', true)
         ->whereIn('market', [Market::B3->value, Market::Crypto->value])
+        ->whereDoesntHave('assetPreferences', fn ($query) => $query->where('auto_update', false))
         ->select('id')
         ->withExists('priceHistory')
         ->chunkById(100, function ($assets): void {
