@@ -44,14 +44,21 @@ type NavSection = { key: string; label: string; items: NavItem[] };
 
 const sections: NavSection[] = [
     {
+        key: 'inicio',
+        label: 'Inicio',
+        items: [
+            { label: 'Visao geral', route: 'dashboard', pattern: 'dashboard', icon: LayoutDashboard },
+            { label: 'Agenda', route: 'agenda.index', pattern: 'agenda.*', icon: CalendarClock },
+        ],
+    },
+    {
         key: 'finance',
         label: 'Financeiro',
         items: [
-            { label: 'Visao geral', route: 'dashboard', pattern: 'dashboard', icon: LayoutDashboard },
+            { label: 'Lancamentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
             { label: 'Contas', route: 'accounts.index', pattern: 'accounts.*', icon: WalletCards },
             { label: 'Categorias', route: 'categories.index', pattern: 'categories.*', icon: Tags },
             { label: 'Orcamentos', route: 'budgets.index', pattern: 'budgets.*', icon: Gauge },
-            { label: 'Lancamentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
             { label: 'Metas', route: 'goals.index', pattern: 'goals.*', icon: Target },
             { label: 'Receitas futuras', route: 'expected-incomes.index', pattern: 'expected-incomes.*', icon: CalendarCheck2 },
         ],
@@ -60,7 +67,6 @@ const sections: NavSection[] = [
         key: 'planning',
         label: 'Planejamento',
         items: [
-            { label: 'Agenda', route: 'agenda.index', pattern: 'agenda.*', icon: CalendarClock },
             { label: 'Recorrencias', route: 'recurring.index', pattern: 'recurring.*', icon: Repeat },
             { label: 'Parcelas', route: 'installments.index', pattern: 'installments.*', icon: CalendarRange },
         ],
@@ -75,8 +81,8 @@ const sections: NavSection[] = [
         ],
     },
     {
-        key: 'system',
-        label: 'Sistema',
+        key: 'data',
+        label: 'Dados & Relatorios',
         items: [
             { label: 'Importacoes', route: 'imports.index', pattern: 'imports.*', icon: Upload },
             { label: 'Conciliacoes', route: 'reconciliations.index', pattern: 'reconciliations.*', icon: Scale },
