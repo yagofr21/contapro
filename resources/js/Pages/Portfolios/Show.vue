@@ -67,7 +67,19 @@ const removeOperation = (transaction: InvestmentTransaction) => {
     </section>
 
     <Card title="Posicoes" subtitle="Quantidade e custo medio atuais" class="mt-6">
-      <div v-if="holdings.length" class="overflow-x-auto"><table class="w-full min-w-[640px] text-left"><thead class="text-[10px] uppercase tracking-wider text-stone-400"><tr><th class="px-5 py-3">Ativo</th><th class="px-4 py-3 text-right">Quantidade</th><th class="px-4 py-3 text-right">Custo medio</th><th class="px-4 py-3 text-right">Preco atual</th><th class="px-5 py-3 text-right">Resultado</th></tr></thead><tbody><tr v-for="holding in holdings" :key="holding.id" class="border-t border-stone-100 dark:border-slate-800"><td class="px-5 py-4"><p class="font-bold">{{ holding.symbol }}</p><p class="truncate text-xs text-stone-400">{{ holding.name }}</p></td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatDecimal(holding.quantity) }}</td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatMoney(holding.average_cost, holding.currency) }}</td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatMoney(holding.current_price, holding.currency) }}</td><td class="whitespace-nowrap px-5 py-4 text-right text-sm font-bold" :class="Number(holding.return) >= 0 ? 'text-emerald-600' : 'text-rose-600'">{{ formatMoney(holding.return, holding.currency) }}</td></tr></tbody></table></div>
+      <div v-if="holdings.length">
+        <div class="md:hidden divide-y divide-stone-100 dark:divide-slate-800">
+          <article v-for="holding in holdings" :key="holding.id" class="flex items-center gap-3 px-5 py-4">
+            <div class="min-w-0 flex-1">
+              <p class="font-bold">{{ holding.symbol }}</p>
+              <p class="mt-0.5 text-xs text-stone-400">{{ formatDecimal(holding.quantity) }} un. · Custo medio {{ formatMoney(holding.average_cost, holding.currency) }}</p>
+              <p class="mt-0.5 text-xs text-stone-400">Preco atual {{ formatMoney(holding.current_price, holding.currency) }}</p>
+            </div>
+            <p class="whitespace-nowrap text-sm font-bold" :class="Number(holding.return) >= 0 ? 'text-emerald-600' : 'text-rose-600'">{{ formatMoney(holding.return, holding.currency) }}</p>
+          </article>
+        </div>
+        <div class="hidden overflow-x-auto md:block"><table class="w-full min-w-[640px] text-left"><thead class="text-[10px] uppercase tracking-wider text-stone-400"><tr><th class="px-5 py-3">Ativo</th><th class="px-4 py-3 text-right">Quantidade</th><th class="px-4 py-3 text-right">Custo medio</th><th class="px-4 py-3 text-right">Preco atual</th><th class="px-5 py-3 text-right">Resultado</th></tr></thead><tbody><tr v-for="holding in holdings" :key="holding.id" class="border-t border-stone-100 dark:border-slate-800"><td class="px-5 py-4"><p class="font-bold">{{ holding.symbol }}</p><p class="truncate text-xs text-stone-400">{{ holding.name }}</p></td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatDecimal(holding.quantity) }}</td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatMoney(holding.average_cost, holding.currency) }}</td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatMoney(holding.current_price, holding.currency) }}</td><td class="whitespace-nowrap px-5 py-4 text-right text-sm font-bold" :class="Number(holding.return) >= 0 ? 'text-emerald-600' : 'text-rose-600'">{{ formatMoney(holding.return, holding.currency) }}</td></tr></tbody></table></div>
+      </div>
       <EmptyState v-else title="Nenhuma posicao aberta" description="Registre uma compra." />
     </Card>
 

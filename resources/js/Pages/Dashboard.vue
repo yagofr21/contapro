@@ -62,11 +62,10 @@ const selectedCategoryExpenses = computed(() => props.categoryExpenses.filter((i
 
 const chartOption = computed(() => ({
     tooltip: { trigger: 'item', valueFormatter: (value: number) => formatMoney(String(value), selectedCurrency.value) },
-    legend: { bottom: 0, icon: 'circle', textStyle: { color: '#78716c' } },
     series: [{
         type: 'pie',
         radius: ['48%', '72%'],
-        center: ['50%', '42%'],
+        center: ['50%', '50%'],
         avoidLabelOverlap: true,
         itemStyle: { borderRadius: 0, borderColor: '#fafaf8', borderWidth: 2 },
         label: { show: false },
@@ -77,6 +76,7 @@ const chartOption = computed(() => ({
         })),
     }],
 }));
+const sortedCategoryExpenses = computed(() => [...selectedCategoryExpenses.value].sort((a, b) => Number(b.total) - Number(a.total)));
 
 const selectedMonthlyTrend = computed(() => props.monthlyTrends.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, months: [] });
 const hasMonthlyData = computed(() => selectedMonthlyTrend.value.months.some((month) => Number(month.income) > 0 || Number(month.expenses) > 0));
@@ -193,44 +193,53 @@ const greeting = computed(() => {
     </section>
 
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-      <article class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <header class="flex items-center justify-between"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatorio</Link></header>
-        <VChart v-if="hasMonthlyData" class="mt-4 h-56 sm:h-72" :option="monthlyChartOption" autoresize />
-        <div v-else class="grid h-56 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Sem lancamentos nos ultimos 6 meses</div>
+      <article class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatorio</Link></header>
+        <VChart v-if="hasMonthlyData" class="mt-4 h-48 sm:h-72" :option="monthlyChartOption" autoresize />
+        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Sem lancamentos nos ultimos 6 meses</div>
       </article>
 
-      <article class="flex flex-col rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <header class="flex items-center justify-between"><div><h2 class="font-semibold">Receitas futuras</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Confirme quando cair na conta</p></div><Link :href="route('expected-incomes.index')" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver todas</Link></header>
+      <article class="flex flex-col rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas futuras</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Confirme quando cair na conta</p></div><Link :href="route('expected-incomes.index')" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver todas</Link></header>
         <div v-if="expectedIncomes.length" class="mt-3 flex-1">
           <div v-for="income in expectedIncomes" :key="income.id" class="flex items-center gap-3 border-b border-stone-100 py-3 last:border-0 dark:border-slate-800">
             <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"><ArrowDownLeft :size="17" /></span>
             <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ income.description }}</p><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">previsto {{ formatDate(income.expected_date) }}</p></div>
-            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ formatMoney(income.amount, income.currency) }}</p>
-            <button type="button" :disabled="receiving === income.id" class="rounded-xl px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" :class="receiving === income.id ? 'bg-stone-300 dark:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-700'" title="Marcar como recebido" @click="receiveIncome(income)"><CheckCircle2 :size="15" /></button>
+            <p class="whitespace-nowrap text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ formatMoney(income.amount, income.currency) }}</p>
+            <button type="button" :disabled="receiving === income.id" class="shrink-0 rounded-xl px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" :class="receiving === income.id ? 'bg-stone-300 dark:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-700'" title="Marcar como recebido" @click="receiveIncome(income)"><CheckCircle2 :size="15" /></button>
           </div>
         </div>
         <div v-else class="grid flex-1 place-items-center py-8 text-center text-sm text-stone-400 dark:text-slate-500">Nenhuma receita prevista<br /><Link :href="route('expected-incomes.index')" class="mt-2 inline-flex items-center justify-center gap-2 rounded-xl border border-brand-200 px-4 py-2 text-xs font-semibold text-brand-700 dark:border-brand-800 dark:text-brand-300"><Plus :size="15" />Planejar entradas</Link></div>
-        <button type="button" class="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700" @click="incomeModalOpen = true"><Plus :size="17" />Nova receita futura</button>
+        <button type="button" class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 sm:w-auto" @click="incomeModalOpen = true"><Plus :size="17" />Nova receita futura</button>
       </article>
     </section>
 
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <article class="rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <header class="flex items-center justify-between border-b border-stone-100 px-5 py-4 dark:border-slate-800"><div><h2 class="font-semibold">Movimentacoes recentes</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos registros do fluxo de caixa</p></div><Link :href="route('transactions.index')" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver todas</Link></header>
+        <header class="flex flex-wrap items-start justify-between gap-3 border-b border-stone-100 px-4 py-4 sm:px-5 dark:border-slate-800"><div><h2 class="font-semibold">Movimentacoes recentes</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos registros do fluxo de caixa</p></div><Link :href="route('transactions.index')" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver todas</Link></header>
         <div v-if="recentTransactions.length">
-          <div v-for="transaction in recentTransactions" :key="transaction.id" class="flex items-center gap-3 border-b border-stone-100 px-5 py-4 transition last:border-0 hover:bg-stone-50/80 dark:border-slate-800 dark:hover:bg-slate-800/40">
+          <div v-for="transaction in recentTransactions" :key="transaction.id" class="flex items-center gap-3 border-b border-stone-100 px-4 py-3.5 transition last:border-0 hover:bg-stone-50/80 sm:px-5 sm:py-4 dark:border-slate-800 dark:hover:bg-slate-800/40">
             <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl ring-1 ring-black/5" :class="transaction.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : transaction.type === 'transfer_out' ? 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'"><ArrowDownLeft v-if="transaction.type === 'income'" :size="17" /><ArrowLeftRight v-else-if="transaction.type === 'transfer_out'" :size="17" /><ArrowUpRight v-else :size="17" /></span>
             <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ transaction.description }}</p><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">{{ transaction.account }} · {{ formatDate(transaction.date) }}</p></div>
-            <p class="text-sm font-bold" :class="transaction.type === 'income' ? 'text-emerald-700 dark:text-emerald-400' : transaction.type === 'transfer_out' ? 'text-brand-700 dark:text-brand-300' : 'text-rose-600 dark:text-rose-400'">{{ transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : '' }}{{ formatMoney(transaction.amount, transaction.currency) }}</p>
+            <p class="whitespace-nowrap text-sm font-bold" :class="transaction.type === 'income' ? 'text-emerald-700 dark:text-emerald-400' : transaction.type === 'transfer_out' ? 'text-brand-700 dark:text-brand-300' : 'text-rose-600 dark:text-rose-400'">{{ transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : '' }}{{ formatMoney(transaction.amount, transaction.currency) }}</p>
           </div>
         </div>
         <div v-else class="px-6 py-14 text-center text-sm text-stone-400 dark:text-slate-500">Seus primeiros lancamentos aparecerao aqui</div>
       </article>
 
-      <article class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <article class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         <header><h2 class="font-semibold">Despesas por categoria</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Distribuicao no mes atual</p></header>
-        <VChart v-if="selectedCategoryExpenses.length" class="mt-2 h-56 sm:h-72" :option="chartOption" autoresize />
-        <div v-else class="grid h-56 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Categorize despesas para visualizar a distribuicao</div>
+        <div v-if="sortedCategoryExpenses.length" class="mt-3">
+          <VChart class="h-48 sm:h-56" :option="chartOption" autoresize />
+          <ul class="mt-3 space-y-2.5 border-t border-stone-100 pt-3 dark:border-slate-800">
+            <li v-for="category in sortedCategoryExpenses" :key="category.name" class="flex items-center gap-2.5">
+              <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: category.color }" />
+              <span class="min-w-0 flex-1 truncate text-sm text-stone-600 dark:text-slate-300">{{ category.name }}</span>
+              <span class="whitespace-nowrap text-sm font-bold">{{ formatMoney(category.total, selectedCurrency) }}</span>
+            </li>
+          </ul>
+        </div>
+        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-56">Categorize despesas para visualizar a distribuicao</div>
       </article>
     </section>
 

@@ -103,15 +103,19 @@ const typePresentation = (transaction: Transaction) => {
       <div class="hidden grid-cols-[1fr_160px_130px_140px_80px] gap-4 border-b border-stone-100 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-stone-400 dark:border-slate-800 md:grid">
         <span>Lancamento</span><span>Conta</span><span>Data</span><span class="text-right">Valor</span><span />
       </div>
-      <article v-for="transaction in transactions.data" :key="transaction.id" class="grid gap-3 border-b border-stone-100 px-4 py-4 last:border-0 dark:border-slate-800 md:grid-cols-[1fr_160px_130px_140px_80px] md:items-center md:px-5">
-        <div class="flex min-w-0 items-center gap-3">
+      <article v-for="transaction in transactions.data" :key="transaction.id" class="flex items-center gap-3 border-b border-stone-100 px-4 py-3.5 transition last:border-0 hover:bg-stone-50/80 dark:border-slate-800 dark:hover:bg-slate-800/40 md:grid md:grid-cols-[1fr_160px_130px_140px_80px] md:items-center md:gap-4 md:px-5 md:py-4">
+        <div class="flex min-w-0 flex-1 items-center gap-3 md:min-w-0">
           <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl" :class="typePresentation(transaction).tone"><component :is="typePresentation(transaction).icon" :size="18" /></span>
-          <div class="min-w-0"><p class="truncate text-sm font-semibold">{{ transaction.description || typePresentation(transaction).label }}</p><p class="mt-0.5 text-xs text-stone-400"><span v-if="transaction.category_color" class="mr-1 inline-block h-2 w-2 rounded-full" :style="{ backgroundColor: transaction.category_color }" />{{ transaction.category_name || typePresentation(transaction).label }}</p></div>
+          <div class="min-w-0">
+            <p class="truncate text-sm font-semibold">{{ transaction.description || typePresentation(transaction).label }}</p>
+            <p class="mt-0.5 text-xs text-stone-400 md:hidden">{{ transaction.account_name }} · {{ formatDate(transaction.transaction_date) }}</p>
+            <p class="mt-0.5 hidden text-xs text-stone-400 md:block"><span v-if="transaction.category_color" class="mr-1 inline-block h-2 w-2 rounded-full" :style="{ backgroundColor: transaction.category_color }" />{{ transaction.category_name || typePresentation(transaction).label }}</p>
+          </div>
         </div>
-        <p class="text-sm text-stone-500 dark:text-slate-400">{{ transaction.account_name }}</p>
-        <p class="text-sm text-stone-500 dark:text-slate-400">{{ formatDate(transaction.transaction_date) }}</p>
-        <p class="text-left text-sm font-bold md:text-right" :class="transaction.type === 'income' ? 'text-emerald-600' : transaction.is_transfer ? 'text-brand-600' : 'text-rose-600'">{{ transaction.type === 'income' ? '+' : transaction.is_transfer ? '' : '-' }}{{ formatMoney(transaction.amount, transaction.currency) }}</p>
-        <div class="flex justify-end gap-1">
+        <p class="hidden text-sm text-stone-500 dark:text-slate-400 md:block">{{ transaction.account_name }}</p>
+        <p class="hidden text-sm text-stone-500 dark:text-slate-400 md:block">{{ formatDate(transaction.transaction_date) }}</p>
+        <p class="whitespace-nowrap text-sm font-bold md:text-right" :class="transaction.type === 'income' ? 'text-emerald-600' : transaction.is_transfer ? 'text-brand-600' : 'text-rose-600'">{{ transaction.type === 'income' ? '+' : transaction.is_transfer ? '' : '-' }}{{ formatMoney(transaction.amount, transaction.currency) }}</p>
+        <div class="flex shrink-0 items-center gap-1 md:justify-end">
           <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" @click="openEdit(transaction)"><Pencil :size="15" /></button>
           <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" @click="remove(transaction)"><Trash2 :size="15" /></button>
         </div>
