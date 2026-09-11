@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import ToggleSwitch from '@/Components/ToggleSwitch.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import Card from '@/Components/Card.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
 import type { MarketAsset, PortfolioOption } from '@/types/investment';
@@ -53,14 +57,11 @@ const toggleAutoUpdate = (asset: MarketAsset) => {
 <template>
   <Head title="Ativos" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Catalogo de mercado</p>
-        <h1 class="mt-2 text-3xl font-bold">Ativos</h1>
-        <p class="mt-2 text-sm text-stone-500">Escolha uma carteira e registre sua compra com quantidade, preco e taxas.</p>
-      </div>
-      <Link :href="route('assets.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white"><Plus :size="18" />Cadastrar no catalogo</Link>
-    </section>
+    <PageHeader kicker="Catalogo de mercado" title="Ativos" subtitle="Escolha uma carteira e registre sua compra com quantidade, preco e taxas.">
+      <template #actions>
+        <Link :href="route('assets.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white"><Plus :size="18" />Cadastrar no catalogo</Link>
+      </template>
+    </PageHeader>
 
     <div class="mt-6 flex gap-3 rounded-2xl border border-brand-100 bg-brand-50/60 p-4 text-sm text-brand-900 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-100">
       <WalletCards :size="20" class="mt-0.5 shrink-0" />
@@ -72,15 +73,15 @@ const toggleAutoUpdate = (asset: MarketAsset) => {
       <input v-model="query" type="search" placeholder="Buscar por simbolo, nome, mercado ou tipo..." class="w-full bg-transparent text-sm outline-none placeholder:text-stone-400 dark:placeholder:text-slate-500">
     </label>
 
-    <div v-if="assets.length && filteredAssets.length" class="mt-6 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <Card v-if="assets.length && filteredAssets.length" class="mt-6">
       <article v-for="asset in filteredAssets" :key="asset.id" class="grid gap-5 border-b border-stone-100 px-5 py-5 last:border-0 dark:border-slate-800 lg:grid-cols-[1fr_auto] lg:items-center">
         <div class="flex items-center gap-3">
           <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40"><CandlestickChart :size="19" /></span>
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <p class="font-bold">{{ asset.symbol }}</p>
-              <span class="rounded-full bg-stone-100 px-2.5 py-1 text-[10px] font-bold text-stone-500 dark:bg-slate-800">{{ asset.market }} · {{ asset.type }}</span>
-              <span v-if="!asset.is_active" class="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600">Inativo</span>
+              <StatusBadge tone="slate" :label="`${asset.market} · ${asset.type}`" />
+              <StatusBadge v-if="!asset.is_active" tone="rose" label="Inativo" />
             </div>
             <p class="mt-1 text-xs text-stone-400">{{ asset.name }}</p>
           </div>
@@ -105,16 +106,8 @@ const toggleAutoUpdate = (asset: MarketAsset) => {
           <Link v-else-if="asset.is_active" :href="route('portfolios.create')" class="inline-flex items-center justify-center gap-2 rounded-xl border border-brand-200 px-4 py-2.5 text-sm font-semibold text-brand-700 dark:border-brand-800 dark:text-brand-300">Criar carteira {{ asset.currency }}</Link>
         </div>
       </article>
-    </div>
-    <div v-else-if="assets.length" class="mt-6 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900">
-      <Search :size="36" class="mx-auto text-stone-300" />
-      <h2 class="mt-4 text-lg font-semibold">Nenhum ativo encontrado</h2>
-      <p class="mt-1 text-sm text-stone-500">Ajuste o termo de busca ou cadastre o ativo no catalogo.</p>
-    </div>
-    <div v-else class="mt-8 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900">
-      <CandlestickChart :size="36" class="mx-auto text-stone-300" />
-      <h2 class="mt-4 text-lg font-semibold">Nenhum ativo no catalogo</h2>
-      <p class="mt-1 text-sm text-stone-500">Cadastre o primeiro ativo para depois registrar uma compra.</p>
-    </div>
+    </Card>
+    <EmptyState v-else-if="assets.length" class="mt-6" :icon="Search" title="Nenhum ativo encontrado" description="Ajuste o termo de busca ou cadastre o ativo no catalogo." />
+    <EmptyState v-else class="mt-8" :icon="CandlestickChart" title="Nenhum ativo no catalogo" description="Cadastre o primeiro ativo para depois registrar uma compra." />
   </AuthenticatedLayout>
 </template>

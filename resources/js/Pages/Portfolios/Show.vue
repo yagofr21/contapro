@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import PageHeader from '@/Components/PageHeader.vue';
+import Card from '@/Components/Card.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatDecimal, formatMoney } from '@/lib/format';
 import type { Holding, InvestmentTransaction, Portfolio } from '@/types/investment';
@@ -38,10 +41,15 @@ const removeOperation = (transaction: InvestmentTransaction) => {
 <template>
   <Head :title="portfolio.name" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Carteira · {{ portfolio.currency }}</p><div class="mt-2 flex items-center gap-3"><h1 class="text-3xl font-bold tracking-tight">{{ portfolio.name }}</h1><Link :href="route('portfolios.edit', portfolio.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800"><Pencil :size="17" /></Link></div><p class="mt-2 text-sm text-stone-500">Posicao e resultados reconstruidos a partir do historico completo.</p></div>
-      <div class="flex flex-wrap gap-2"><a :href="route('portfolios.operations.export', portfolio.id)" class="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"><Download :size="17" />Exportar CSV</a><Link :href="route('investment-transactions.create', portfolio.id)" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20"><Plus :size="18" />Nova operacao</Link></div>
-    </section>
+    <PageHeader :kicker="`Carteira · ${portfolio.currency}`" :title="portfolio.name" subtitle="Posicao e resultados reconstruidos a partir do historico completo.">
+      <template #title-suffix>
+        <Link :href="route('portfolios.edit', portfolio.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800"><Pencil :size="17" /></Link>
+      </template>
+      <template #actions>
+        <a :href="route('portfolios.operations.export', portfolio.id)" class="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"><Download :size="17" />Exportar CSV</a>
+        <Link :href="route('investment-transactions.create', portfolio.id)" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20"><Plus :size="18" />Nova operacao</Link>
+      </template>
+    </PageHeader>
 
     <section class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <article v-for="item in [
@@ -58,14 +66,12 @@ const removeOperation = (transaction: InvestmentTransaction) => {
       </article>
     </section>
 
-    <section class="mt-6 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <header class="border-b border-stone-100 px-5 py-4 dark:border-slate-800"><h2 class="font-semibold">Posicoes</h2><p class="text-xs text-stone-400">Quantidade e custo medio atuais</p></header>
+    <Card title="Posicoes" subtitle="Quantidade e custo medio atuais" class="mt-6">
       <div v-if="holdings.length" class="overflow-x-auto"><table class="w-full min-w-[640px] text-left"><thead class="text-[10px] uppercase tracking-wider text-stone-400"><tr><th class="px-5 py-3">Ativo</th><th class="px-4 py-3 text-right">Quantidade</th><th class="px-4 py-3 text-right">Custo medio</th><th class="px-4 py-3 text-right">Preco atual</th><th class="px-5 py-3 text-right">Resultado</th></tr></thead><tbody><tr v-for="holding in holdings" :key="holding.id" class="border-t border-stone-100 dark:border-slate-800"><td class="px-5 py-4"><p class="font-bold">{{ holding.symbol }}</p><p class="truncate text-xs text-stone-400">{{ holding.name }}</p></td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatDecimal(holding.quantity) }}</td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatMoney(holding.average_cost, holding.currency) }}</td><td class="whitespace-nowrap px-4 py-4 text-right text-sm">{{ formatMoney(holding.current_price, holding.currency) }}</td><td class="whitespace-nowrap px-5 py-4 text-right text-sm font-bold" :class="Number(holding.return) >= 0 ? 'text-emerald-600' : 'text-rose-600'">{{ formatMoney(holding.return, holding.currency) }}</td></tr></tbody></table></div>
-      <p v-else class="px-6 py-12 text-center text-sm text-stone-400">Nenhuma posicao aberta. Registre uma compra.</p>
-    </section>
+      <EmptyState v-else title="Nenhuma posicao aberta" description="Registre uma compra." />
+    </Card>
 
-    <section class="mt-6 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <header class="border-b border-stone-100 px-5 py-4 dark:border-slate-800"><h2 class="font-semibold">Historico de operacoes</h2></header>
+    <Card title="Historico de operacoes" class="mt-6">
       <div v-if="transactions.length">
         <article v-for="transaction in transactions" :key="transaction.id" class="flex flex-col gap-3 border-b border-stone-100 px-5 py-4 last:border-0 dark:border-slate-800 sm:flex-row sm:items-center">
           <div class="flex min-w-0 flex-1 items-start gap-3"><span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl" :class="operationMeta[transaction.type].tone"><component :is="operationMeta[transaction.type].icon" :size="17" /></span><div class="min-w-0"><p class="truncate text-sm font-bold">{{ transaction.asset_symbol }} · {{ operationMeta[transaction.type].label }}</p><p class="mt-0.5 text-xs text-stone-400">{{ formatDate(transaction.date ?? '') }}<template v-if="transaction.broker_name"> · {{ transaction.broker_name }}</template></p><p v-if="transaction.type === 'buy' || transaction.type === 'sell'" class="mt-1 text-xs text-stone-500">{{ formatDecimal(transaction.quantity) }} unidades · {{ formatMoney(transaction.unit_price, portfolio.currency) }} por unidade<template v-if="Number(transaction.fees) > 0"> · taxas {{ formatMoney(transaction.fees, portfolio.currency) }}</template></p><p v-else-if="transaction.type === 'split'" class="mt-1 text-xs text-stone-500">Proporcao {{ formatDecimal(transaction.split_from ?? '0') }} para {{ formatDecimal(transaction.split_to ?? '0') }} · custo total preservado</p><p v-else class="mt-1 text-xs text-stone-500">Bruto {{ formatMoney(transaction.gross_amount ?? '0', portfolio.currency) }}</p></div></div>
@@ -74,7 +80,7 @@ const removeOperation = (transaction: InvestmentTransaction) => {
           <div class="flex justify-end gap-1"><Link :href="route('investment-transactions.edit', transaction.id)" class="rounded-lg p-2 text-stone-400 hover:text-brand-600"><Pencil :size="15" /></Link><button class="rounded-lg p-2 text-stone-400 hover:text-rose-600" @click="removeOperation(transaction)"><Trash2 :size="15" /></button></div>
         </article>
       </div>
-      <p v-else class="px-6 py-10 text-center text-sm text-stone-400">Nenhuma operacao registrada.</p>
-    </section>
+      <EmptyState v-else title="Nenhuma operacao registrada" />
+    </Card>
   </AuthenticatedLayout>
 </template>

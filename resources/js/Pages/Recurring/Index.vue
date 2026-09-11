@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import Card from '@/Components/Card.vue';
+import EmptyState from '@/Components/EmptyState.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -34,12 +38,13 @@ const remove = (schedule: Schedule) => {
 <template>
   <Head title="Recorrencias" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Agenda</p><h1 class="mt-2 text-3xl font-bold tracking-tight">Recorrencias</h1><p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Transacoes que se repetem sozinhas no dia marcado.</p></div>
-      <Link :href="route('recurring.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova recorrencia</Link>
-    </section>
+    <PageHeader kicker="Agenda" title="Recorrencias" subtitle="Transacoes que se repetem sozinhas no dia marcado.">
+      <template #actions>
+        <Link :href="route('recurring.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova recorrencia</Link>
+      </template>
+    </PageHeader>
 
-    <div v-if="schedules.length" class="mt-8 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <Card v-if="schedules.length" class="mt-8">
       <ul class="divide-y divide-stone-100 dark:divide-slate-800 md:hidden">
         <li v-for="schedule in schedules" :key="schedule.id" class="px-5 py-4" :class="schedule.is_active ? '' : 'opacity-60'">
           <div class="flex items-start justify-between gap-3">
@@ -47,7 +52,7 @@ const remove = (schedule: Schedule) => {
               <p class="truncate font-semibold">{{ schedule.description ?? 'Sem descricao' }}</p>
               <p class="mt-0.5 truncate text-xs text-stone-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
             </div>
-            <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="schedule.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : schedule.type === 'expense' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300'">{{ schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferencia' }}</span>
+            <StatusBadge class="shrink-0" :tone="schedule.type === 'income' ? 'emerald' : schedule.type === 'expense' ? 'rose' : 'sky'" :label="schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferencia'" />
           </div>
           <div class="mt-3 flex items-end justify-between gap-3">
             <div class="min-w-0">
@@ -80,7 +85,7 @@ const remove = (schedule: Schedule) => {
                 <p class="truncate font-semibold">{{ schedule.description ?? 'Sem descricao' }}</p>
                 <p class="truncate text-xs text-stone-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
               </td>
-              <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="schedule.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : schedule.type === 'expense' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300'">{{ schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferencia' }}</span></td>
+              <td class="px-5 py-4"><StatusBadge :tone="schedule.type === 'income' ? 'emerald' : schedule.type === 'expense' ? 'rose' : 'sky'" :label="schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferencia'" /></td>
               <td class="px-5 py-4 font-semibold" :class="schedule.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'">{{ schedule.type === 'expense' ? '-' : '+' }}{{ formatMoney(schedule.amount) }}</td>
               <td class="px-5 py-4">{{ schedule.frequency_label }}</td>
               <td class="px-5 py-4">{{ formatDate(schedule.next_run_date) }}</td>
@@ -95,7 +100,7 @@ const remove = (schedule: Schedule) => {
           </tbody>
         </table>
       </div>
-    </div>
-    <div v-else class="mt-8 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900"><Repeat :size="36" class="mx-auto text-stone-300 dark:text-slate-600" /><h2 class="mt-4 text-lg font-semibold">Automatize seus lancamentos</h2><p class="mt-1 text-sm text-stone-500">Crie recorrencias para contas, salarios e assinaturas.</p></div>
+    </Card>
+    <EmptyState v-else class="mt-8" :icon="Repeat" title="Automatize seus lancamentos" description="Crie recorrencias para contas, salarios e assinaturas." />
   </AuthenticatedLayout>
 </template>

@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import EmptyState from '@/Components/EmptyState.vue';
 import Modal from '@/Components/Modal.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatMoney } from '@/lib/format';
 import type { Account, Option } from '@/types/finance';
@@ -55,14 +58,11 @@ const remove = (account: Account) => {
 <template>
   <Head title="Contas" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Organizacao financeira</p>
-        <h1 class="mt-2 text-2xl font-bold tracking-tight text-stone-950 dark:text-white">Suas contas</h1>
-        <p class="mt-1 max-w-xl text-sm text-stone-500 dark:text-slate-400">Acompanhe onde o dinheiro esta e mantenha cada saldo sob controle.</p>
-      </div>
-      <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700" @click="openCreate"><Plus :size="18" /> Nova conta</button>
-    </section>
+    <PageHeader kicker="Organizacao financeira" title="Suas contas" subtitle="Acompanhe onde o dinheiro esta e mantenha cada saldo sob controle.">
+      <template #actions>
+        <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700" @click="openCreate"><Plus :size="18" /> Nova conta</button>
+      </template>
+    </PageHeader>
 
     <div v-if="accounts.length" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       <article v-for="account in accounts" :key="account.id" class="group relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
@@ -72,7 +72,7 @@ const remove = (account: Account) => {
             <Landmark v-if="account.type !== 'cash'" :size="21" />
             <WalletCards v-else :size="21" />
           </div>
-          <span v-if="account.is_archived" class="rounded-full bg-stone-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-stone-500 dark:bg-slate-800">Arquivada</span>
+          <StatusBadge v-if="account.is_archived" tone="slate" label="Arquivada" />
         </div>
         <div class="relative mt-5">
           <p class="text-sm font-medium text-stone-500 dark:text-slate-400">{{ account.name }}</p>
@@ -86,11 +86,7 @@ const remove = (account: Account) => {
       </article>
     </div>
 
-    <div v-else class="mt-6 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900">
-      <WalletCards :size="36" class="mx-auto text-stone-300 dark:text-slate-600" />
-      <h2 class="mt-4 text-lg font-semibold">Nenhuma conta cadastrada</h2>
-      <p class="mt-1 text-sm text-stone-500">Comece pela conta que voce mais movimenta.</p>
-    </div>
+    <EmptyState v-else class="mt-6" :icon="WalletCards" title="Nenhuma conta cadastrada" description="Comece pela conta que voce mais movimenta." />
 
     <Modal :show="modalOpen" max-width="lg" :title="editing ? 'Editar conta' : 'Nova conta'" @close="closeModal">
       <AccountForm v-if="modalOpen" :account="editing ?? undefined" :types="types" :currencies="currencies" embedded @cancel="closeModal" />

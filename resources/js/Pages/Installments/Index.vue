@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import EmptyState from '@/Components/EmptyState.vue';
+import PageHeader from '@/Components/PageHeader.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -32,10 +34,11 @@ const remove = (installment: Installment) => {
 <template>
   <Head title="Parcelas" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Agenda</p><h1 class="mt-2 text-3xl font-bold tracking-tight">Parcelas</h1><p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Financiamentos e compras divididas em prestacoes.</p></div>
-      <Link :href="route('installments.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova serie</Link>
-    </section>
+    <PageHeader kicker="Agenda" title="Parcelas" subtitle="Financiamentos e compras divididas em prestacoes.">
+      <template #actions>
+        <Link :href="route('installments.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova serie</Link>
+      </template>
+    </PageHeader>
 
     <div v-if="installments.length" class="mt-8 grid gap-4 lg:grid-cols-2">
       <article v-for="installment in installments" :key="installment.id" class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" :class="installment.is_finished ? 'opacity-60' : ''">
@@ -58,6 +61,6 @@ const remove = (installment: Installment) => {
         <p v-else class="mt-2 text-right text-xs font-semibold text-stone-400">{{ installment.remaining_count }} restante{{ installment.remaining_count > 1 ? 's' : '' }}</p>
       </article>
     </div>
-    <div v-else class="mt-8 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900"><CreditCard :size="36" class="mx-auto text-stone-300 dark:text-slate-600" /><h2 class="mt-4 text-lg font-semibold">Divida seus gastos</h2><p class="mt-1 text-sm text-stone-500">Crie series de parcelas e acompanhe o saldo.</p></div>
+    <EmptyState v-else class="mt-8" :icon="CreditCard" title="Divida seus gastos" description="Crie series de parcelas e acompanhe o saldo." />
   </AuthenticatedLayout>
 </template>

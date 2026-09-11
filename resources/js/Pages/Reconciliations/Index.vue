@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import InputError from '@/Components/InputError.vue';
+import PageHeader from '@/Components/PageHeader.vue';
 import SelectInput from '@/Components/SelectInput.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatMoney } from '@/lib/format';
 import { Head, Link, useForm } from '@inertiajs/vue3';
@@ -32,24 +34,16 @@ const form = useForm<{ account_id: string; period_start: string; statement_date:
 
 const submit = () => form.post(route('reconciliations.store'), { forceFormData: true });
 const statusLabel = (status: string) => ({ previewed: 'Aguardando', reconciled: 'Reconciliada', divergent: 'Divergente' }[status] ?? status);
-const statusClass = (status: string) => ({
-    previewed: 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300',
-    reconciled: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-    divergent: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-}[status] ?? 'bg-stone-100 text-stone-600 dark:bg-slate-800 dark:text-slate-300');
 </script>
 
 <template>
   <Head title="Conciliacoes" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Conferencia de extrato</p>
-        <h1 class="mt-2 text-3xl font-bold tracking-tight">Conciliacoes</h1>
-        <p class="mt-2 max-w-2xl text-sm text-stone-500">Compare o saldo declarado pelo banco com o saldo detectado nos seus lancamentos, linha a linha.</p>
-      </div>
-      <a :href="route('reconciliations.template')" class="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"><Download :size="16" />Modelo de extrato</a>
-    </section>
+    <PageHeader kicker="Conferencia de extrato" title="Conciliacoes" subtitle="Compare o saldo declarado pelo banco com o saldo detectado nos seus lancamentos, linha a linha.">
+      <template #actions>
+        <a :href="route('reconciliations.template')" class="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"><Download :size="16" />Modelo de extrato</a>
+      </template>
+    </PageHeader>
 
     <section class="mt-7 grid gap-4 lg:grid-cols-3">
       <article v-for="(step, index) in [{ title: 'Enviar', text: 'Extrato CSV com Data, Descricao e Valor' }, { title: 'Conferir', text: 'Regras de casamento com seus lancamentos' }, { title: 'Confirmar', text: 'Situacao Reconciliada ou Divergente' }]" :key="step.title" class="rounded-2xl border border-stone-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
@@ -71,7 +65,7 @@ const statusClass = (status: string) => ({
 
     <section v-if="history.length" class="mt-8">
       <div class="flex items-center gap-2"><History :size="18" class="text-stone-400" /><h2 class="font-semibold">Historico recente</h2></div>
-      <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3"><Link v-for="item in history" :key="item.id" :href="route('reconciliations.show', item.id)" class="rounded-2xl border border-stone-200 bg-white p-4 transition hover:border-brand-300 dark:border-slate-800 dark:bg-slate-900"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="truncate text-sm font-semibold">{{ item.account_name ?? 'Conta removida' }}</p><p class="mt-1 text-xs text-stone-500">{{ new Intl.DateTimeFormat('pt-BR').format(new Date(item.created_at)) }}</p></div><span class="shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold" :class="statusClass(item.status)">{{ statusLabel(item.status) }}</span></div><p class="mt-3 text-xs text-stone-400">{{ item.summary.total }} linhas · diferenca {{ formatMoney(item.delta, item.currency) }}</p></Link></div>
+      <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3"><Link v-for="item in history" :key="item.id" :href="route('reconciliations.show', item.id)" class="rounded-2xl border border-stone-200 bg-white p-4 transition hover:border-brand-300 dark:border-slate-800 dark:bg-slate-900"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="truncate text-sm font-semibold">{{ item.account_name ?? 'Conta removida' }}</p><p class="mt-1 text-xs text-stone-500">{{ new Intl.DateTimeFormat('pt-BR').format(new Date(item.created_at)) }}</p></div><StatusBadge :tone="item.status === 'reconciled' ? 'emerald' : item.status === 'divergent' ? 'amber' : 'brand'" :label="statusLabel(item.status)" /></div><p class="mt-3 text-xs text-stone-400">{{ item.summary.total }} linhas · diferenca {{ formatMoney(item.delta, item.currency) }}</p></Link></div>
     </section>
 
     <div class="mt-6 flex gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-xs text-stone-500 dark:border-slate-800 dark:bg-slate-900"><AlertTriangle :size="17" class="shrink-0 text-amber-500" /><p>As regras casam valor absoluto e data (exata ou em ate 3 dias) preservando o sentido do lancamento. Conciliacao nao altera seus dados.</p></div>

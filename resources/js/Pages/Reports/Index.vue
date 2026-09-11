@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import Card from '@/Components/Card.vue';
+import EmptyState from '@/Components/EmptyState.vue';
+import PageHeader from '@/Components/PageHeader.vue';
 import SelectInput from '@/Components/SelectInput.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatMoney, formatMonth } from '@/lib/format';
@@ -63,10 +66,11 @@ const allocationOption = computed(() => ({
 <template>
   <Head title="Relatorios" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-      <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Analise financeira</p><h1 class="mt-2 text-3xl font-bold tracking-tight">Relatorios</h1><p class="mt-2 text-sm text-stone-500">Fluxo de caixa e investimentos sem misturar moedas.</p></div>
-      <a :href="exportUrl" class="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 shadow-sm hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"><Download :size="17" />Exportar CSV</a>
-    </section>
+    <PageHeader kicker="Analise financeira" title="Relatorios" subtitle="Fluxo de caixa e investimentos sem misturar moedas.">
+      <template #actions>
+        <a :href="exportUrl" class="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 shadow-sm hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"><Download :size="17" />Exportar CSV</a>
+      </template>
+    </PageHeader>
 
     <form class="mt-7 grid gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_160px_auto] lg:items-end" @submit.prevent="submit">
       <label><span class="mb-2 block text-xs font-semibold text-stone-500">De</span><input v-model="form.from" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" /></label>
@@ -77,9 +81,11 @@ const allocationOption = computed(() => ({
 
     <section class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-6"><article v-for="item in [{ label: 'Receitas', value: summary.income, tone: 'text-emerald-600' }, { label: 'Despesas', value: summary.expenses, tone: 'text-rose-600' }, { label: 'Fluxo liquido', value: summary.net, tone: Number(summary.net) >= 0 ? 'text-brand-600' : 'text-rose-600' }, { label: 'Proventos', value: summary.net_investment_income, tone: 'text-amber-600' }, { label: 'Resultado realizado', value: summary.realized_profit_loss, tone: Number(summary.realized_profit_loss) >= 0 ? 'text-emerald-600' : 'text-rose-600' }]" :key="item.label" class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><p class="text-xs text-stone-400">{{ item.label }}</p><p class="mt-2 text-xl font-bold" :class="item.tone">{{ formatMoney(item.value, filters.currency) }}</p></article><article class="rounded-2xl bg-slate-950 p-5 text-white"><p class="text-xs text-slate-500">Lancamentos</p><p class="mt-2 text-xl font-bold">{{ summary.transaction_count }}</p></article></section>
 
-    <section class="mt-6 rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><header><h2 class="font-semibold">Fluxo mensal</h2><p class="text-xs text-stone-400">Receitas e despesas no periodo</p></header><VChart class="mt-4 h-64 sm:h-80" :option="cashFlowOption" autoresize /></section>
+    <Card class="mt-6" title="Fluxo mensal" subtitle="Receitas e despesas no periodo">
+      <div class="p-5"><VChart class="mt-4 h-64 sm:h-80" :option="cashFlowOption" autoresize /></div>
+    </Card>
 
-    <section class="mt-6 grid gap-6 xl:grid-cols-2"><article class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><header><h2 class="font-semibold">Despesas por categoria</h2><p class="text-xs text-stone-400">Distribuicao do periodo</p></header><VChart v-if="categories.length" class="h-56 sm:h-72" :option="categoryOption" autoresize /><div v-else class="grid h-56 place-items-center text-sm text-stone-400 sm:h-72">Sem despesas no periodo.</div></article><article class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><header><h2 class="font-semibold">Alocacao atual</h2><p class="text-xs text-stone-400">Posicao por tipo de ativo em {{ filters.currency }}</p></header><VChart v-if="allocation.length" class="h-56 sm:h-72" :option="allocationOption" autoresize /><div v-else class="grid h-56 place-items-center text-sm text-stone-400 sm:h-72">Sem investimentos nesta moeda.</div><p v-if="investmentSummary?.unpriced_holdings" class="mt-2 text-xs text-amber-600">{{ investmentSummary.unpriced_holdings }} posicao(oes) sem cotacao atual.</p></article></section>
+    <section class="mt-6 grid gap-6 xl:grid-cols-2"><Card title="Despesas por categoria" subtitle="Distribuicao do periodo"><div class="p-5"><VChart v-if="categories.length" class="h-56 sm:h-72" :option="categoryOption" autoresize /><EmptyState v-else title="Sem despesas no periodo." /></div></Card><Card title="Alocacao atual" subtitle="Posicao por tipo de ativo em {{ filters.currency }}"><div class="p-5"><VChart v-if="allocation.length" class="h-56 sm:h-72" :option="allocationOption" autoresize /><EmptyState v-else title="Sem investimentos nesta moeda." /><p v-if="investmentSummary?.unpriced_holdings" class="mt-2 text-xs text-amber-600">{{ investmentSummary.unpriced_holdings }} posicao(oes) sem cotacao atual.</p></div></Card></section>
 
     <section v-if="investmentSummary" class="mt-6 grid gap-5 rounded-3xl bg-slate-950 p-6 text-white sm:grid-cols-2 lg:grid-cols-4"><div><p class="text-xs uppercase tracking-[0.18em] text-brand-400">Posicao atual</p><p class="mt-2 text-2xl font-bold">{{ formatMoney(investmentSummary.current_value, filters.currency) }}</p></div><div><p class="text-xs text-slate-500">Nao realizado</p><p class="mt-1 text-lg font-bold" :class="Number(investmentSummary.market_return) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatMoney(investmentSummary.market_return, filters.currency) }}</p></div><div><p class="text-xs text-slate-500">Resultado realizado</p><p class="mt-1 text-lg font-bold" :class="Number(investmentSummary.realized_profit_loss) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatMoney(investmentSummary.realized_profit_loss, filters.currency) }}</p><p class="mt-1 text-xs text-slate-500">Proventos: {{ formatMoney(investmentSummary.net_income, filters.currency) }}</p></div><div class="lg:text-right"><p class="text-xs text-slate-500">Retorno total</p><p class="mt-1 text-lg font-bold" :class="Number(investmentSummary.total_return) >= 0 ? 'text-emerald-400' : 'text-rose-400'"><TrendingUp :size="17" class="mr-1 inline" />{{ formatMoney(investmentSummary.total_return, filters.currency) }}</p></div></section>
   </AuthenticatedLayout>

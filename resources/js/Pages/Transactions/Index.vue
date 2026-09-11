@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import EmptyState from '@/Components/EmptyState.vue';
 import Modal from '@/Components/Modal.vue';
+import PageHeader from '@/Components/PageHeader.vue';
 import SelectInput from '@/Components/SelectInput.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -77,14 +79,11 @@ const typePresentation = (transaction: Transaction) => {
 <template>
   <Head title="Lancamentos" />
   <AuthenticatedLayout>
-    <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Fluxo de caixa</p>
-        <h1 class="mt-2 text-2xl font-bold tracking-tight">Lancamentos</h1>
-        <p class="mt-1 text-sm text-stone-500 dark:text-slate-400">Receitas, despesas e transferencias reunidas em uma linha do tempo.</p>
-      </div>
-      <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Novo lancamento</button>
-    </section>
+    <PageHeader kicker="Fluxo de caixa" title="Lancamentos" subtitle="Receitas, despesas e transferencias reunidas em uma linha do tempo.">
+      <template #actions>
+        <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Novo lancamento</button>
+      </template>
+    </PageHeader>
 
     <form class="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" @submit.prevent="applyFilters">
       <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -119,7 +118,7 @@ const typePresentation = (transaction: Transaction) => {
       </article>
     </div>
 
-    <div v-else class="mt-5 rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900"><ReceiptText :size="36" class="mx-auto text-stone-300 dark:text-slate-600" /><h2 class="mt-4 text-lg font-semibold">Nenhum lancamento encontrado</h2><p class="mt-1 text-sm text-stone-500">Ajuste os filtros ou registre uma movimentacao.</p></div>
+    <EmptyState v-else class="mt-5" :icon="ReceiptText" title="Nenhum lancamento encontrado" description="Ajuste os filtros ou registre uma movimentacao." />
 
     <nav v-if="transactions.links.length > 3" class="mt-5 flex flex-wrap items-center justify-center gap-1">
       <Link v-for="link in transactions.links" :key="link.label" :href="link.url ?? '#'" class="min-w-9 rounded-lg px-3 py-2 text-center text-xs font-semibold" :class="link.active ? 'bg-brand-600 text-white' : link.url ? 'bg-white text-stone-600 hover:bg-stone-100 dark:bg-slate-900 dark:text-slate-300' : 'pointer-events-none text-stone-300'" preserve-state>{{ paginationLabel(link.label) }}</Link>
