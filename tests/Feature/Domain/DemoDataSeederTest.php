@@ -16,14 +16,18 @@ class DemoDataSeederTest extends TestCase
         $this->seed(DemoDataSeeder::class);
 
         $this->assertDatabaseCount('users', 1);
-        $this->assertDatabaseCount('financial_accounts', 1);
-        $this->assertDatabaseCount('categories', 2);
-        $this->assertDatabaseCount('transactions', 1);
-        $this->assertDatabaseCount('budgets', 1);
-        $this->assertDatabaseCount('assets', 1);
+        $this->assertDatabaseCount('financial_accounts', 4);
+        $this->assertDatabaseCount('categories', 11);
+        $this->assertDatabaseCount('transactions', 104);
+        $this->assertDatabaseCount('budgets', 4);
+        $this->assertDatabaseCount('expected_incomes', 3);
+        $this->assertDatabaseCount('transaction_schedules', 4);
+        $this->assertDatabaseCount('installments', 1);
+        $this->assertDatabaseCount('financial_goals', 3);
+        $this->assertDatabaseCount('assets', 4);
         $this->assertDatabaseCount('portfolios', 1);
-        $this->assertDatabaseCount('portfolio_holdings', 1);
-        $this->assertDatabaseCount('asset_transactions', 2);
-        $this->assertDatabaseCount('price_history', 1);
+        $this->assertDatabaseCount('portfolio_holdings', 4);
+        $this->assertDatabaseCount('asset_transactions', 7);
+        $this->assertDatabaseCount('price_history', 24);
     }
 }
