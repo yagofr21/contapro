@@ -40,7 +40,28 @@ const remove = (schedule: Schedule) => {
     </section>
 
     <div v-if="schedules.length" class="mt-8 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="overflow-x-auto">
+      <ul class="divide-y divide-stone-100 dark:divide-slate-800 md:hidden">
+        <li v-for="schedule in schedules" :key="schedule.id" class="px-5 py-4" :class="schedule.is_active ? '' : 'opacity-60'">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="truncate font-semibold">{{ schedule.description ?? 'Sem descricao' }}</p>
+              <p class="mt-0.5 truncate text-xs text-stone-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
+            </div>
+            <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="schedule.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : schedule.type === 'expense' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300'">{{ schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferencia' }}</span>
+          </div>
+          <div class="mt-3 flex items-end justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-semibold" :class="schedule.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'">{{ schedule.type === 'expense' ? '-' : '+' }}{{ formatMoney(schedule.amount) }}</p>
+              <p class="mt-0.5 text-xs text-stone-400">{{ schedule.frequency_label }} · proxima {{ formatDate(schedule.next_run_date) }}</p>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+              <Link :href="route('recurring.edit', schedule.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800"><Pencil :size="15" /></Link>
+              <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" aria-label="Remover recorrencia" @click="remove(schedule)"><Trash2 :size="15" /></button>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <div class="hidden overflow-x-auto md:block">
         <table class="w-full text-sm">
           <thead class="bg-stone-50 text-left text-xs uppercase tracking-wider text-stone-400 dark:bg-slate-950/60">
             <tr>
@@ -54,10 +75,10 @@ const remove = (schedule: Schedule) => {
             </tr>
           </thead>
           <tbody class="divide-y divide-stone-100 dark:divide-slate-800">
-            <tr v-for="schedule in schedules" :key="schedule.id" class="opacity-60" :class="schedule.is_active ? '' : 'opacity-60'">
+            <tr v-for="schedule in schedules" :key="schedule.id" :class="schedule.is_active ? '' : 'opacity-60'">
               <td class="px-5 py-4">
-                <p class="font-semibold">{{ schedule.description ?? 'Sem descricao' }}</p>
-                <p class="text-xs text-stone-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
+                <p class="truncate font-semibold">{{ schedule.description ?? 'Sem descricao' }}</p>
+                <p class="truncate text-xs text-stone-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
               </td>
               <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="schedule.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : schedule.type === 'expense' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300'">{{ schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferencia' }}</span></td>
               <td class="px-5 py-4 font-semibold" :class="schedule.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'">{{ schedule.type === 'expense' ? '-' : '+' }}{{ formatMoney(schedule.amount) }}</td>

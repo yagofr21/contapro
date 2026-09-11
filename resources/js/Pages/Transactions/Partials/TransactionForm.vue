@@ -67,7 +67,7 @@ const cancel = () => {
 <template>
   <form :class="embedded ? '' : 'mt-8 max-w-3xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8'" @submit.prevent="submit">
     <div class="px-6 py-5 sm:px-8">
-      <fieldset class="grid grid-cols-3 gap-2" :disabled="Boolean(transaction)">
+      <fieldset class="grid gap-2 sm:grid-cols-3" :disabled="Boolean(transaction)">
         <label v-for="option in [{ value: 'expense', label: 'Despesa' }, { value: 'income', label: 'Receita' }, { value: 'transfer', label: 'Transferencia' }]" :key="option.value" class="cursor-pointer">
           <input v-model="form.type" type="radio" :value="option.value" class="peer sr-only" />
           <span class="block rounded-xl border border-stone-200 px-2 py-2.5 text-center text-xs font-semibold text-stone-500 transition peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 dark:border-slate-700 dark:peer-checked:bg-brand-950/50 dark:peer-checked:text-brand-200">{{ option.label }}</span>

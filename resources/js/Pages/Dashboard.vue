@@ -131,8 +131,8 @@ const summaryCards = computed(() => [
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <article class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <header class="flex items-center justify-between"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatorio</Link></header>
-        <VChart v-if="hasMonthlyData" class="mt-4 h-72" :option="monthlyChartOption" autoresize />
-        <div v-else class="grid h-72 place-items-center text-center text-sm text-stone-400 dark:text-slate-500">Sem lancamentos nos ultimos 6 meses</div>
+        <VChart v-if="hasMonthlyData" class="mt-4 h-56 sm:h-72" :option="monthlyChartOption" autoresize />
+        <div v-else class="grid h-56 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Sem lancamentos nos ultimos 6 meses</div>
       </article>
 
       <article class="flex flex-col rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -165,8 +165,8 @@ const summaryCards = computed(() => [
 
       <article class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <header><h2 class="font-semibold">Despesas por categoria</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Distribuicao no mes atual</p></header>
-        <VChart v-if="selectedCategoryExpenses.length" class="mt-2 h-72" :option="chartOption" autoresize />
-        <div v-else class="grid h-72 place-items-center text-center text-sm text-stone-400 dark:text-slate-500">Categorize despesas para visualizar a distribuicao</div>
+        <VChart v-if="selectedCategoryExpenses.length" class="mt-2 h-56 sm:h-72" :option="chartOption" autoresize />
+        <div v-else class="grid h-56 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Categorize despesas para visualizar a distribuicao</div>
       </article>
     </section>
 

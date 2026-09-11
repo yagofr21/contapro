@@ -87,7 +87,7 @@ const typePresentation = (transaction: Transaction) => {
     </section>
 
     <form class="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" @submit.prevent="applyFilters">
-      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         <label class="relative xl:col-span-2"><Search :size="16" class="absolute left-3 top-3 text-stone-400" /><input v-model="form.search" class="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="Buscar descricao" /></label>
         <SelectInput v-model="form.account_id"><option value="">Todas as contas</option><option v-for="account in accounts" :key="account.id" :value="String(account.id)">{{ account.name }}</option></SelectInput>
         <SelectInput v-model="form.type"><option value="">Todos os tipos</option><option value="expense">Despesas</option><option value="income">Receitas</option><option value="transfer">Transferencias</option></SelectInput>

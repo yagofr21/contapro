@@ -66,7 +66,7 @@ const remove = (income: ExpectedIncome) => {
         <p class="text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-slate-500">Ja recebidas</p>
         <div v-for="income in received" :key="income.id" class="mt-2 flex items-center gap-3 opacity-70">
           <p class="min-w-0 flex-1 truncate text-sm">{{ income.description }}</p>
-          <p class="text-xs text-stone-400">{{ formatMoney(income.amount, income.currency) }} · {{ formatDate(income.received_at ?? income.expected_date) }}</p>
+          <p class="shrink-0 whitespace-nowrap text-xs text-stone-400">{{ formatMoney(income.amount, income.currency) }} · {{ formatDate(income.received_at ?? income.expected_date) }}</p>
         </div>
       </div>
     </section>
