@@ -10,7 +10,7 @@ import { use } from 'echarts/core';
 import VChart from 'vue-echarts';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, BellRing, CalendarClock, CandlestickChart, CheckCircle2, Gauge, Landmark, Plus, TrendingUp } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import ExpectedIncomeForm from './ExpectedIncomes/Partials/ExpectedIncomeForm.vue';
 import TransactionForm from './Transactions/Partials/TransactionForm.vue';
 
@@ -38,6 +38,16 @@ const selectedCurrency = ref(props.financialSummaries.find((summary) => summary.
 const modalOpen = ref(false);
 const incomeModalOpen = ref(false);
 const receiving = ref<number | null>(null);
+const isDesktop = ref(false);
+const desktopQuery = window.matchMedia('(min-width: 640px)');
+isDesktop.value = desktopQuery.matches;
+const onDesktopChange = (event: MediaQueryListEvent) => { isDesktop.value = event.matches; };
+if (typeof desktopQuery.addEventListener === 'function') desktopQuery.addEventListener('change', onDesktopChange);
+else desktopQuery.addListener(onDesktopChange);
+onUnmounted(() => {
+    if (typeof desktopQuery.removeEventListener === 'function') desktopQuery.removeEventListener('change', onDesktopChange);
+    else desktopQuery.removeListener(onDesktopChange);
+});
 const formAccounts = computed(() =>
     props.accounts
         .filter((account) => !account.is_archived)
@@ -182,10 +192,8 @@ const greeting = computed(() => {
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <article class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatorio</Link></header>
-        <div v-if="hasMonthlyData" class="mt-4 hidden sm:block">
-          <VChart class="h-72" :option="monthlyChartOption" autoresize />
-        </div>
-        <div v-if="hasMonthlyData" class="mt-4 space-y-3 sm:hidden">
+        <VChart v-if="hasMonthlyData && isDesktop" class="mt-4 h-72" :option="monthlyChartOption" autoresize />
+        <div v-else-if="hasMonthlyData" class="mt-4 space-y-3">
           <div v-for="month in selectedMonthlyTrend.months" :key="month.month" class="rounded-2xl bg-stone-50 px-3 py-2.5 dark:bg-slate-950">
             <p class="mb-2 text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400">{{ formatMonth(month.month) }}</p>
             <div class="space-y-1.5">
