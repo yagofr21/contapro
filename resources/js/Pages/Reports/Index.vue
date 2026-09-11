@@ -40,11 +40,11 @@ const exportUrl = computed(() => route('reports.transactions.export', {
     currency: form.currency,
 }));
 const cashFlowOption = computed(() => ({
-    tooltip: { trigger: 'axis', valueFormatter: (value: number) => formatMoney(String(value), props.filters.currency) },
-    legend: { bottom: 0, textStyle: { color: '#78716c' } },
-    grid: { left: 8, right: 8, top: 24, bottom: 44, containLabel: true },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: (value: number) => formatMoney(String(value), props.filters.currency) },
+    legend: { top: 0, right: 0, icon: 'circle', itemWidth: 10, itemHeight: 10, textStyle: { color: '#78716c', fontSize: 11 } },
+    grid: { left: 4, right: 4, top: 30, bottom: 22, containLabel: true },
     xAxis: { type: 'category', data: props.monthly.map((item) => formatMonth(item.month)), axisLabel: { color: '#78716c', interval: 0, fontSize: 10 }, axisLine: { lineStyle: { color: '#e7e5e4' } }, axisTick: { show: false } },
-    yAxis: { type: 'value', axisLabel: { color: '#78716c', formatter: (value: number) => (Math.abs(value) >= 1000 ? `${value / 1000}k` : String(value)) }, splitLine: { lineStyle: { color: '#e7e5e4' } } },
+    yAxis: { type: 'value', axisLabel: { color: '#78716c', fontSize: 10, formatter: (value: number) => (Math.abs(value) >= 1000 ? `${value / 1000}k` : String(value)) }, splitLine: { lineStyle: { color: '#e7e5e4' } } },
     series: [
         { name: 'Receitas', type: 'bar', barMaxWidth: 14, data: props.monthly.map((item) => Number(item.income)), itemStyle: { color: '#10b981', borderRadius: [6, 6, 0, 0] } },
         { name: 'Despesas', type: 'bar', barMaxWidth: 14, data: props.monthly.map((item) => Number(item.expenses)), itemStyle: { color: '#f43f5e', borderRadius: [6, 6, 0, 0] } },
@@ -82,7 +82,13 @@ const allocationOption = computed(() => ({
     <section class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"><article v-for="item in [{ label: 'Receitas', value: summary.income, tone: 'text-emerald-600' }, { label: 'Despesas', value: summary.expenses, tone: 'text-rose-600' }, { label: 'Fluxo liquido', value: summary.net, tone: Number(summary.net) >= 0 ? 'text-brand-600' : 'text-rose-600' }, { label: 'Proventos', value: summary.net_investment_income, tone: 'text-amber-600' }, { label: 'Resultado realizado', value: summary.realized_profit_loss, tone: Number(summary.realized_profit_loss) >= 0 ? 'text-emerald-600' : 'text-rose-600' }]" :key="item.label" class="min-w-0 rounded-2xl border border-stone-200 bg-white p-3 shadow-sm sm:p-4 dark:border-slate-800 dark:bg-slate-900"><p class="truncate text-[11px] text-stone-400">{{ item.label }}</p><p class="mt-1 truncate text-base font-bold sm:text-lg" :class="item.tone">{{ formatMoney(item.value, filters.currency) }}</p></article><article class="min-w-0 rounded-2xl bg-slate-950 p-3 text-white sm:p-4"><p class="text-[11px] text-slate-500">Lancamentos</p><p class="mt-1 text-base font-bold sm:text-lg">{{ summary.transaction_count }}</p></article></section>
 
     <Card class="mt-6" title="Fluxo mensal" subtitle="Receitas e despesas no periodo">
-      <div class="p-4 sm:p-5"><VChart class="mt-4 h-56 sm:h-80" :option="cashFlowOption" autoresize /></div>
+      <div class="p-4 sm:p-5">
+        <div class="h-64 sm:h-80"><VChart :option="cashFlowOption" autoresize style="width: 100%; height: 100%;" /></div>
+        <ul class="mt-3 flex justify-center gap-6 border-t border-stone-100 pt-3 text-xs font-semibold text-stone-600 sm:hidden dark:border-slate-800 dark:text-slate-400">
+          <li class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500" />Receitas: <span class="text-emerald-600 dark:text-emerald-400">{{ formatMoney(summary.income, filters.currency) }}</span></li>
+          <li class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500" />Despesas: <span class="text-rose-600 dark:text-rose-400">{{ formatMoney(summary.expenses, filters.currency) }}</span></li>
+        </ul>
+      </div>
     </Card>
 
     <section class="mt-6 grid gap-6 xl:grid-cols-2">
