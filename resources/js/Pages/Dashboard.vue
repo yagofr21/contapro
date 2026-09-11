@@ -141,7 +141,7 @@ const greeting = computed(() => {
           <div class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(closest-side_at_50%_0%,rgba(255,255,255,0.18),transparent)]" aria-hidden="true" />
           <div class="relative">
             <p class="text-xs font-semibold uppercase tracking-wider text-brand-200">Saldo em contas</p>
-            <p class="mt-2 text-3xl font-bold tracking-tight sm:text-5xl">{{ formatMoney(summary.balance, selectedCurrency) }}</p>
+            <p class="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">{{ formatMoney(summary.balance, selectedCurrency) }}</p>
             <p class="mt-2 text-sm text-brand-200">Consolidado em todas as contas deste mes</p>
           </div>
         </article>
