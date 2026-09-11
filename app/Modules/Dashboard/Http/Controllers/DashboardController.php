@@ -4,6 +4,7 @@ namespace App\Modules\Dashboard\Http\Controllers;
 
 use App\Enums\Currency;
 use App\Http\Controllers\Controller;
+use App\Modules\Dashboard\Queries\DashboardAttentionQuery;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
@@ -103,6 +104,9 @@ class DashboardController extends Controller
                 'color' => $transaction->category?->color,
             ]);
 
+        $investments = $portfolioValuation->forUser($user)['summaries'];
+        $attention = (new DashboardAttentionQuery)->forUser($user, $investments);
+
         $categoryExpenses = $monthTransactions
             ->where('type', TransactionType::Expense)
             ->groupBy(fn (Transaction $transaction): string => $transaction->account->currency->value.':'.($transaction->category_id ?? 'none'))
@@ -126,7 +130,8 @@ class DashboardController extends Controller
             'financialSummaries' => $financialSummaries,
             'monthlyTrends' => $monthlyTrends,
             'expectedIncomes' => $expectedIncome->pendingFor($user, 10),
-            'investments' => $portfolioValuation->forUser($user)['summaries'],
+            'investments' => $investments,
+            'attention' => $attention,
             'accounts' => $accounts,
             'recentTransactions' => $recent,
             'categoryExpenses' => $categoryExpenses,

@@ -9,8 +9,9 @@ import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/compon
 import { use } from 'echarts/core';
 import VChart from 'vue-echarts';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CheckCircle2, Landmark, Plus, TrendingUp, WalletCards } from '@lucide/vue';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, BellRing, CalendarClock, CandlestickChart, CheckCircle2, Gauge, Landmark, Plus, TrendingUp, WalletCards } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import StatCard from '@/Components/StatCard.vue';
 import ExpectedIncomeForm from './ExpectedIncomes/Partials/ExpectedIncomeForm.vue';
 import TransactionForm from './Transactions/Partials/TransactionForm.vue';
 
@@ -21,6 +22,7 @@ type MonthlyTrend = { currency: string; months: { month: string; income: string;
 type InvestmentSummary = { currency: string; cost: string; current_value: string; market_return: string; market_return_percentage: string; realized_profit_loss: string; net_income: string; total_return: string; unpriced_holdings: number; price_date: string | null };
 type RecentTransaction = { id: number; description: string; type: string; amount: string; currency: string; date: string; account: string; category: string | null; color: string | null };
 type CategoryExpense = { name: string; color: string; total: string; currency: string };
+type Attention = { pending_expected_incomes: number; due_events: number; budgets_over_limit: number; unpriced_holdings: number };
 
 const props = defineProps<{
     financialSummaries: Summary[];
@@ -31,6 +33,7 @@ const props = defineProps<{
     recentTransactions: RecentTransaction[];
     categoryExpenses: CategoryExpense[];
     categories: Category[];
+    attention: Attention;
 }>();
 const selectedCurrency = ref(props.financialSummaries.find((summary) => summary.currency === 'BRL')?.currency ?? props.financialSummaries[0]?.currency ?? 'BRL');
 const modalOpen = ref(false);
@@ -91,11 +94,29 @@ const monthlyChartOption = computed(() => ({
 }));
 
 const summaryCards = computed(() => [
-    { label: 'Saldo total', value: summary.value.balance, icon: WalletCards, bar: 'bg-brand-500', chip: 'bg-gradient-to-br from-brand-500/15 to-brand-500/5 text-brand-700 ring-1 ring-black/5 dark:text-brand-300' },
-    { label: 'Receitas no mes', value: summary.value.income, icon: ArrowDownLeft, bar: 'bg-emerald-500', chip: 'bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-700 ring-1 ring-black/5 dark:text-emerald-300' },
-    { label: 'Despesas no mes', value: summary.value.expenses, icon: ArrowUpRight, bar: 'bg-rose-500', chip: 'bg-gradient-to-br from-rose-500/15 to-rose-500/5 text-rose-700 ring-1 ring-black/5 dark:text-rose-300' },
-    { label: 'Resultado mensal', value: summary.value.net, icon: TrendingUp, bar: 'bg-amber-500', chip: 'bg-gradient-to-br from-amber-500/15 to-amber-500/5 text-amber-700 ring-1 ring-black/5 dark:text-amber-300' },
+    { label: 'Saldo total', value: summary.value.balance, icon: WalletCards, bar: 'bg-brand-500', chip: 'bg-gradient-to-br from-brand-500/15 to-brand-500/5 text-brand-700 ring-1 ring-black/5 dark:text-brand-300', valueClass: '' },
+    { label: 'Receitas no mes', value: summary.value.income, icon: ArrowDownLeft, bar: 'bg-emerald-500', chip: 'bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-700 ring-1 ring-black/5 dark:text-emerald-300', valueClass: '' },
+    { label: 'Despesas no mes', value: summary.value.expenses, icon: ArrowUpRight, bar: 'bg-rose-500', chip: 'bg-gradient-to-br from-rose-500/15 to-rose-500/5 text-rose-700 ring-1 ring-black/5 dark:text-rose-300', valueClass: '' },
+    { label: 'Resultado mensal', value: summary.value.net, icon: TrendingUp, bar: 'bg-amber-500', chip: 'bg-gradient-to-br from-amber-500/15 to-amber-500/5 text-amber-700 ring-1 ring-black/5 dark:text-amber-300', valueClass: Number(summary.value.net) < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400' },
 ]);
+
+const attentionItems = computed(() => {
+    const items: { key: string; count: number; label: string; href: string; icon: typeof ArrowDownLeft; pill: string }[] = [];
+    if (props.attention.pending_expected_incomes > 0) {
+        items.push({ key: 'expected', count: props.attention.pending_expected_incomes, label: 'receitas a receber', href: route('expected-incomes.index'), icon: ArrowDownLeft, pill: 'text-emerald-700 ring-emerald-200 hover:bg-emerald-50 dark:text-emerald-300 dark:ring-emerald-900/60 dark:hover:bg-emerald-950/40' });
+    }
+    if (props.attention.due_events > 0) {
+        items.push({ key: 'due', count: props.attention.due_events, label: 'vencimentos de hoje', href: route('agenda.index'), icon: CalendarClock, pill: 'text-rose-700 ring-rose-200 hover:bg-rose-50 dark:text-rose-300 dark:ring-rose-900/60 dark:hover:bg-rose-950/40' });
+    }
+    if (props.attention.budgets_over_limit > 0) {
+        items.push({ key: 'budgets', count: props.attention.budgets_over_limit, label: 'orcamentos no limite', href: route('budgets.index'), icon: Gauge, pill: 'text-amber-700 ring-amber-200 hover:bg-amber-50 dark:text-amber-300 dark:ring-amber-900/60 dark:hover:bg-amber-950/40' });
+    }
+    if (props.attention.unpriced_holdings > 0) {
+        items.push({ key: 'prices', count: props.attention.unpriced_holdings, label: 'posicoes sem cotacao', href: route('assets.index'), icon: CandlestickChart, pill: 'text-amber-700 ring-amber-200 hover:bg-amber-50 dark:text-amber-300 dark:ring-amber-900/60 dark:hover:bg-amber-950/40' });
+    }
+    return items;
+});
+const hasAttention = computed(() => attentionItems.value.length > 0);
 </script>
 
 <template>
@@ -113,19 +134,26 @@ const summaryCards = computed(() => [
       </div>
     </section>
 
+    <section v-if="hasAttention" class="mt-5 rounded-2xl border border-amber-200/70 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30 sm:p-5">
+      <div class="flex items-center gap-2">
+        <BellRing :size="16" class="text-amber-600 dark:text-amber-400" />
+        <h2 class="text-sm font-bold text-amber-950 dark:text-amber-200">Precisa da sua atencao</h2>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <Link v-for="item in attentionItems" :key="item.key" :href="item.href" class="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold ring-1 transition dark:bg-slate-900" :class="item.pill">
+          <component :is="item.icon" :size="15" />
+          <span>{{ item.count }}</span>
+          <span>{{ item.label }}</span>
+        </Link>
+      </div>
+    </section>
+
     <div class="relative mt-5 flex flex-wrap gap-2">
       <button v-for="item in financialSummaries" :key="item.currency" class="rounded-full text-xs font-bold transition" :class="selectedCurrency === item.currency ? 'bg-gradient-to-br from-brand-500 to-brand-600 px-4 py-1.5 text-white shadow-lg shadow-brand-500/25' : 'bg-white px-4 py-1.5 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800'" @click="selectedCurrency = item.currency">{{ item.currency }}</button>
     </div>
 
     <section class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <article v-for="card in summaryCards" :key="card.label" class="group relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
-        <span class="absolute inset-x-0 top-0 h-1" :class="card.bar" />
-        <div class="flex items-start justify-between">
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">{{ card.label }}</p>
-          <span class="grid h-9 w-9 place-items-center rounded-xl transition group-hover:-translate-y-0.5" :class="card.chip"><component :is="card.icon" :size="18" /></span>
-        </div>
-        <p class="mt-4 text-2xl font-bold tracking-tight" :class="card.label === 'Resultado mensal' && Number(card.value) < 0 ? 'text-rose-600 dark:text-rose-400' : card.label === 'Resultado mensal' ? 'text-emerald-700 dark:text-emerald-400' : ''">{{ formatMoney(card.value, selectedCurrency) }}</p>
-      </article>
+      <StatCard v-for="card in summaryCards" :key="card.label" :label="card.label" :value="formatMoney(card.value, selectedCurrency)" :icon="card.icon" :chip-class="card.chip" :bar-class="card.bar" :value-class="card.valueClass" />
     </section>
 
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">

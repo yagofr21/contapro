@@ -4,8 +4,11 @@ namespace Tests\Feature\Finance;
 
 use App\Models\User;
 use App\Modules\Finance\Enums\TransactionType;
+use App\Modules\Finance\Models\Budget;
+use App\Modules\Finance\Models\ExpectedIncome;
 use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\Transaction;
+use App\Modules\Finance\Models\TransactionSchedule;
 use App\Modules\Investment\Enums\AssetTransactionType;
 use App\Modules\Investment\Models\Asset;
 use App\Modules\Investment\Models\AssetTransaction;
@@ -131,5 +134,42 @@ class DashboardTest extends TestCase
                 ->where('monthlyTrends.0.months.5.month', $thisMonth)
                 ->where('monthlyTrends.0.months.5.income', '700.0000')
                 ->where('monthlyTrends.0.months.5.expenses', '300.0000'));
+    }
+
+    public function test_dashboard_reports_items_needing_attention(): void
+    {
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $budget = Budget::factory()->for($user)->create([
+            'limit_amount' => '100.0000',
+            'starts_on' => now()->startOfMonth(),
+        ]);
+        Transaction::factory()->for($user)->for($account, 'account')->create([
+            'type' => TransactionType::Expense,
+            'amount' => '150.0000',
+            'category_id' => $budget->category_id,
+            'transaction_date' => now(),
+        ]);
+        ExpectedIncome::factory()->for($user)->create([
+            'currency' => 'BRL',
+            'received_at' => null,
+        ]);
+        TransactionSchedule::factory()->for($user)->for($account, 'account')->create([
+            'is_active' => true,
+            'next_run_date' => today(),
+        ]);
+        $portfolio = Portfolio::factory()->for($user)->create(['currency' => 'BRL']);
+        $asset = Asset::factory()->create(['currency' => 'BRL']);
+        PortfolioHolding::factory()->for($portfolio)->for($asset)->create(['quantity' => '2', 'average_cost' => '100']);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Dashboard')
+                ->where('attention.pending_expected_incomes', 1)
+                ->where('attention.due_events', 1)
+                ->where('attention.budgets_over_limit', 1)
+                ->where('attention.unpriced_holdings', 1));
     }
 }
