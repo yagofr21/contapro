@@ -92,6 +92,9 @@ const monthlyChartOption = computed(() => ({
     ],
 }));
 
+const maxMonthlyValue = computed(() => Math.max(0, ...selectedMonthlyTrend.value.months.map((month) => Math.max(Number(month.income), Number(month.expenses)))));
+const monthWidth = (value: string) => `${maxMonthlyValue.value > 0 ? Math.max(2, (Number(value) / maxMonthlyValue.value) * 100) : 0}%`;
+
 const attentionItems = computed(() => {
     const items: { key: string; count: number; label: string; href: string; icon: typeof ArrowDownLeft; pill: string }[] = [];
     if (props.attention.pending_expected_incomes > 0) {
@@ -179,7 +182,26 @@ const greeting = computed(() => {
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <article class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatorio</Link></header>
-        <VChart v-if="hasMonthlyData" class="mt-4 h-48 sm:h-72" :option="monthlyChartOption" autoresize />
+        <div v-if="hasMonthlyData" class="mt-4 hidden sm:block">
+          <VChart class="h-72" :option="monthlyChartOption" autoresize />
+        </div>
+        <div v-if="hasMonthlyData" class="mt-4 space-y-3 sm:hidden">
+          <div v-for="month in selectedMonthlyTrend.months" :key="month.month" class="rounded-2xl bg-stone-50 px-3 py-2.5 dark:bg-slate-950">
+            <p class="mb-2 text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400">{{ formatMonth(month.month) }}</p>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-16 shrink-0 text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Receita</span>
+                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-950/60"><div class="h-full rounded-full bg-emerald-500" :style="{ width: monthWidth(month.income) }" /></div>
+                <span class="shrink-0 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">{{ formatMoney(month.income, selectedCurrency) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-16 shrink-0 text-[10px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">Despesa</span>
+                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-rose-100 dark:bg-rose-950/60"><div class="h-full rounded-full bg-rose-500" :style="{ width: monthWidth(month.expenses) }" /></div>
+                <span class="shrink-0 text-[11px] font-semibold text-rose-700 dark:text-rose-400">{{ formatMoney(month.expenses, selectedCurrency) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Sem lancamentos nos ultimos 6 meses</div>
       </article>
 
