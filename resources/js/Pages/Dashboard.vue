@@ -9,7 +9,7 @@ import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/compon
 import { use } from 'echarts/core';
 import VChart from 'vue-echarts';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, BellRing, CalendarClock, CandlestickChart, CheckCircle2, Gauge, Landmark, Plus, TrendingUp, WalletCards } from '@lucide/vue';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, BellRing, CalendarClock, CandlestickChart, CheckCircle2, Gauge, Landmark, Plus, TrendingUp } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ExpectedIncomeForm from './ExpectedIncomes/Partials/ExpectedIncomeForm.vue';
 import TransactionForm from './Transactions/Partials/TransactionForm.vue';
@@ -122,57 +122,41 @@ const greeting = computed(() => {
 <template>
   <Head title="Visao geral" />
   <AuthenticatedLayout>
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-950 p-6 text-slate-100 shadow-xl sm:p-8">
-      <div class="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(closest-side_at_50%_0%,rgba(51,141,255,0.22),transparent)]" aria-hidden="true" />
-      <div class="pointer-events-none absolute bottom-0 right-0 h-48 w-48 bg-[radial-gradient(closest-side_at_100%_100%,rgba(51,141,255,0.12),transparent)]" aria-hidden="true" />
-      <div class="relative">
-        <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-300">{{ greeting }}, {{ user?.split(' ')[0] }}</p>
-            <div class="mt-3 flex items-baseline gap-3">
-              <p class="text-3xl font-bold tracking-tight sm:text-4xl">{{ formatMoney(summary.balance, selectedCurrency) }}</p>
-              <span
-                v-if="Number(summary.net) !== 0"
-                class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-                :class="Number(summary.net) >= 0 ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30' : 'bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30'"
-              >
-                <TrendingUp v-if="Number(summary.net) >= 0" :size="13" />
-                <ArrowUpRight v-else :size="13" />
-                {{ formatMoney(summary.net, selectedCurrency) }} no mes
-              </span>
-            </div>
-            <p class="mt-2 text-sm text-slate-400">Saldo consolidado em todas as contas</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="flex gap-1.5">
-              <button v-for="item in financialSummaries" :key="item.currency" class="rounded-full px-3 py-1.5 text-xs font-bold transition" :class="selectedCurrency === item.currency ? 'bg-white/15 text-white ring-1 ring-white/20' : 'text-slate-400 hover:text-white'" @click="selectedCurrency = item.currency">{{ item.currency }}</button>
-            </div>
-            <button type="button" class="ml-2 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-400" @click="openCreate"><Plus :size="18" />Lancamento</button>
-          </div>
+    <section class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">{{ greeting }}, {{ user?.split(' ')[0] }}</p>
+          <h1 class="mt-1 text-xl font-bold text-stone-900 dark:text-white">Visao geral</h1>
         </div>
-        <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div v-for="item in [{ label: 'Receitas', value: summary.income, icon: ArrowDownLeft, tone: 'text-emerald-400' }, { label: 'Despesas', value: summary.expenses, icon: ArrowUpRight, tone: 'text-rose-400' }]" :key="item.label" class="rounded-xl bg-white/5 p-3 ring-1 ring-white/5">
-            <div class="flex items-center gap-1.5">
-              <component :is="item.icon" :size="14" :class="item.tone" />
-              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ item.label }}</p>
-            </div>
-            <p class="mt-1.5 text-lg font-bold" :class="item.tone">{{ formatMoney(item.value, selectedCurrency) }}</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex gap-1 rounded-full bg-stone-100 p-1 dark:bg-slate-800">
+            <button v-for="item in financialSummaries" :key="item.currency" type="button" class="rounded-full px-3 py-1.5 text-xs font-bold transition" :class="selectedCurrency === item.currency ? 'bg-white text-brand-700 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-stone-500 hover:text-stone-800 dark:text-slate-400 dark:hover:text-slate-200'" @click="selectedCurrency = item.currency">{{ item.currency }}</button>
           </div>
-          <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/5">
-            <div class="flex items-center gap-1.5">
-              <WalletCards :size="14" class="text-brand-400" />
-              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Saldo</p>
-            </div>
-            <p class="mt-1.5 text-lg font-bold">{{ formatMoney(summary.balance, selectedCurrency) }}</p>
-          </div>
-          <div class="rounded-xl bg-white/5 p-3 ring-1 ring-white/5">
-            <div class="flex items-center gap-1.5">
-              <TrendingUp :size="14" class="text-amber-400" />
-              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Resultado</p>
-            </div>
-            <p class="mt-1.5 text-lg font-bold" :class="Number(summary.net) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatMoney(summary.net, selectedCurrency) }}</p>
-          </div>
+          <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Lancamento</button>
         </div>
+      </div>
+
+      <div class="mt-5 grid gap-3 sm:grid-cols-3">
+        <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-5 text-white shadow-lg shadow-brand-700/20 sm:col-span-3 sm:p-6">
+          <div class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(closest-side_at_50%_0%,rgba(255,255,255,0.18),transparent)]" aria-hidden="true" />
+          <div class="relative">
+            <p class="text-xs font-semibold uppercase tracking-wider text-brand-200">Saldo em contas</p>
+            <p class="mt-2 text-3xl font-bold tracking-tight sm:text-5xl">{{ formatMoney(summary.balance, selectedCurrency) }}</p>
+            <p class="mt-2 text-sm text-brand-200">Consolidado em todas as contas deste mes</p>
+          </div>
+        </article>
+        <article class="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:ring-emerald-900/60">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300"><ArrowDownLeft :size="18" /></span>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70">Receitas no mes</p><p class="mt-0.5 truncate text-lg font-bold text-emerald-700 dark:text-emerald-300">{{ formatMoney(summary.income, selectedCurrency) }}</p></div>
+        </article>
+        <article class="flex items-center gap-3 rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100 dark:bg-rose-950/40 dark:ring-rose-900/60">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300"><ArrowUpRight :size="18" /></span>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-rose-700/70 dark:text-rose-400/70">Despesas no mes</p><p class="mt-0.5 truncate text-lg font-bold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.expenses, selectedCurrency) }}</p></div>
+        </article>
+        <article class="flex items-center gap-3 rounded-2xl bg-stone-50 p-4 ring-1 ring-stone-200 dark:bg-slate-800/60 dark:ring-slate-700/60">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-stone-200 text-stone-700 dark:bg-slate-700 dark:text-slate-200"><TrendingUp :size="18" /></span>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Resultado no mes</p><p class="mt-0.5 truncate text-lg font-bold" :class="Number(summary.net) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(summary.net, selectedCurrency) }}</p></div>
+        </article>
       </div>
     </section>
 
