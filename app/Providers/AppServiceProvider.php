@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Modules\Finance\Models\Bank;
 use App\Modules\Finance\Models\Budget;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\ExpectedIncome;
@@ -10,6 +11,7 @@ use App\Modules\Finance\Models\FinancialGoal;
 use App\Modules\Finance\Models\Installment;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Models\TransactionSchedule;
+use App\Modules\Finance\Policies\BankPolicy;
 use App\Modules\Finance\Policies\BudgetPolicy;
 use App\Modules\Finance\Policies\CategoryPolicy;
 use App\Modules\Finance\Policies\ExpectedIncomePolicy;
@@ -56,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         Vite::prefetch(concurrency: 3);
 
         Gate::policy(FinancialAccount::class, FinancialAccountPolicy::class);
+        Gate::policy(Bank::class, BankPolicy::class);
         Gate::policy(Category::class, CategoryPolicy::class);
         Gate::policy(Transaction::class, TransactionPolicy::class);
         Gate::policy(Budget::class, BudgetPolicy::class);

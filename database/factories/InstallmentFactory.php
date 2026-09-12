@@ -23,6 +23,12 @@ class InstallmentFactory extends Factory
             'category_id' => null,
             'type' => TransactionType::Expense,
             'amount' => fake()->randomFloat(2, 10, 500),
+            'total_amount' => fn (array $attributes) => number_format(
+                (float) $attributes['amount'] * (int) $attributes['total_count'],
+                4,
+                '.',
+                '',
+            ),
             'total_count' => 10,
             'remaining_count' => 10,
             'next_due_date' => now()->startOfMonth(),

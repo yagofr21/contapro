@@ -2,6 +2,7 @@
 import Modal from '@/Components/Modal.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney, formatMonth } from '@/lib/format';
+import { bankMetaFrom, type BankOption } from '@/lib/banks';
 import type { Account, Category, ExpectedIncome } from '@/types/finance';
 import { CanvasRenderer } from 'echarts/renderers';
 import { BarChart, PieChart } from 'echarts/charts';
@@ -29,6 +30,7 @@ const props = defineProps<{
     expectedIncomes: ExpectedIncome[];
     investments: InvestmentSummary[];
     accounts: Account[];
+    banks: BankOption[];
     recentTransactions: RecentTransaction[];
     categoryExpenses: CategoryExpense[];
     categories: Category[];
@@ -37,6 +39,7 @@ const props = defineProps<{
 const selectedCurrency = ref(props.financialSummaries.find((summary) => summary.currency === 'BRL')?.currency ?? props.financialSummaries[0]?.currency ?? 'BRL');
 const modalOpen = ref(false);
 const incomeModalOpen = ref(false);
+const modalTone = ref<false | 'brand' | 'green' | 'rose'>('rose');
 const receiving = ref<number | null>(null);
 const isDesktop = ref(false);
 const desktopQuery = window.matchMedia('(min-width: 640px)');
@@ -51,13 +54,22 @@ onUnmounted(() => {
 const formAccounts = computed(() =>
     props.accounts
         .filter((account) => !account.is_archived)
-        .map((account) => ({ id: account.id, name: account.name, currency: account.currency })),
+        .map((account) => ({ id: account.id, name: account.name, currency: account.currency, type: account.type })),
 );
+const accountTone = (account: Account) => {
+    const meta = bankMetaFrom(props.banks, account.bank);
+    const color = account.color ?? meta?.color ?? '#1b6ef5';
+    return { color, initials: meta?.initials ?? null, isBank: Boolean(meta) };
+};
 const openCreate = () => {
+    modalTone.value = 'rose';
     modalOpen.value = true;
 };
 const closeModal = () => {
     modalOpen.value = false;
+};
+const onTypeChange = (type: string) => {
+    modalTone.value = type === 'income' ? 'green' : type === 'transfer' ? 'brand' : 'rose';
 };
 const closeIncomeModal = () => {
     incomeModalOpen.value = false;
@@ -284,13 +296,35 @@ const greeting = computed(() => {
     <section class="mt-6 rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <header class="mb-4 flex items-center justify-between"><div><h2 class="font-semibold">Contas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Saldos atualizados por movimentacao</p></div><Link :href="route('accounts.index')" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Gerenciar</Link></header>
       <div v-if="accounts.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <div v-for="account in accounts" :key="account.id" class="flex items-center gap-3 rounded-2xl bg-stone-50 p-4 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-950"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-500/15 to-brand-500/5 text-brand-700 ring-1 ring-black/5 dark:text-brand-300"><Landmark :size="18" /></span><div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ account.name }}</p><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500"><span class="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-brand-500 align-middle" />{{ account.currency }}</p></div><p class="text-sm font-bold">{{ formatMoney(account.balance ?? account.initial_balance, account.currency) }}</p></div>
+        <div v-for="account in accounts" :key="account.id" class="rounded-2xl bg-stone-50 p-4 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-950">
+          <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white" :style="accountTone(account).isBank ? { backgroundColor: accountTone(account).color } : { backgroundColor: accountTone(account).color + '22', color: accountTone(account).color }"><span v-if="accountTone(account).isBank" class="text-sm font-extrabold">{{ accountTone(account).initials }}</span><Landmark v-else :size="18" /></span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold">{{ account.name }}</p>
+              <p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500"><span class="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-brand-500 align-middle" />{{ account.currency }}</p>
+            </div>
+            <p class="text-sm font-bold">{{ formatMoney(account.balance ?? account.initial_balance, account.currency) }}</p>
+          </div>
+          <div v-if="account.credit_card?.has_limit" class="mt-3">
+            <div class="mb-1 flex items-center justify-between text-[11px] text-stone-500 dark:text-slate-400">
+              <span>Limite utilizado</span>
+              <span :class="account.credit_card.over_limit ? 'font-bold text-rose-600 dark:text-rose-400' : ''">{{ account.credit_card.utilization }}%</span>
+            </div>
+            <div class="h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-slate-700">
+              <div class="h-full rounded-full transition-all duration-300" :class="account.credit_card.over_limit ? 'bg-rose-500' : account.credit_card.utilization && account.credit_card.utilization > 75 ? 'bg-amber-400' : 'bg-brand-500'" :style="{ width: Math.min(account.credit_card.utilization ?? 0, 100) + '%' }" />
+            </div>
+            <div class="mt-1.5 flex items-center justify-between text-[11px] text-stone-400 dark:text-slate-500">
+              <span>Fatura: {{ formatMoney(account.credit_card.current_invoice, account.currency) }}</span>
+              <span>Disponivel: {{ formatMoney(account.credit_card.available ?? '0', account.currency) }}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <p v-else class="py-8 text-center text-sm text-stone-400 dark:text-slate-500">Cadastre uma conta para iniciar seu painel</p>
     </section>
 
-    <Modal :show="modalOpen" max-width="2xl" title="Novo lancamento" @close="closeModal">
-      <TransactionForm v-if="modalOpen" :accounts="formAccounts" :categories="categories" from-dashboard embedded @cancel="closeModal" />
+    <Modal :show="modalOpen" max-width="2xl" :gradient="modalTone" title="Novo lancamento" @close="closeModal">
+      <TransactionForm v-if="modalOpen" :accounts="formAccounts" :categories="categories" from-dashboard embedded @cancel="closeModal" @saved="closeModal" @type-change="onTypeChange" />
     </Modal>
 
     <Modal :show="incomeModalOpen" max-width="2xl" title="Nova receita futura" @close="closeIncomeModal">

@@ -9,6 +9,8 @@ use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Queries\AccountSummaryQuery;
+use App\Modules\Finance\Queries\BankOptionsQuery;
+use App\Modules\Finance\Queries\CreditCardSummaryQuery;
 use App\Modules\Finance\Queries\ExpectedIncomeQuery;
 use App\Modules\Investment\Queries\PortfolioValuationQuery;
 use Illuminate\Http\Request;
@@ -33,7 +35,15 @@ class DashboardController extends Controller
             ->whereDate('transaction_date', '<=', $monthEnd)
             ->whereIn('type', [TransactionType::Income->value, TransactionType::Expense->value])
             ->get();
-        $accounts = $accountSummary->forUser($user);
+        $creditCards = (new CreditCardSummaryQuery)->forUser($user);
+        $accounts = $accountSummary->forUser($user)
+            ->map(function (array $account) use ($creditCards): array {
+                if (isset($creditCards[$account['id']])) {
+                    $account['credit_card'] = $creditCards[$account['id']];
+                }
+
+                return $account;
+            });
         $financialSummaries = collect(Currency::cases())->map(function (Currency $currency) use ($accounts, $monthTransactions): array {
             $currencyAccounts = $accounts->where('currency', $currency->value);
             $currencyTransactions = $monthTransactions->filter(
@@ -133,6 +143,7 @@ class DashboardController extends Controller
             'investments' => $investments,
             'attention' => $attention,
             'accounts' => $accounts,
+            'banks' => (new BankOptionsQuery)->active(),
             'recentTransactions' => $recent,
             'categoryExpenses' => $categoryExpenses,
             'categories' => $user->categories()

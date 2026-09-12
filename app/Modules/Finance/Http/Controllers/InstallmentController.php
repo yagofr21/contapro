@@ -24,21 +24,7 @@ class InstallmentController extends Controller
             ->with(['account:id,name', 'category:id,name,color'])
             ->latest('id')
             ->get()
-            ->map(fn (Installment $installment): array => [
-                'id' => $installment->id,
-                'account_id' => $installment->account_id,
-                'account_name' => $installment->account->name,
-                'category_id' => $installment->category_id,
-                'category_name' => $installment->category?->name,
-                'category_color' => $installment->category?->color,
-                'type' => $installment->type->value,
-                'amount' => $installment->amount,
-                'total_count' => $installment->total_count,
-                'remaining_count' => $installment->remaining_count,
-                'next_due_date' => $installment->next_due_date->format('Y-m-d'),
-                'description' => $installment->description,
-                'is_finished' => $installment->isFinished(),
-            ]);
+            ->map(fn (Installment $installment): array => $this->serialize($installment));
 
         return Inertia::render('Installments/Index', [
             'installments' => $installments,
@@ -66,6 +52,32 @@ class InstallmentController extends Controller
         $action->handle($installment);
 
         return to_route('installments.index')->with('success', 'Serie de parcelas removida com sucesso.');
+    }
+
+    /** @return array<string, mixed> */
+    private function serialize(Installment $installment): array
+    {
+        return [
+            'id' => $installment->id,
+            'account_id' => $installment->account_id,
+            'account_name' => $installment->account->name,
+            'category_id' => $installment->category_id,
+            'category_name' => $installment->category?->name,
+            'category_color' => $installment->category?->color,
+            'type' => $installment->type->value,
+            'amount' => $installment->amount,
+            'total_amount' => $installment->totalAmountValue(),
+            'total_count' => $installment->total_count,
+            'paid_count' => $installment->paidCount(),
+            'remaining_count' => $installment->remaining_count,
+            'current_parcela' => $installment->currentParcela(),
+            'total_paid' => $installment->totalPaidValue(),
+            'total_remaining' => $installment->totalRemainingValue(),
+            'next_due_date' => $installment->next_due_date->format('Y-m-d'),
+            'description' => $installment->description,
+            'is_finished' => $installment->isFinished(),
+            'schedule' => $installment->schedule(),
+        ];
     }
 
     /** @return array<string, mixed> */

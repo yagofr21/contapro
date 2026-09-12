@@ -60,6 +60,7 @@ class InstallmentTest extends TestCase
             'total_count' => 10,
             'remaining_count' => 4,
             'amount' => '99.9000',
+            'total_amount' => '999.0000',
             'description' => 'Bike',
         ]);
 
@@ -70,7 +71,15 @@ class InstallmentTest extends TestCase
                 ->component('Installments/Index')
                 ->has('installments', 1)
                 ->where('installments.0.remaining_count', 4)
-                ->where('installments.0.is_finished', false));
+                ->where('installments.0.is_finished', false)
+                ->where('installments.0.total_amount', '999.0000')
+                ->where('installments.0.paid_count', 6)
+                ->where('installments.0.current_parcela', 7)
+                ->where('installments.0.total_paid', '599.4000')
+                ->where('installments.0.total_remaining', '399.6000')
+                ->has('installments.0.schedule', 10)
+                ->where('installments.0.schedule.6.number', 7)
+                ->where('installments.0.schedule.6.status', 'pendente'));
     }
 
     public function test_user_cannot_delete_another_users_installment(): void

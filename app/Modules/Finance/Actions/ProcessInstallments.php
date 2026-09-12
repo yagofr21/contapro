@@ -36,20 +36,23 @@ class ProcessInstallments
                         return;
                     }
 
+                    $ordinal = $installment->total_count - $installment->remaining_count + 1;
+
                     $this->createTransaction->handle($installment->user, [
                         'type' => $installment->type->value,
                         'account_id' => $installment->account_id,
                         'category_id' => $installment->category_id,
-                        'amount' => $installment->amount,
+                        'installment_id' => $installment->id,
+                        'amount' => $installment->amountForOrdinal($ordinal),
                         'transaction_date' => $installment->next_due_date->format('Y-m-d'),
-                        'description' => $this->description($installment),
+                        'description' => $this->description($installment, $ordinal),
                     ]);
 
                     $remaining = $installment->remaining_count - 1;
 
                     $installment->update([
                         'remaining_count' => $remaining,
-                        'next_due_date' => $installment->next_due_date->copy()->addMonth()->format('Y-m-d'),
+                        'next_due_date' => $this->nextDueDate($installment),
                     ]);
 
                     $created++;
@@ -59,11 +62,15 @@ class ProcessInstallments
         return $created;
     }
 
-    private function description(Installment $installment): string
+    private function nextDueDate(Installment $installment): string
     {
-        $paid = $installment->total_count - $installment->remaining_count + 1;
+        return $installment->next_due_date->copy()->addMonthsNoOverflow(1)->format('Y-m-d');
+    }
+
+    private function description(Installment $installment, int $ordinal): string
+    {
         $base = trim((string) $installment->description);
 
-        return sprintf('%s (%d/%d)', $base !== '' ? $base : 'Parcela', $paid, $installment->total_count);
+        return sprintf('%s (%d/%d)', $base !== '' ? $base : 'Parcela', $ordinal, $installment->total_count);
     }
 }

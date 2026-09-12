@@ -18,14 +18,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $id
  * @property int $user_id
  * @property string $name
+ * @property string|null $bank
+ * @property string|null $color
  * @property FinancialAccountType $type
  * @property Currency $currency
  * @property numeric-string $initial_balance
+ * @property numeric-string|null $credit_limit
+ * @property int|null $credit_closing_day
+ * @property int|null $credit_due_day
  * @property numeric-string|null $credits
  * @property numeric-string|null $debits
  * @property bool $is_archived
  */
-#[Fillable(['user_id', 'name', 'type', 'currency', 'initial_balance', 'is_archived'])]
+#[Fillable(['user_id', 'name', 'bank', 'color', 'type', 'currency', 'initial_balance', 'credit_limit', 'credit_closing_day', 'credit_due_day', 'is_archived'])]
 #[UseFactory(FinancialAccountFactory::class)]
 class FinancialAccount extends Model
 {
@@ -44,12 +49,21 @@ class FinancialAccount extends Model
         return $this->hasMany(Transaction::class, 'account_id');
     }
 
+    /** @return HasMany<Installment, $this> */
+    public function installments(): HasMany
+    {
+        return $this->hasMany(Installment::class, 'account_id');
+    }
+
     protected function casts(): array
     {
         return [
             'type' => FinancialAccountType::class,
             'currency' => Currency::class,
             'initial_balance' => 'decimal:4',
+            'credit_limit' => 'decimal:4',
+            'credit_closing_day' => 'integer',
+            'credit_due_day' => 'integer',
             'is_archived' => 'boolean',
         ];
     }

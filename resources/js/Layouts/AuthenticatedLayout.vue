@@ -3,6 +3,7 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import type { Component } from 'vue';
 import {
+    AlertCircle,
     ArrowLeftRight,
     Building2,
     CalendarClock,
@@ -13,6 +14,7 @@ import {
     CheckCircle2,
     ChevronDown,
     Gauge,
+    Landmark,
     LayoutDashboard,
     Menu,
     Moon,
@@ -30,14 +32,37 @@ import {
     X,
 } from '@lucide/vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const page = usePage();
 const menuOpen = ref(false);
 const isDark = ref(false);
-const success = computed(() => page.props.flash?.success as string | null);
+const flashTitle = computed(() => page.props.flash?.success as string | null);
+const flashDetail = computed(() => page.props.flash?.detail as string | null);
+const flashError = computed(() => page.props.flash?.error as string | null);
 const user = computed(() => page.props.auth.user as { name: string; email: string });
 const initial = computed(() => user.value.name.charAt(0).toUpperCase());
+
+const toast = ref<{ title: string; detail: string | null; tone: 'success' | 'error' } | null>(null);
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+
+const dismissToast = () => {
+    toast.value = null;
+    if (toastTimer) clearTimeout(toastTimer);
+};
+
+watch([flashTitle, flashDetail, flashError], ([title, detail, error]) => {
+    if (!title && !error) return;
+    toast.value = {
+        title: title ?? (error as string),
+        detail,
+        tone: title ? 'success' : 'error',
+    };
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        toast.value = null;
+    }, 5000);
+});
 
 type NavItem = { label: string; route: string; pattern: string; icon: Component };
 type NavSection = { key: string; label: string; items: NavItem[] };
@@ -57,6 +82,7 @@ const sections: NavSection[] = [
         items: [
             { label: 'Lancamentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
             { label: 'Contas', route: 'accounts.index', pattern: 'accounts.*', icon: WalletCards },
+            { label: 'Bancos', route: 'banks.index', pattern: 'banks.*', icon: Landmark },
             { label: 'Categorias', route: 'categories.index', pattern: 'categories.*', icon: Tags },
             { label: 'Orcamentos', route: 'budgets.index', pattern: 'budgets.*', icon: Gauge },
             { label: 'Metas', route: 'goals.index', pattern: 'goals.*', icon: Target },
@@ -143,7 +169,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen text-stone-900 dark:text-slate-100">
+  <div class="relative min-h-screen text-stone-900 dark:text-slate-100">
+    <div class="aurora-surface pointer-events-none fixed inset-0" />
+    <div class="aurora-blob pointer-events-none aurora-blob-1" />
+    <div class="aurora-blob pointer-events-none aurora-blob-2" />
+    <div class="aurora-blob pointer-events-none aurora-blob-3" />
     <aside
       class="fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-slate-800/80 bg-slate-950 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-200 transition-[width] duration-200 lg:flex"
       :class="collapsed ? 'w-[4.5rem]' : 'w-64'"
@@ -214,7 +244,7 @@ onMounted(() => {
       </div>
     </aside>
 
-    <div class="transition-[padding] duration-200" :class="collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'">
+    <div class="relative transition-[padding] duration-200" :class="collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'">
       <header class="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-stone-200/70 bg-white/85 px-4 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/85 sm:px-6">
         <div class="flex min-w-0 items-center gap-2">
           <button class="rounded-lg p-2 text-stone-600 hover:bg-stone-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:hidden" aria-label="Abrir menu" @click="menuOpen = true"><Menu :size="20" /></button>
@@ -250,9 +280,18 @@ onMounted(() => {
         </div>
       </header>
 
-      <div v-if="success" class="mx-4 mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-medium text-emerald-800 backdrop-blur dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200 sm:mx-6">
-        <CheckCircle2 :size="16" class="shrink-0 text-emerald-500 dark:text-emerald-400" />
-        {{ success }}
+      <div v-if="toast" class="pointer-events-none fixed right-4 top-16 z-[60] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-1 rounded-2xl border bg-white/95 p-4 shadow-2xl backdrop-blur sm:right-6" :class="toast.tone === 'error' ? 'border-rose-200 shadow-rose-900/10 dark:border-rose-900/70 dark:bg-slate-900/95' : 'border-emerald-200 shadow-emerald-900/10 dark:border-emerald-900/70 dark:bg-slate-900/95'">
+        <div class="flex items-start gap-3">
+          <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl" :class="toast.tone === 'error' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-300'">
+            <AlertCircle v-if="toast.tone === 'error'" :size="17" />
+            <CheckCircle2 v-else :size="17" />
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-bold" :class="toast.tone === 'error' ? 'text-rose-900 dark:text-rose-100' : 'text-emerald-900 dark:text-emerald-100'">{{ toast.title }}</p>
+            <p v-if="toast.detail" class="mt-1 text-xs leading-snug text-stone-500 dark:text-slate-400">{{ toast.detail }}</p>
+          </div>
+          <button type="button" class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-slate-800" aria-label="Fechar notificacao" @click="dismissToast"><X :size="15" /></button>
+        </div>
       </div>
 
       <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">

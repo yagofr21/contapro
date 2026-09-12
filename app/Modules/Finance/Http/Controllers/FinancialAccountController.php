@@ -10,6 +10,8 @@ use App\Modules\Finance\Enums\FinancialAccountType;
 use App\Modules\Finance\Http\Requests\FinancialAccountRequest;
 use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Queries\AccountSummaryQuery;
+use App\Modules\Finance\Queries\BankOptionsQuery;
+use App\Modules\Finance\Queries\CreditCardSummaryQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,8 +23,18 @@ class FinancialAccountController extends Controller
     {
         $this->authorize('viewAny', FinancialAccount::class);
 
+        $creditCards = (new CreditCardSummaryQuery)->forUser($request->user());
+        $accounts = $query->forUser($request->user())
+            ->map(function (array $account) use ($creditCards): array {
+                if (isset($creditCards[$account['id']])) {
+                    $account['credit_card'] = $creditCards[$account['id']];
+                }
+
+                return $account;
+            });
+
         return Inertia::render('Accounts/Index', [
-            'accounts' => $query->forUser($request->user()),
+            'accounts' => $accounts,
             ...$this->formOptions(),
         ]);
     }
@@ -50,9 +62,14 @@ class FinancialAccountController extends Controller
             'account' => [
                 'id' => $account->id,
                 'name' => $account->name,
+                'bank' => $account->bank,
+                'color' => $account->color,
                 'type' => $account->type->value,
                 'currency' => $account->currency->value,
                 'initial_balance' => $account->initial_balance,
+                'credit_limit' => $account->credit_limit,
+                'credit_closing_day' => $account->credit_closing_day,
+                'credit_due_day' => $account->credit_due_day,
                 'is_archived' => $account->is_archived,
             ],
         ]);
@@ -94,6 +111,7 @@ class FinancialAccountController extends Controller
                 'value' => $currency->value,
                 'label' => $currency->value,
             ]),
+            'banks' => (new BankOptionsQuery)->active(),
         ];
     }
 }

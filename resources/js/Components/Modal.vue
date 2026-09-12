@@ -8,12 +8,14 @@ const props = withDefaults(
         maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
         title?: string;
         closeable?: boolean;
+        gradient?: boolean | 'brand' | 'green' | 'rose';
     }>(),
     {
         show: false,
         maxWidth: '2xl',
         title: '',
         closeable: true,
+        gradient: false,
     },
 );
 
@@ -55,6 +57,12 @@ const maxWidthClass = computed(() => {
         '2xl': 'sm:max-w-2xl',
     }[props.maxWidth];
 });
+
+const gradientTone = computed(() => {
+    if (props.gradient === 'green') return 'aurora-green';
+    if (props.gradient === 'rose') return 'aurora-rose';
+    return '';
+});
 </script>
 
 <template>
@@ -71,12 +79,19 @@ const maxWidthClass = computed(() => {
         <div class="fixed inset-0 bg-stone-900/40" @click="close" />
         <div class="relative flex min-h-full items-center justify-center p-4 sm:p-6">
           <div
-            class="relative w-full rounded-2xl bg-white shadow-2xl shadow-stone-900/10 ring-1 ring-stone-900/5 dark:bg-slate-900 dark:ring-white/5"
-            :class="maxWidthClass"
+            class="relative w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-stone-900/10 ring-1 ring-stone-900/5 dark:bg-slate-900 dark:ring-white/5"
+            :class="[maxWidthClass, gradientTone]"
           >
+            <template v-if="props.gradient">
+              <div class="aurora-surface pointer-events-none absolute inset-0" />
+              <div class="aurora-blob pointer-events-none aurora-blob-1" />
+              <div class="aurora-blob pointer-events-none aurora-blob-2" />
+              <div class="aurora-blob pointer-events-none aurora-blob-3" />
+            </template>
             <header
               v-if="title || closeable"
-              class="flex shrink-0 items-center justify-between gap-4 border-b border-stone-100 px-6 py-4 dark:border-slate-800 sm:px-8"
+              class="relative flex shrink-0 items-center justify-between gap-4 border-b border-stone-100 px-6 py-4 dark:border-slate-800 sm:px-8"
+              :class="props.gradient ? 'border-transparent bg-white/60 backdrop-blur dark:bg-slate-900/60' : ''"
             >
               <h2 v-if="title" class="text-lg font-bold tracking-tight">
                 {{ title }}
@@ -93,7 +108,7 @@ const maxWidthClass = computed(() => {
               </button>
             </header>
 
-            <div class="max-h-[calc(100dvh-3.5rem)] min-h-0 overflow-y-auto">
+            <div class="relative max-h-[calc(100dvh-3.5rem)] min-h-0 overflow-y-auto">
               <slot />
             </div>
           </div>

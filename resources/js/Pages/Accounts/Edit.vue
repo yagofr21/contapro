@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import type { BankOption } from '@/lib/banks';
 import type { Account, Option } from '@/types/finance';
 import { Head } from '@inertiajs/vue3';
 import AccountForm from './Partials/AccountForm.vue';
 
-defineProps<{ account: Account; types: Option[]; currencies: Option[] }>();
+defineProps<{ account: Account; types: Option[]; currencies: Option[]; banks: BankOption[] }>();
 </script>
 
 <template>
@@ -13,6 +14,6 @@ defineProps<{ account: Account; types: Option[]; currencies: Option[] }>();
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Contas</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Editar conta</h1>
     <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Atualize os dados sem perder o historico financeiro.</p>
-    <AccountForm :account="account" :types="types" :currencies="currencies" />
+    <AccountForm :account="account" :types="types" :currencies="currencies" :banks="banks" />
   </AuthenticatedLayout>
 </template>

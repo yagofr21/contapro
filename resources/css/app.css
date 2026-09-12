@@ -102,6 +102,134 @@ body {
     }
 }
 
+/* Fundo com gradiente + blobs desfocados (inspirado no login do Bispo PW,
+   adaptado aos tons brand do produto). */
+.aurora-surface {
+    background: linear-gradient(135deg, #eef7ff 0%, #ffffff 45%, #e6edff 100%);
+}
+
+.dark .aurora-surface {
+    background: linear-gradient(135deg, #0f172a 0%, #142857 45%, #0f172a 100%);
+}
+
+.aurora-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(70px);
+    opacity: 0.55;
+}
+
+.aurora-blob-1 {
+    width: 26rem;
+    height: 26rem;
+    top: -8rem;
+    right: -6rem;
+    background: #bce0ff;
+}
+
+.aurora-blob-2 {
+    width: 22rem;
+    height: 22rem;
+    bottom: -7rem;
+    left: -5rem;
+    background: #d9edff;
+}
+
+.aurora-blob-3 {
+    width: 16rem;
+    height: 16rem;
+    top: 50%;
+    left: 42%;
+    background: #8ecdff;
+}
+
+.dark .aurora-blob-1 {
+    background: #193f8f;
+    opacity: 0.35;
+}
+
+.dark .aurora-blob-2 {
+    background: #142857;
+    opacity: 0.45;
+}
+
+.dark .aurora-blob-3 {
+    background: #1458e1;
+    opacity: 0.3;
+}
+
+/* Variante esmeralda (receitas). */
+.aurora-green .aurora-surface {
+    background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 45%, #d1fae5 100%);
+}
+
+.dark .aurora-green .aurora-surface {
+    background: linear-gradient(135deg, #022c22 0%, #065f46 45%, #022c22 100%);
+}
+
+.aurora-green .aurora-blob-1 {
+    background: #a7f3d0;
+}
+
+.aurora-green .aurora-blob-2 {
+    background: #d1fae5;
+}
+
+.aurora-green .aurora-blob-3 {
+    background: #6ee7b7;
+}
+
+.dark .aurora-green .aurora-blob-1 {
+    background: #065f46;
+    opacity: 0.35;
+}
+
+.dark .aurora-green .aurora-blob-2 {
+    background: #022c22;
+    opacity: 0.45;
+}
+
+.dark .aurora-green .aurora-blob-3 {
+    background: #047857;
+    opacity: 0.3;
+}
+
+/* Variante rosa (despesas). */
+.aurora-rose .aurora-surface {
+    background: linear-gradient(135deg, #fff1f2 0%, #ffffff 45%, #ffe4e6 100%);
+}
+
+.dark .aurora-rose .aurora-surface {
+    background: linear-gradient(135deg, #4c0519 0%, #881337 45%, #4c0519 100%);
+}
+
+.aurora-rose .aurora-blob-1 {
+    background: #fecdd3;
+}
+
+.aurora-rose .aurora-blob-2 {
+    background: #ffe4e6;
+}
+
+.aurora-rose .aurora-blob-3 {
+    background: #fda4af;
+}
+
+.dark .aurora-rose .aurora-blob-1 {
+    background: #881337;
+    opacity: 0.35;
+}
+
+.dark .aurora-rose .aurora-blob-2 {
+    background: #4c0519;
+    opacity: 0.45;
+}
+
+.dark .aurora-rose .aurora-blob-3 {
+    background: #9f1239;
+    opacity: 0.3;
+}
+
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;

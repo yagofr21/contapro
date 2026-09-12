@@ -4,13 +4,17 @@ namespace App\Modules\Finance\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Finance\Actions\CreateInstallment;
 use App\Modules\Finance\Actions\CreateTransaction;
 use App\Modules\Finance\Actions\DeleteTransaction;
+use App\Modules\Finance\Actions\ProcessInstallments;
 use App\Modules\Finance\Actions\UpdateTransaction;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Http\Requests\TransactionRequest;
 use App\Modules\Finance\Models\Category;
+use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\Transaction;
+use App\Modules\Finance\Support\InstallmentMath;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,15 +73,57 @@ class TransactionController extends Controller
         return Inertia::render('Transactions/Create', $this->formOptions($request));
     }
 
-    public function store(TransactionRequest $request, CreateTransaction $action): RedirectResponse
+    public function store(TransactionRequest $request, CreateTransaction $action, CreateInstallment $createInstallment, ProcessInstallments $processInstallments): RedirectResponse
     {
-        $action->handle($request->user(), $request->validated());
+        if ($this->isInstallmentPurchase($request)) {
+            $totalAmount = $request->string('amount')->toString();
+            $totalCount = (int) $request->input('total_count');
 
-        $success = 'Lancamento criado com sucesso.';
+            $createInstallment->handle($request->user(), [
+                'type' => 'expense',
+                'account_id' => $request->integer('account_id'),
+                'category_id' => $request->integer('category_id') !== 0 ? $request->integer('category_id') : null,
+                'total_amount' => $totalAmount,
+                'total_count' => $totalCount,
+                'starts_on' => $request->string('first_installment_date')->toString(),
+                'description' => $request->input('description'),
+            ]);
+
+            $parcela = InstallmentMath::centsToAmount(
+                InstallmentMath::split(InstallmentMath::amountToCents($totalAmount), $totalCount)['base'],
+            );
+
+            $processInstallments->handle();
+
+            $success = 'Compra parcelada lancada com sucesso.';
+            $detail = sprintf(
+                '%s em %d parcelas de R$ %s realizadas no cartao.',
+                $this->formatCurrency($totalAmount),
+                $totalCount,
+                $this->formatCurrency($parcela),
+            );
+        } else {
+            $created = $action->handle($request->user(), $request->validated());
+
+            [$success, $detail] = match (true) {
+                $created->transfer_id !== null => [
+                    'Transferencia realizada com sucesso.',
+                    sprintf('R$ %s movimentados entre contas.', $this->formatCurrency((string) $created->amount)),
+                ],
+                $created->type === TransactionType::Income => [
+                    'Receita lancada com sucesso.',
+                    sprintf('R$ %s adicionados a conta.', $this->formatCurrency((string) $created->amount)),
+                ],
+                default => [
+                    'Despesa lancada com sucesso.',
+                    sprintf('R$ %s registrados na conta.', $this->formatCurrency((string) $created->amount)),
+                ],
+            };
+        }
 
         return $request->boolean('from_dashboard')
-            ? to_route('dashboard')->with('success', $success)
-            : to_route('transactions.index')->with('success', $success);
+            ? to_route('dashboard')->with('success', $success)->with('detail', $detail)
+            : to_route('transactions.index')->with('success', $success)->with('detail', $detail);
     }
 
     public function edit(Request $request, Transaction $transaction): Response
@@ -112,7 +158,13 @@ class TransactionController extends Controller
             'accounts' => $request->user()->financialAccounts()
                 ->where('is_archived', false)
                 ->orderBy('name')
-                ->get(['id', 'name', 'currency']),
+                ->get(['id', 'name', 'currency', 'type'])
+                ->map(fn (FinancialAccount $account): array => [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'currency' => $account->currency->value,
+                    'type' => $account->type->value,
+                ]),
             'categories' => $request->user()->categories()
                 ->orderBy('name')
                 ->get(['id', 'name', 'type', 'color'])
@@ -155,8 +207,7 @@ class TransactionController extends Controller
         ];
     }
 
-    /**
-     * @param  LengthAwarePaginator<int, array<string, mixed>>  $paginator
+    /** @param  LengthAwarePaginator<int, array<string, mixed>>  $paginator
      */
     private function hydrateDestinations(User $user, LengthAwarePaginator $paginator): void
     {
@@ -187,5 +238,15 @@ class TransactionController extends Controller
 
         /** @var Collection<int, array<string, mixed>> $items */
         $paginator->setCollection($items);
+    }
+
+    private function isInstallmentPurchase(TransactionRequest $request): bool
+    {
+        return $request->boolean('install_in') && $request->string('type')->toString() === 'expense';
+    }
+
+    private function formatCurrency(string $amount): string
+    {
+        return number_format((float) $amount, 2, ',', '.');
     }
 }

@@ -70,10 +70,10 @@ class DemoDataSeeder extends Seeder
     private function accounts(User $user): array
     {
         $rows = [
-            ['name' => 'Conta principal', 'type' => FinancialAccountType::Checking, 'currency' => Currency::BRL, 'initial_balance' => '2500.0000'],
-            ['name' => 'Poupanca', 'type' => FinancialAccountType::Savings, 'currency' => Currency::BRL, 'initial_balance' => '8000.0000'],
-            ['name' => 'Cartao de credito', 'type' => FinancialAccountType::CreditCard, 'currency' => Currency::BRL, 'initial_balance' => '0.0000'],
-            ['name' => 'Conta em dolar', 'type' => FinancialAccountType::Checking, 'currency' => Currency::USD, 'initial_balance' => '0.0000'],
+            ['name' => 'Conta principal', 'type' => FinancialAccountType::Checking, 'currency' => Currency::BRL, 'initial_balance' => '2500.0000', 'bank' => 'nubank', 'color' => '#820AD1'],
+            ['name' => 'Poupanca', 'type' => FinancialAccountType::Savings, 'currency' => Currency::BRL, 'initial_balance' => '8000.0000', 'bank' => 'itau', 'color' => '#EC7001'],
+            ['name' => 'Cartao de credito', 'type' => FinancialAccountType::CreditCard, 'currency' => Currency::BRL, 'initial_balance' => '0.0000', 'credit_limit' => '8000.0000', 'credit_closing_day' => 15, 'credit_due_day' => 22, 'bank' => 'nubank', 'color' => '#820AD1'],
+            ['name' => 'Conta em dolar', 'type' => FinancialAccountType::Checking, 'currency' => Currency::USD, 'initial_balance' => '0.0000', 'bank' => 'inter', 'color' => '#FF7A00'],
         ];
 
         $accounts = [];
@@ -222,6 +222,7 @@ class DemoDataSeeder extends Seeder
             'category_id' => $categories['Compras']->id,
             'type' => TransactionType::Expense,
             'amount' => '349.9000',
+            'total_amount' => '4198.8000',
             'total_count' => 12,
             'remaining_count' => 7,
             'next_due_date' => now()->toDateString(),

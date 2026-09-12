@@ -5,6 +5,7 @@ use App\Http\Controllers\ReadinessController;
 use App\Modules\Dashboard\Http\Controllers\DashboardController;
 use App\Modules\Dashboard\Http\Controllers\ReportController;
 use App\Modules\Finance\Http\Controllers\AgendaController;
+use App\Modules\Finance\Http\Controllers\BankController;
 use App\Modules\Finance\Http\Controllers\BudgetController;
 use App\Modules\Finance\Http\Controllers\CategoryController;
 use App\Modules\Finance\Http\Controllers\ExpectedIncomeController;
@@ -54,6 +55,7 @@ Route::middleware('auth')->group(function () {
         ->name('reconciliations.confirm');
     Route::delete('/reconciliations/{reconciliation}', [ReconciliationController::class, 'destroy'])->name('reconciliations.destroy');
     Route::resource('accounts', FinancialAccountController::class)->except('show');
+    Route::resource('banks', BankController::class)->except('show');
     Route::resource('categories', CategoryController::class);
     Route::resource('budgets', BudgetController::class)->except('show');
     Route::resource('goals', FinancialGoalController::class)->except('show');

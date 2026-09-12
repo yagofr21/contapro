@@ -23,9 +23,12 @@ use Illuminate\Support\Carbon;
  * @property numeric-string $amount
  * @property Carbon $transaction_date
  * @property string|null $description
+ * @property bool $is_transfer
+ * @property int|null $installment_id
  * @property Transaction|null $transferCounterpart
+ * @property Installment|null $installment
  */
-#[Fillable(['user_id', 'account_id', 'category_id', 'transfer_id', 'type', 'amount', 'transaction_date', 'description'])]
+#[Fillable(['user_id', 'account_id', 'category_id', 'transfer_id', 'installment_id', 'type', 'amount', 'transaction_date', 'description'])]
 #[UseFactory(TransactionFactory::class)]
 class Transaction extends Model
 {
@@ -48,6 +51,12 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class)->withTrashed();
+    }
+
+    /** @return BelongsTo<Installment, $this> */
+    public function installment(): BelongsTo
+    {
+        return $this->belongsTo(Installment::class, 'installment_id');
     }
 
     /** @return HasOne<Transaction, $this> */

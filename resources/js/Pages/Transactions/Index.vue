@@ -23,15 +23,24 @@ const props = defineProps<{
 
 const modalOpen = ref(false);
 const editing = ref<Transaction | null>(null);
+const modalTone = ref<false | 'brand' | 'green' | 'rose'>(false);
 
 const openCreate = () => {
     editing.value = null;
+    modalTone.value = 'rose';
     modalOpen.value = true;
 };
 
 const openEdit = (transaction: Transaction) => {
     editing.value = transaction;
+    modalTone.value = transaction.is_transfer ? 'brand' : transaction.type === 'income' ? 'green' : 'rose';
     modalOpen.value = true;
+};
+
+const onTypeChange = (type: string) => {
+    if (!editing.value) {
+        modalTone.value = type === 'income' ? 'green' : type === 'transfer' ? 'brand' : 'rose';
+    }
 };
 
 const closeModal = () => {
@@ -128,8 +137,8 @@ const typePresentation = (transaction: Transaction) => {
       <Link v-for="link in transactions.links" :key="link.label" :href="link.url ?? '#'" class="min-w-9 rounded-lg px-3 py-2 text-center text-xs font-semibold" :class="link.active ? 'bg-brand-600 text-white' : link.url ? 'bg-white text-stone-600 hover:bg-stone-100 dark:bg-slate-900 dark:text-slate-300' : 'pointer-events-none text-stone-300'" preserve-state>{{ paginationLabel(link.label) }}</Link>
     </nav>
 
-    <Modal :show="modalOpen" max-width="2xl" :title="editing ? 'Editar lancamento' : 'Novo lancamento'" @close="closeModal">
-      <TransactionForm v-if="modalOpen" :transaction="editing ?? undefined" :accounts="accounts" :categories="categories" @cancel="closeModal" />
+    <Modal :show="modalOpen" max-width="2xl" :gradient="modalTone" :title="editing ? 'Editar lancamento' : 'Novo lancamento'" @close="closeModal">
+      <TransactionForm v-if="modalOpen" :transaction="editing ?? undefined" :accounts="accounts" :categories="categories" @cancel="closeModal" @type-change="onTypeChange" />
     </Modal>
   </AuthenticatedLayout>
 </template>

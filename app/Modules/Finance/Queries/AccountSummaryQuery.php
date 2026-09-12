@@ -10,19 +10,11 @@ use Illuminate\Support\Collection;
 class AccountSummaryQuery
 {
     /**
-     * @return Collection<int, array{
-     *     id: int,
-     *     name: string,
-     *     type: 'cash'|'checking'|'credit_card'|'investment'|'savings',
-     *     currency: 'BRL'|'EUR'|'USD',
-     *     initial_balance: numeric-string,
-     *     balance: numeric-string,
-     *     is_archived: bool
-     * }>
+     * @return Collection<int, array<string, mixed>>
      */
     public function forUser(User $user): Collection
     {
-        return $user->financialAccounts()
+        $rows = $user->financialAccounts()
             ->withSum([
                 'transactions as credits' => fn ($query) => $query->whereIn('type', [
                     TransactionType::Income->value,
@@ -41,15 +33,24 @@ class AccountSummaryQuery
             ->map(fn (FinancialAccount $account): array => [
                 'id' => $account->id,
                 'name' => $account->name,
+                'bank' => $account->bank,
+                'color' => $account->color,
                 'type' => $account->type->value,
                 'currency' => $account->currency->value,
                 'initial_balance' => $account->initial_balance,
+                'credit_limit' => $account->credit_limit,
+                'credit_closing_day' => $account->credit_closing_day,
+                'credit_due_day' => $account->credit_due_day,
                 'balance' => bcsub(
                     bcadd((string) $account->initial_balance, (string) ($account->credits ?? 0), 4),
                     (string) ($account->debits ?? 0),
                     4,
                 ),
                 'is_archived' => $account->is_archived,
-            ]);
+            ])
+            ->all();
+
+        /** @var Collection<int, array<string, mixed>> */
+        return new Collection($rows);
     }
 }
