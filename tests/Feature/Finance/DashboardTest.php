@@ -3,6 +3,7 @@
 namespace Tests\Feature\Finance;
 
 use App\Models\User;
+use App\Modules\Finance\Enums\FinancialAccountType;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\Budget;
 use App\Modules\Finance\Models\ExpectedIncome;
@@ -52,6 +53,80 @@ class DashboardTest extends TestCase
                 ->where('financialSummaries.0.expenses', '125.0000')
                 ->where('financialSummaries.0.net', '375.0000')
                 ->has('recentTransactions', 2));
+    }
+
+    public function test_dashboard_separates_available_balance_card_debt_and_net_worth(): void
+    {
+        Carbon::setTestNow('2026-09-10 10:00:00');
+
+        try {
+            $user = User::factory()->create();
+            $checking = FinancialAccount::factory()->for($user)->create([
+                'type' => FinancialAccountType::Checking,
+                'currency' => 'BRL',
+                'initial_balance' => '1000.0000',
+            ]);
+            $investmentAccount = FinancialAccount::factory()->for($user)->create([
+                'type' => FinancialAccountType::Investment,
+                'currency' => 'BRL',
+                'initial_balance' => '300.0000',
+            ]);
+            $card = FinancialAccount::factory()->for($user)->creditCard()->create([
+                'currency' => 'BRL',
+                'initial_balance' => '-100.0000',
+            ]);
+            Transaction::factory()->for($user)->for($checking, 'account')->create([
+                'type' => TransactionType::Income,
+                'amount' => '200.0000',
+                'transaction_date' => '2026-09-09',
+            ]);
+            Transaction::factory()->for($user)->for($card, 'account')->create([
+                'type' => TransactionType::Expense,
+                'amount' => '250.0000',
+                'transaction_date' => '2026-09-10',
+            ]);
+
+            $this->actingAs($user)
+                ->get(route('dashboard'))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->where('financialSummaries.0.available_balance', '1200.0000')
+                    ->where('financialSummaries.0.investments', '300.0000')
+                    ->where('financialSummaries.0.current_invoices', '250.0000')
+                    ->where('financialSummaries.0.credit_card_debt', '350.0000')
+                    ->where('financialSummaries.0.net_worth', '1150.0000')
+                    ->where('creditCards.0.current_invoice', '250.0000')
+                    ->where('creditCards.0.overdue_balance', '100.0000'));
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_dashboard_includes_pending_expected_income_in_planned_income(): void
+    {
+        Carbon::setTestNow('2026-09-16 10:00:00');
+
+        try {
+            $user = User::factory()->create();
+            $account = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+            ExpectedIncome::factory()->for($user)->create([
+                'account_id' => $account->id,
+                'currency' => 'BRL',
+                'amount' => '250.0000',
+                'expected_date' => '2026-09-20',
+                'received_at' => null,
+            ]);
+
+            $this->actingAs($user)
+                ->get(route('dashboard'))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->where('financialSummaries.0.planned_income', '250.0000')
+                    ->where('financialSummaries.0.planned_net', '250.0000')
+                    ->where('nextEvents.0.kind', 'expected_income'));
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_dashboard_separates_realized_and_planned_month_values(): void

@@ -4,19 +4,32 @@ export type Option = {
 };
 
 export type CreditCardInfo = {
+    id: number;
+    name: string;
+    currency: string;
     has_limit: boolean;
     credit_limit: string | null;
     utilized: string | null;
     available: string | null;
     over_limit: boolean;
     utilization: number | null;
+    initial_debt: string;
+    overdue_balance: string;
     current_invoice: string;
     future_invoices: string;
+    total_debt: string;
+    credit_balance: string;
     current_invoice_start: string;
     current_invoice_end: string;
     next_closing: string;
     next_due: string;
+    status: 'open' | 'closing_soon' | 'due_soon' | 'overdue';
     future_by_month: { month: string; amount: string }[];
+    current_purchases?: { date: string; description: string; amount: string; remaining: string }[];
+    current_refunds?: { date: string; description: string; amount: string; remaining: string }[];
+    future_installments?: { date: string; description: string; amount: string; remaining: string; cycle_end: string; due_date: string }[];
+    payments?: { date: string; amount: string; description: string | null }[];
+    history?: { cycle: string; due_date: string; amount: string }[];
 };
 
 export type Account = {

@@ -63,6 +63,103 @@ class CreditCardTest extends TestCase
         $this->assertSame(24, $summary['utilization']);
     }
 
+    public function test_card_without_movements_has_zero_debt_and_full_available_limit(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->card($user);
+
+        $summary = (new CreditCardSummaryQuery)->forAccount($card, CarbonImmutable::parse('2026-09-10'));
+
+        $this->assertSame('0.0000', $summary['overdue_balance']);
+        $this->assertSame('0.0000', $summary['current_invoice']);
+        $this->assertSame('0.0000', $summary['future_invoices']);
+        $this->assertSame('0.0000', $summary['total_debt']);
+        $this->assertSame('5000.0000', $summary['available']);
+    }
+
+    public function test_initial_card_debt_is_preserved_as_overdue_balance(): void
+    {
+        $user = User::factory()->create();
+        $card = FinancialAccount::factory()->for($user)->creditCard()->create(['initial_balance' => '-450.0000']);
+
+        $summary = (new CreditCardSummaryQuery)->forAccount($card, CarbonImmutable::parse('2026-09-10'));
+
+        $this->assertSame('450.0000', $summary['initial_debt']);
+        $this->assertSame('450.0000', $summary['overdue_balance']);
+        $this->assertSame('450.0000', $summary['total_debt']);
+        $this->assertSame('4550.0000', $summary['available']);
+    }
+
+    public function test_purchase_before_and_after_closing_go_to_correct_cycles(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->card($user);
+
+        $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '100.0000', 'transaction_date' => '2026-09-15']);
+        $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '200.0000', 'transaction_date' => '2026-09-16']);
+
+        $summary = (new CreditCardSummaryQuery)->forAccount($card, CarbonImmutable::parse('2026-09-15'));
+
+        $this->assertSame('100.0000', $summary['current_invoice']);
+        $this->assertSame('200.0000', $summary['future_invoices']);
+        $this->assertSame('300.0000', $summary['total_debt']);
+    }
+
+    public function test_payment_total_partial_excess_and_refund_reduce_card_debt(): void
+    {
+        $user = User::factory()->create();
+        $checking = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $card = $this->card($user);
+
+        $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '500.0000', 'transaction_date' => '2026-09-10']);
+        $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Income, 'amount' => '50.0000', 'transaction_date' => '2026-09-11']);
+
+        $this->actingAs($user)->post(route('accounts.pay-card', $card), [
+            'account_id' => $checking->id,
+            'amount' => '200.0000',
+            'transaction_date' => '2026-09-12',
+            'description' => 'Parcial',
+        ])->assertRedirect();
+
+        $partial = (new CreditCardSummaryQuery)->forAccount($card, CarbonImmutable::parse('2026-09-12'));
+        $this->assertSame('250.0000', $partial['current_invoice']);
+        $this->assertSame('250.0000', $partial['total_debt']);
+
+        $this->actingAs($user)->post(route('accounts.pay-card', $card), [
+            'account_id' => $checking->id,
+            'amount' => '300.0000',
+            'transaction_date' => '2026-09-13',
+            'description' => 'Excedente',
+        ])->assertRedirect();
+
+        $excess = (new CreditCardSummaryQuery)->forAccount($card->fresh(), CarbonImmutable::parse('2026-09-13'));
+        $this->assertSame('0.0000', $excess['current_invoice']);
+        $this->assertSame('0.0000', $excess['total_debt']);
+        $this->assertSame('50.0000', $excess['credit_balance']);
+        $this->assertSame('5000.0000', $excess['available']);
+        $this->assertSame(2, Transaction::query()->where('account_id', $card->id)->where('type', TransactionType::TransferIn)->count());
+    }
+
+    public function test_cycle_turns_year_and_keeps_user_and_currency_isolation(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $brl = $this->card($user);
+        $usd = FinancialAccount::factory()->for($user)->creditCard()->create(['currency' => 'USD']);
+        $otherCard = $this->card($other);
+
+        $brl->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '100.0000', 'transaction_date' => '2026-12-16']);
+        $usd->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '25.0000', 'transaction_date' => '2026-12-16']);
+        $otherCard->transactions()->create(['user_id' => $other->id, 'type' => TransactionType::Expense, 'amount' => '999.0000', 'transaction_date' => '2026-12-16']);
+
+        $cards = (new CreditCardSummaryQuery)->forUser($user, CarbonImmutable::parse('2027-01-02'));
+
+        $this->assertCount(2, $cards);
+        $this->assertSame('100.0000', $cards[$brl->id]['current_invoice']);
+        $this->assertSame('25.0000', $cards[$usd->id]['current_invoice']);
+        $this->assertSame('2027-01-15', $cards[$brl->id]['current_invoice_end']);
+    }
+
     public function test_installment_rounding_keeps_total_and_no_double_counting(): void
     {
         $split = InstallmentMath::split(100_000, 3);

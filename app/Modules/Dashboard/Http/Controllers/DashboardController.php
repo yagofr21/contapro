@@ -5,10 +5,12 @@ namespace App\Modules\Dashboard\Http\Controllers;
 use App\Enums\Currency;
 use App\Http\Controllers\Controller;
 use App\Modules\Dashboard\Queries\DashboardAttentionQuery;
+use App\Modules\Finance\Enums\FinancialAccountType;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Queries\AccountSummaryQuery;
+use App\Modules\Finance\Queries\AgendaProjectionQuery;
 use App\Modules\Finance\Queries\BankOptionsQuery;
 use App\Modules\Finance\Queries\CreditCardSummaryQuery;
 use App\Modules\Finance\Queries\ExpectedIncomeQuery;
@@ -29,6 +31,7 @@ class DashboardController extends Controller
         $today = now($user->timezone ?? config('app.timezone'));
         $monthStart = $today->copy()->startOfMonth()->toDateString();
         $monthEnd = $today->copy()->endOfMonth()->toDateString();
+        $investments = $portfolioValuation->forUser($user)['summaries'];
         $monthTransactions = $user->transactions()
             ->with(['account:id,currency', 'category:id,name,color'])
             ->whereDate('transaction_date', '>=', $monthStart)
@@ -50,8 +53,23 @@ class DashboardController extends Controller
 
                 return $account;
             });
-        $financialSummaries = collect(Currency::cases())->map(function (Currency $currency) use ($accounts, $realizedMonthTransactions, $plannedMonthTransactions): array {
+        $expectedIncomeByCurrency = $user->expectedIncomes()
+            ->whereNull('received_at')
+            ->whereDate('expected_date', '>=', $today->toDateString())
+            ->whereDate('expected_date', '<=', $monthEnd)
+            ->get(['currency', 'amount'])
+            ->groupBy(fn ($income): string => $income->currency->value)
+            ->map(fn ($rows): string => $rows->reduce(fn (string $total, $income): string => bcadd($total, (string) $income->amount, 4), '0.0000'));
+
+        $financialSummaries = collect(Currency::cases())->map(function (Currency $currency) use ($accounts, $realizedMonthTransactions, $plannedMonthTransactions, $expectedIncomeByCurrency, $investments): array {
             $currencyAccounts = $accounts->where('currency', $currency->value);
+            $availableAccounts = $currencyAccounts->whereIn('type', [
+                FinancialAccountType::Cash->value,
+                FinancialAccountType::Checking->value,
+                FinancialAccountType::Savings->value,
+            ]);
+            $investmentAccounts = $currencyAccounts->where('type', FinancialAccountType::Investment->value);
+            $cardAccounts = $currencyAccounts->where('type', FinancialAccountType::CreditCard->value);
             $currencyTransactions = $realizedMonthTransactions->filter(
                 fn (Transaction $transaction): bool => $transaction->account->currency === $currency,
             );
@@ -64,8 +82,27 @@ class DashboardController extends Controller
                 ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
             $plannedIncome = $plannedCurrencyTransactions->where('type', TransactionType::Income)
                 ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
+            $plannedIncome = bcadd($plannedIncome, $expectedIncomeByCurrency[$currency->value] ?? '0.0000', 4);
             $plannedExpenses = $plannedCurrencyTransactions->where('type', TransactionType::Expense)
                 ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
+            $availableBalance = $availableAccounts->reduce(
+                fn (string $total, array $account): string => bcadd($total, (string) $account['balance'], 4),
+                '0.0000',
+            );
+            $investmentAccountsBalance = $investmentAccounts->reduce(
+                fn (string $total, array $account): string => bcadd($total, (string) $account['balance'], 4),
+                '0.0000',
+            );
+            $portfolioInvestments = collect($investments)->firstWhere('currency', $currency->value)['current_value'] ?? '0.0000';
+            $investmentTotal = bcadd($investmentAccountsBalance, $portfolioInvestments, 4);
+            $currentInvoices = $cardAccounts->reduce(
+                fn (string $total, array $account): string => bcadd($total, (string) ($account['credit_card']['current_invoice'] ?? '0.0000'), 4),
+                '0.0000',
+            );
+            $creditCardDebt = $cardAccounts->reduce(
+                fn (string $total, array $account): string => bcadd($total, (string) ($account['credit_card']['total_debt'] ?? '0.0000'), 4),
+                '0.0000',
+            );
 
             return [
                 'currency' => $currency->value,
@@ -73,6 +110,11 @@ class DashboardController extends Controller
                     fn (string $total, array $account): string => bcadd($total, (string) $account['balance'], 4),
                     '0.0000',
                 ),
+                'available_balance' => $availableBalance,
+                'investments' => $investmentTotal,
+                'current_invoices' => $currentInvoices,
+                'credit_card_debt' => $creditCardDebt,
+                'net_worth' => bcsub(bcadd($availableBalance, $investmentTotal, 4), $creditCardDebt, 4),
                 'income' => $income,
                 'expenses' => $expenses,
                 'net' => bcsub($income, $expenses, 4),
@@ -115,6 +157,7 @@ class DashboardController extends Controller
         $recent = $user->transactions()
             ->with(['account:id,name,currency', 'category:id,name,color'])
             ->where('type', '!=', TransactionType::TransferIn->value)
+            ->whereDate('transaction_date', '<=', $today->toDateString())
             ->latest('transaction_date')
             ->latest('id')
             ->limit(6)
@@ -131,8 +174,10 @@ class DashboardController extends Controller
                 'color' => $transaction->category?->color,
             ]);
 
-        $investments = $portfolioValuation->forUser($user)['summaries'];
-        $attention = (new DashboardAttentionQuery)->forUser($user, $investments);
+        $attention = (new DashboardAttentionQuery)->forUser($user, $investments, $creditCards->values()->all());
+        $nextEvents = (new AgendaProjectionQuery)->forUser($user, 45)['events']
+            ->take(8)
+            ->values();
 
         $categoryExpenses = $realizedMonthTransactions
             ->where('type', TransactionType::Expense)
@@ -160,8 +205,13 @@ class DashboardController extends Controller
             'investments' => $investments,
             'attention' => $attention,
             'accounts' => $accounts,
+            'creditCards' => $creditCards->values()->sortBy(fn (array $card): array => [
+                ['overdue' => 0, 'due_soon' => 1, 'closing_soon' => 2, 'open' => 3][$card['status']] ?? 4,
+                -((float) $card['current_invoice']),
+            ])->values(),
             'banks' => (new BankOptionsQuery)->active(),
             'recentTransactions' => $recent,
+            'nextEvents' => $nextEvents,
             'categoryExpenses' => $categoryExpenses,
             'categories' => $user->categories()
                 ->orderBy('name')

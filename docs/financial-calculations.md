@@ -31,6 +31,51 @@ Toda operação valida moedas iguais.
 
 `saldo = saldo_inicial + Σ(income) + Σ(transfer_in) − Σ(expense) − Σ(transfer_out)`
 
+Para cartões de crédito, esse saldo contábil não é usado como informação principal de
+decisão. A camada de domínio interpreta `initial_balance` de cartão como **dívida
+inicial cadastrada** usando o valor absoluto, preservando compatibilidade com bases em
+que a dívida tenha sido digitada positiva ou negativa. Nenhum valor financeiro existente
+é alterado automaticamente.
+
+### Cartão de crédito
+
+Cada compra ou parcela pertence a um único ciclo, definido pelo dia de fechamento do
+cartão. Compras feitas após o fechamento entram no próximo ciclo. O vencimento é
+calculado pelo dia de vencimento configurado e, quando esse dia cai antes ou no mesmo
+dia do fechamento, é movido para o mês seguinte.
+
+Pagamentos de fatura são transferências para o cartão (`transfer_in`) e não são despesas.
+Eles são alocados do ciclo mais antigo para o mais novo:
+
+```text
+saldo vencido = obrigações de ciclos anteriores ainda não pagas
+fatura atual = obrigações do ciclo aberto ainda não pagas
+compromissos futuros = obrigações de ciclos posteriores ainda não pagas
+dívida total do cartão = saldo vencido + fatura atual + compromissos futuros
+limite utilizado = dívida total do cartão
+limite disponível = max(0, limite total - limite utilizado)
+```
+
+Estornos são lançamentos de receita no cartão e reduzem a obrigação antes da alocação de
+pagamentos. Pagamentos ou estornos excedentes geram saldo credor; o limite disponível
+nunca passa do limite total.
+
+### Dashboard financeiro
+
+O topo do dashboard separa ativos e dívidas por moeda, sem conversão cambial:
+
+```text
+saldo disponível = dinheiro + conta corrente + poupança
+investimentos = contas de investimento + valor atual das carteiras
+faturas atuais = soma das faturas abertas dos cartões
+dívida total dos cartões = soma da dívida total dos cartões
+patrimônio líquido financeiro = saldo disponível + investimentos - dívida total dos cartões
+```
+
+Receitas e despesas realizadas usam apenas lançamentos até hoje. Receitas previstas
+somam lançamentos futuros de receita no mês e receitas futuras pendentes com data dentro
+do mês selecionado.
+
 ### Custo médio de ativos (Fase 3)
 
 Custo médio ponderado por quantidade mantida (json):

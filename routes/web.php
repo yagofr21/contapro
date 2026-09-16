@@ -54,7 +54,8 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:10,1')
         ->name('reconciliations.confirm');
     Route::delete('/reconciliations/{reconciliation}', [ReconciliationController::class, 'destroy'])->name('reconciliations.destroy');
-    Route::resource('accounts', FinancialAccountController::class)->except('show');
+    Route::post('accounts/{account}/pay-card', [FinancialAccountController::class, 'payCard'])->name('accounts.pay-card');
+    Route::resource('accounts', FinancialAccountController::class);
     Route::resource('banks', BankController::class)->except('show');
     Route::resource('categories', CategoryController::class);
     Route::resource('budgets', BudgetController::class)->except('show');
