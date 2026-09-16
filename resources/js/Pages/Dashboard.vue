@@ -17,7 +17,7 @@ import TransactionForm from './Transactions/Partials/TransactionForm.vue';
 
 use([CanvasRenderer, BarChart, PieChart, TooltipComponent, LegendComponent, GridComponent]);
 
-type Summary = { currency: string; balance: string; income: string; expenses: string; net: string };
+type Summary = { currency: string; balance: string; income: string; expenses: string; net: string; planned_income: string; planned_expenses: string; planned_net: string };
 type MonthlyTrend = { currency: string; months: { month: string; income: string; expenses: string }[] };
 type InvestmentSummary = { currency: string; cost: string; current_value: string; market_return: string; market_return_percentage: string; realized_profit_loss: string; net_income: string; total_return: string; unpriced_holdings: number; price_date: string | null };
 type RecentTransaction = { id: number; description: string; type: string; amount: string; currency: string; date: string; account: string; category: string | null; color: string | null };
@@ -78,7 +78,7 @@ const receiveIncome = (income: ExpectedIncome) => router.post(route('expected-in
     onStart: () => receiving.value = income.id,
     onFinish: () => receiving.value = null,
 });
-const summary = computed(() => props.financialSummaries.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, balance: '0', income: '0', expenses: '0', net: '0' });
+const summary = computed(() => props.financialSummaries.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, balance: '0', income: '0', expenses: '0', net: '0', planned_income: '0', planned_expenses: '0', planned_net: '0' });
 const investment = computed(() => props.investments.find((item) => item.currency === selectedCurrency.value));
 const selectedCategoryExpenses = computed(() => props.categoryExpenses.filter((item) => item.currency === selectedCurrency.value));
 
@@ -126,10 +126,10 @@ const attentionItems = computed(() => {
         items.push({ key: 'due', count: props.attention.due_events, label: 'vencimentos de hoje', href: route('agenda.index'), icon: CalendarClock, pill: 'text-rose-700 ring-rose-200 hover:bg-rose-50 dark:text-rose-300 dark:ring-rose-900/60 dark:hover:bg-rose-950/40' });
     }
     if (props.attention.budgets_over_limit > 0) {
-        items.push({ key: 'budgets', count: props.attention.budgets_over_limit, label: 'orcamentos no limite', href: route('budgets.index'), icon: Gauge, pill: 'text-amber-700 ring-amber-200 hover:bg-amber-50 dark:text-amber-300 dark:ring-amber-900/60 dark:hover:bg-amber-950/40' });
+        items.push({ key: 'budgets', count: props.attention.budgets_over_limit, label: 'orçamentos no limite', href: route('budgets.index'), icon: Gauge, pill: 'text-amber-700 ring-amber-200 hover:bg-amber-50 dark:text-amber-300 dark:ring-amber-900/60 dark:hover:bg-amber-950/40' });
     }
     if (props.attention.unpriced_holdings > 0) {
-        items.push({ key: 'prices', count: props.attention.unpriced_holdings, label: 'posicoes sem cotacao', href: route('assets.index'), icon: CandlestickChart, pill: 'text-amber-700 ring-amber-200 hover:bg-amber-50 dark:text-amber-300 dark:ring-amber-900/60 dark:hover:bg-amber-950/40' });
+        items.push({ key: 'prices', count: props.attention.unpriced_holdings, label: 'posições sem cotação', href: route('assets.index'), icon: CandlestickChart, pill: 'text-amber-700 ring-amber-200 hover:bg-amber-50 dark:text-amber-300 dark:ring-amber-900/60 dark:hover:bg-amber-950/40' });
     }
     return items;
 });
@@ -145,19 +145,19 @@ const greeting = computed(() => {
 </script>
 
 <template>
-  <Head title="Visao geral" />
+  <Head title="Visão geral" />
   <AuthenticatedLayout>
     <section class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">{{ greeting }}, {{ user?.split(' ')[0] }}</p>
-          <h1 class="mt-1 text-xl font-bold text-stone-900 dark:text-white">Visao geral</h1>
+          <h1 class="mt-1 text-xl font-bold text-stone-900 dark:text-white">Visão geral</h1>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <div class="flex gap-1 rounded-full bg-stone-100 p-1 dark:bg-slate-800">
             <button v-for="item in financialSummaries" :key="item.currency" type="button" class="rounded-full px-3 py-1.5 text-xs font-bold transition" :class="selectedCurrency === item.currency ? 'bg-white text-brand-700 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-stone-500 hover:text-stone-800 dark:text-slate-400 dark:hover:text-slate-200'" @click="selectedCurrency = item.currency">{{ item.currency }}</button>
           </div>
-          <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Lancamento</button>
+          <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Lançamento</button>
         </div>
       </div>
 
@@ -167,20 +167,20 @@ const greeting = computed(() => {
           <div class="relative">
             <p class="text-xs font-semibold uppercase tracking-wider text-brand-200">Saldo em contas</p>
             <p class="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">{{ formatMoney(summary.balance, selectedCurrency) }}</p>
-            <p class="mt-2 text-sm text-brand-200">Consolidado em todas as contas deste mes</p>
+            <p class="mt-2 text-sm text-brand-200">Consolidado em todas as contas deste mês</p>
           </div>
         </article>
         <article class="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:ring-emerald-900/60">
           <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300"><ArrowDownLeft :size="18" /></span>
-          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70">Receitas no mes</p><p class="mt-0.5 truncate text-lg font-bold text-emerald-700 dark:text-emerald-300">{{ formatMoney(summary.income, selectedCurrency) }}</p></div>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70">Receitas realizadas</p><p class="mt-0.5 truncate text-lg font-bold text-emerald-700 dark:text-emerald-300">{{ formatMoney(summary.income, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-emerald-700/70 dark:text-emerald-400/70">Previsto: {{ formatMoney(summary.planned_income, selectedCurrency) }}</p></div>
         </article>
         <article class="flex items-center gap-3 rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100 dark:bg-rose-950/40 dark:ring-rose-900/60">
           <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300"><ArrowUpRight :size="18" /></span>
-          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-rose-700/70 dark:text-rose-400/70">Despesas no mes</p><p class="mt-0.5 truncate text-lg font-bold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.expenses, selectedCurrency) }}</p></div>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-rose-700/70 dark:text-rose-400/70">Despesas realizadas</p><p class="mt-0.5 truncate text-lg font-bold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.expenses, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-rose-700/70 dark:text-rose-400/70">Previsto: {{ formatMoney(summary.planned_expenses, selectedCurrency) }}</p></div>
         </article>
         <article class="flex items-center gap-3 rounded-2xl bg-stone-50 p-4 ring-1 ring-stone-200 dark:bg-slate-800/60 dark:ring-slate-700/60">
           <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-stone-200 text-stone-700 dark:bg-slate-700 dark:text-slate-200"><TrendingUp :size="18" /></span>
-          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Resultado no mes</p><p class="mt-0.5 truncate text-lg font-bold" :class="Number(summary.net) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(summary.net, selectedCurrency) }}</p></div>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Resultado realizado</p><p class="mt-0.5 truncate text-lg font-bold" :class="Number(summary.net) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(summary.net, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-stone-500 dark:text-slate-400">Previsto: {{ formatMoney(summary.planned_net, selectedCurrency) }}</p></div>
         </article>
       </div>
     </section>
@@ -198,12 +198,12 @@ const greeting = computed(() => {
           <span>{{ item.label }}</span>
         </Link>
       </div>
-      <p v-else class="mt-1.5 text-xs text-emerald-600/80 dark:text-emerald-400/70">Nenhum vencimento, orcamento estourado ou posicao sem cotacao.</p>
+      <p v-else class="mt-1.5 text-xs text-emerald-600/80 dark:text-emerald-400/70">Nenhum vencimento, orçamento estourado ou posição sem cotação.</p>
     </section>
 
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <article class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
-        <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatorio</Link></header>
+        <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Últimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver relatório</Link></header>
         <VChart v-if="hasMonthlyData && isDesktop" class="mt-4 h-72" :option="monthlyChartOption" autoresize />
         <div v-else-if="hasMonthlyData" class="mt-4 space-y-3">
           <div v-for="month in selectedMonthlyTrend.months" :key="month.month" class="rounded-2xl bg-stone-50 px-3 py-2.5 dark:bg-slate-950">
@@ -222,7 +222,7 @@ const greeting = computed(() => {
             </div>
           </div>
         </div>
-        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Sem lancamentos nos ultimos 6 meses</div>
+        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-72">Sem lançamentos nos últimos 6 meses</div>
       </article>
 
       <article class="flex flex-col rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
@@ -232,7 +232,7 @@ const greeting = computed(() => {
             <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"><ArrowDownLeft :size="17" /></span>
             <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ income.description }}</p><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">previsto {{ formatDate(income.expected_date) }}</p></div>
             <p class="whitespace-nowrap text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ formatMoney(income.amount, income.currency) }}</p>
-            <button type="button" :disabled="receiving === income.id" class="shrink-0 rounded-xl px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" :class="receiving === income.id ? 'bg-stone-300 dark:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-700'" title="Marcar como recebido" @click="receiveIncome(income)"><CheckCircle2 :size="15" /></button>
+            <button type="button" :disabled="receiving === income.id" class="shrink-0 rounded-xl px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" :class="receiving === income.id ? 'bg-stone-300 dark:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-700'" title="Marcar como recebido" :aria-label="`Marcar ${income.description} como recebido`" @click="receiveIncome(income)"><CheckCircle2 :size="15" /></button>
           </div>
         </div>
         <div v-else class="grid flex-1 place-items-center py-8 text-center text-sm text-stone-400 dark:text-slate-500">Nenhuma receita prevista<br /><Link :href="route('expected-incomes.index')" class="mt-2 inline-flex items-center justify-center gap-2 rounded-xl border border-brand-200 px-4 py-2 text-xs font-semibold text-brand-700 dark:border-brand-800 dark:text-brand-300"><Plus :size="15" />Planejar entradas</Link></div>
@@ -242,7 +242,7 @@ const greeting = computed(() => {
 
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <article class="rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <header class="flex flex-wrap items-start justify-between gap-3 border-b border-stone-100 px-4 py-4 sm:px-5 dark:border-slate-800"><div><h2 class="font-semibold">Movimentacoes recentes</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Ultimos registros do fluxo de caixa</p></div><Link :href="route('transactions.index')" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver todas</Link></header>
+        <header class="flex flex-wrap items-start justify-between gap-3 border-b border-stone-100 px-4 py-4 sm:px-5 dark:border-slate-800"><div><h2 class="font-semibold">Movimentações recentes</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Últimos registros do fluxo de caixa</p></div><Link :href="route('transactions.index')" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Ver todas</Link></header>
         <div v-if="recentTransactions.length">
           <div v-for="transaction in recentTransactions" :key="transaction.id" class="flex items-center gap-3 border-b border-stone-100 px-4 py-3.5 transition last:border-0 hover:bg-stone-50/80 sm:px-5 sm:py-4 dark:border-slate-800 dark:hover:bg-slate-800/40">
             <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl ring-1 ring-black/5" :class="transaction.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : transaction.type === 'transfer_out' ? 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'"><ArrowDownLeft v-if="transaction.type === 'income'" :size="17" /><ArrowLeftRight v-else-if="transaction.type === 'transfer_out'" :size="17" /><ArrowUpRight v-else :size="17" /></span>
@@ -250,11 +250,11 @@ const greeting = computed(() => {
             <p class="whitespace-nowrap text-sm font-bold" :class="transaction.type === 'income' ? 'text-emerald-700 dark:text-emerald-400' : transaction.type === 'transfer_out' ? 'text-brand-700 dark:text-brand-300' : 'text-rose-600 dark:text-rose-400'">{{ transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : '' }}{{ formatMoney(transaction.amount, transaction.currency) }}</p>
           </div>
         </div>
-        <div v-else class="px-6 py-14 text-center text-sm text-stone-400 dark:text-slate-500">Seus primeiros lancamentos aparecerao aqui</div>
+        <div v-else class="px-6 py-14 text-center text-sm text-stone-400 dark:text-slate-500">Seus primeiros lançamentos aparecerão aqui</div>
       </article>
 
       <article class="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
-        <header><h2 class="font-semibold">Despesas por categoria</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Distribuicao no mes atual</p></header>
+        <header><h2 class="font-semibold">Despesas por categoria</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Distribuição no mês atual</p></header>
         <div v-if="sortedCategoryExpenses.length" class="mt-3">
           <VChart class="h-48 sm:h-56" :option="chartOption" autoresize />
           <ul class="mt-3 space-y-2.5 border-t border-stone-100 pt-3 dark:border-slate-800">
@@ -265,7 +265,7 @@ const greeting = computed(() => {
             </li>
           </ul>
         </div>
-        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-56">Categorize despesas para visualizar a distribuicao</div>
+        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-400 dark:text-slate-500 sm:h-56">Categorize despesas para visualizar a distribuição</div>
       </article>
     </section>
 
@@ -274,14 +274,14 @@ const greeting = computed(() => {
       <div class="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-400">Investimentos · {{ selectedCurrency }}</p>
-          <h2 class="mt-2 text-xl font-bold">Posicao consolidada</h2>
-          <p class="mt-1 text-sm text-slate-400">Valores atuais sem conversao entre moedas</p>
+          <h2 class="mt-2 text-xl font-bold">Posição consolidada</h2>
+          <p class="mt-1 text-sm text-slate-400">Valores atuais sem conversão entre moedas</p>
         </div>
-        <Link :href="route('reports.index', { currency: selectedCurrency })" class="rounded-xl px-3 py-1.5 text-xs font-semibold text-brand-400 ring-1 ring-brand-500/30 transition hover:bg-brand-500/10 hover:text-brand-300">Abrir relatorios</Link>
+        <Link :href="route('reports.index', { currency: selectedCurrency })" class="rounded-xl px-3 py-1.5 text-xs font-semibold text-brand-400 ring-1 ring-brand-500/30 transition hover:bg-brand-500/10 hover:text-brand-300">Abrir relatórios</Link>
       </div>
       <div v-if="investment" class="relative mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div
-          v-for="item in [{ label: 'Custo em aberto', value: investment.cost }, { label: 'Valor atual', value: investment.current_value }, { label: 'Nao realizado', value: investment.market_return }, { label: 'Realizado', value: investment.realized_profit_loss }, { label: 'Proventos liquidos', value: investment.net_income }, { label: 'Retorno total', value: investment.total_return }]"
+          v-for="item in [{ label: 'Custo em aberto', value: investment.cost }, { label: 'Valor atual', value: investment.current_value }, { label: 'Não realizado', value: investment.market_return }, { label: 'Realizado', value: investment.realized_profit_loss }, { label: 'Proventos líquidos', value: investment.net_income }, { label: 'Retorno total', value: investment.total_return }]"
           :key="item.label"
           class="rounded-2xl border border-white/5 bg-slate-900/80 p-4 transition hover:border-brand-500/30"
         >
@@ -290,11 +290,11 @@ const greeting = computed(() => {
         </div>
       </div>
       <p v-else class="relative mt-6 text-sm text-slate-400">Nenhuma carteira nesta moeda.</p>
-      <p v-if="investment?.unpriced_holdings" class="relative mt-4 text-xs text-amber-400">{{ investment.unpriced_holdings }} posicao(oes) sem cotacao, avaliada(s) pelo custo medio.</p>
+      <p v-if="investment?.unpriced_holdings" class="relative mt-4 text-xs text-amber-400">{{ investment.unpriced_holdings }} posição(ões) sem cotação, avaliada(s) pelo custo médio.</p>
     </section>
 
     <section class="mt-6 rounded-3xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <header class="mb-4 flex items-center justify-between"><div><h2 class="font-semibold">Contas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Saldos atualizados por movimentacao</p></div><Link :href="route('accounts.index')" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Gerenciar</Link></header>
+      <header class="mb-4 flex items-center justify-between"><div><h2 class="font-semibold">Contas</h2><p class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">Saldos atualizados por movimentação</p></div><Link :href="route('accounts.index')" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40">Gerenciar</Link></header>
       <div v-if="accounts.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <div v-for="account in accounts" :key="account.id" class="rounded-2xl bg-stone-50 p-4 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-950">
           <div class="flex items-center gap-3">
@@ -315,7 +315,7 @@ const greeting = computed(() => {
             </div>
             <div class="mt-1.5 flex items-center justify-between text-[11px] text-stone-400 dark:text-slate-500">
               <span>Fatura: {{ formatMoney(account.credit_card.current_invoice, account.currency) }}</span>
-              <span>Disponivel: {{ formatMoney(account.credit_card.available ?? '0', account.currency) }}</span>
+              <span>Disponível: {{ formatMoney(account.credit_card.available ?? '0', account.currency) }}</span>
             </div>
           </div>
         </div>
@@ -323,7 +323,7 @@ const greeting = computed(() => {
       <p v-else class="py-8 text-center text-sm text-stone-400 dark:text-slate-500">Cadastre uma conta para iniciar seu painel</p>
     </section>
 
-    <Modal :show="modalOpen" max-width="2xl" :gradient="modalTone" title="Novo lancamento" @close="closeModal">
+    <Modal :show="modalOpen" max-width="2xl" :gradient="modalTone" title="Novo lançamento" @close="closeModal">
       <TransactionForm v-if="modalOpen" :accounts="formAccounts" :categories="categories" from-dashboard embedded @cancel="closeModal" @saved="closeModal" @type-change="onTypeChange" />
     </Modal>
 

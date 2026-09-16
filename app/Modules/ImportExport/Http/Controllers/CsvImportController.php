@@ -63,7 +63,7 @@ class CsvImportController extends Controller
             $request->boolean('skip_invalid'),
         );
 
-        return to_route('imports.show', $batch)->with('success', 'Importacao confirmada com sucesso.');
+        return to_route('imports.show', $batch)->with('success', 'Importação confirmada com sucesso.');
     }
 
     public function destroy(ImportBatch $importBatch): RedirectResponse
@@ -71,12 +71,12 @@ class CsvImportController extends Controller
         $this->authorize('delete', $importBatch);
 
         if ($importBatch->status === ImportStatus::Confirmed) {
-            abort(422, 'Uma importacao confirmada nao pode ser removida.');
+            abort(422, 'Uma importação confirmada não pode ser removida.');
         }
 
         $importBatch->delete();
 
-        return to_route('imports.index')->with('success', 'Previa de importacao removida.');
+        return to_route('imports.index')->with('success', 'Prévia de importação removida.');
     }
 
     private function page(Request $request, ?ImportBatch $batch = null): Response

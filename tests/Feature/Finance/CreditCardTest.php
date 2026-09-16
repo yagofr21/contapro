@@ -122,7 +122,7 @@ class CreditCardTest extends TestCase
             'first_installment_date' => now()->toDateString(),
             'description' => 'Celular',
         ])->assertRedirect(route('transactions.index'))
-            ->assertSessionHas('success', 'Compra parcelada lancada com sucesso.')
+            ->assertSessionHas('success', 'Compra parcelada lançada com sucesso.')
             ->assertSessionHas('detail');
 
         $installment = $user->installments()->firstOrFail();
@@ -168,7 +168,7 @@ class CreditCardTest extends TestCase
             'transaction_date' => '2026-09-10',
             'description' => 'Salario',
         ])->assertRedirect(route('transactions.index'))
-            ->assertSessionHas('success', 'Receita lancada com sucesso.');
+            ->assertSessionHas('success', 'Receita lançada com sucesso.');
     }
 
     public function test_credit_fields_require_credit_card_type(): void

@@ -62,12 +62,12 @@ const remove = (income: ExpectedIncome) => {
         <p class="text-base font-bold text-emerald-700 dark:text-emerald-400">{{ formatMoney(income.amount, income.currency) }}</p>
         <div class="flex items-center gap-2">
           <button type="button" :disabled="receiving === income.id" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50" @click="receive(income)"><CheckCircle2 :size="16" />Recebido</button>
-          <button type="button" class="rounded-xl p-2.5 text-stone-400 transition hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" title="Remover" @click="remove(income)"><Trash2 :size="16" /></button>
+          <button type="button" class="rounded-xl p-2.5 text-stone-400 transition hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" title="Remover" :aria-label="`Remover receita ${income.description}`" @click="remove(income)"><Trash2 :size="16" /></button>
         </div>
       </div>
 
       <div v-if="received.length" class="border-t border-stone-100 px-5 py-4 dark:border-slate-800">
-        <p class="text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-slate-500">Ja recebidas</p>
+        <p class="text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-slate-500">Já recebidas</p>
         <div v-for="income in received" :key="income.id" class="mt-2 flex items-center gap-3 opacity-70">
           <p class="min-w-0 flex-1 truncate text-sm">{{ income.description }}</p>
           <p class="shrink-0 whitespace-nowrap text-xs text-stone-400">{{ formatMoney(income.amount, income.currency) }} · {{ formatDate(income.received_at ?? income.expected_date) }}</p>
@@ -75,7 +75,7 @@ const remove = (income: ExpectedIncome) => {
       </div>
     </Card>
 
-    <EmptyState v-else class="mt-8" :icon="ArrowDownLeft" title="Preveja suas proximas entradas" description="Cadastre o salario, adiantamentos, emprestimos a amigos e outras receitas previstas. Ao receber, clique em &quot;Recebido&quot; e vira um lancamento normal." />
+    <EmptyState v-else class="mt-8" :icon="ArrowDownLeft" title="Preveja suas próximas entradas" description="Cadastre o salário, adiantamentos, empréstimos a amigos e outras receitas previstas. Ao receber, clique em &quot;Recebido&quot; e vira um lançamento normal." />
 
     <Modal :show="modalOpen" max-width="2xl" title="Nova receita futura" @close="modalOpen = false">
       <ExpectedIncomeForm v-if="modalOpen" :accounts="accounts" :categories="categories" embedded @cancel="modalOpen = false" />

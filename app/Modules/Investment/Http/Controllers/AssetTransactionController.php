@@ -46,7 +46,7 @@ class AssetTransactionController extends Controller
     ): RedirectResponse {
         $action->handle($portfolio, $request->validated());
 
-        return to_route('portfolios.show', $portfolio)->with('success', 'Operacao registrada com sucesso.');
+        return to_route('portfolios.show', $portfolio)->with('success', 'Operação registrada com sucesso.');
     }
 
     public function edit(AssetTransaction $investmentTransaction): Response
@@ -90,7 +90,7 @@ class AssetTransactionController extends Controller
         $action->handle($investmentTransaction, $request->validated());
 
         return to_route('portfolios.show', $investmentTransaction->portfolio_id)
-            ->with('success', 'Operacao atualizada com sucesso.');
+            ->with('success', 'Operação atualizada com sucesso.');
     }
 
     public function destroy(
@@ -101,7 +101,7 @@ class AssetTransactionController extends Controller
         $portfolioId = $investmentTransaction->portfolio_id;
         $action->handle($investmentTransaction);
 
-        return to_route('portfolios.show', $portfolioId)->with('success', 'Operacao removida com sucesso.');
+        return to_route('portfolios.show', $portfolioId)->with('success', 'Operação removida com sucesso.');
     }
 
     /** @return array<int, array{id: int, symbol: string, name: string, currency: string, market: string, available_quantity: string}> */

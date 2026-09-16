@@ -37,7 +37,7 @@ class ConfirmCsvImport
             $portfolio = $batch->portfolio;
 
             if ($batch->kind === ImportKind::Investment && ! $portfolio instanceof Portfolio) {
-                throw ValidationException::withMessages(['portfolio' => 'A carteira desta importacao nao esta disponivel.']);
+                throw ValidationException::withMessages(['portfolio' => 'A carteira desta importação não está disponível.']);
             }
 
             $invalidCount = $batch->rows()->where('status', 'invalid')->count();

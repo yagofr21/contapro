@@ -10,7 +10,7 @@ import { CalendarRange, Plus, Trash2 } from '@lucide/vue';
 defineProps<{ installments: Installment[] }>();
 
 const remove = (installment: Installment) => {
-    if (confirm(`Remover a serie de parcelas ${installment.description ?? ''}?`)) {
+    if (confirm(`Remover a série de parcelas ${installment.description ?? ''}?`)) {
         router.delete(route('installments.destroy', installment.id));
     }
 };
@@ -22,9 +22,9 @@ const shortDate = (value: string) => value.slice(0, 10);
 <template>
   <Head title="Parcelas" />
   <AuthenticatedLayout>
-    <PageHeader kicker="Agenda" title="Parcelas" subtitle="Compras parceladas no cartao e prestacoes em andamento.">
+    <PageHeader kicker="Agenda" title="Parcelas" subtitle="Compras parceladas no cartão e prestações em andamento.">
       <template #actions>
-        <Link :href="route('installments.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova serie</Link>
+        <Link :href="route('installments.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova série</Link>
       </template>
     </PageHeader>
 
@@ -34,11 +34,11 @@ const shortDate = (value: string) => value.slice(0, 10);
           <div class="flex min-w-0 items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><CalendarRange :size="18" /></span>
             <div class="min-w-0">
-              <h2 class="truncate font-semibold">{{ installment.description ?? 'Serie de parcelas' }}</h2>
+              <h2 class="truncate font-semibold">{{ installment.description ?? 'Série de parcelas' }}</h2>
               <p class="mt-0.5 text-xs text-stone-400">{{ installment.category_name ?? 'Sem categoria' }} · {{ installment.account_name }}</p>
             </div>
           </div>
-          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :title="`Remover ${installment.description ?? 'serie'}`" @click="remove(installment)"><Trash2 :size="15" /></button>
+          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :title="`Remover ${installment.description ?? 'série'}`" :aria-label="`Remover ${installment.description ?? 'série de parcelas'}`" @click="remove(installment)"><Trash2 :size="15" /></button>
         </div>
 
         <div class="mt-4 flex items-center justify-between gap-3">
@@ -64,7 +64,7 @@ const shortDate = (value: string) => value.slice(0, 10);
         </div>
 
         <div v-if="installment.schedule.some((row) => row.status === 'pendente')" class="mt-3">
-          <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Proximas parcelas</p>
+          <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Próximas parcelas</p>
           <ul class="space-y-1 overflow-x-auto">
             <li v-for="row in installment.schedule.filter((item) => item.status === 'pendente')" :key="row.number" class="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs">
               <span class="w-7 shrink-0 text-right font-bold text-stone-500">{{ row.number }}</span>
@@ -77,6 +77,6 @@ const shortDate = (value: string) => value.slice(0, 10);
         <p v-else-if="installment.is_finished" class="mt-3 text-xs text-stone-400">Todas as {{ installment.total_count }} parcelas foram pagas.</p>
       </article>
     </div>
-    <EmptyState v-else class="mt-8" :icon="CalendarRange" title="Divida seus gastos" description="Lance uma compra parcelada no cartao ou crie uma serie de parcelas." />
+    <EmptyState v-else class="mt-8" :icon="CalendarRange" title="Divida seus gastos" description="Lance uma compra parcelada no cartão ou crie uma série de parcelas." />
   </AuthenticatedLayout>
 </template>

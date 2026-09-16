@@ -33,7 +33,7 @@ class ConfirmReconciliation
             $account = $reconciliation->account;
 
             if (! $account instanceof FinancialAccount || $account->user_id !== $user->id) {
-                throw ValidationException::withMessages(['account' => 'A conta desta conciliacao nao esta disponivel.']);
+                throw ValidationException::withMessages(['account' => 'A conta desta conciliação não está disponível.']);
             }
 
             $rows = $reconciliation->rows()->orderBy('row_number')->get();

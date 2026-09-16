@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue';
-import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = withDefaults(
     defineProps<{
@@ -20,11 +20,22 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(['close']);
+const dialogRef = ref<HTMLElement | null>(null);
+const previouslyFocusedElement = ref<HTMLElement | null>(null);
+const titleId = `modal-title-${Math.random().toString(36).slice(2)}`;
 
 watch(
     () => props.show,
     (open) => {
         document.body.style.overflow = open ? 'hidden' : '';
+
+        if (open) {
+            previouslyFocusedElement.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            nextTick(() => dialogRef.value?.focus());
+        } else {
+            previouslyFocusedElement.value?.focus();
+            previouslyFocusedElement.value = null;
+        }
     },
 );
 
@@ -79,8 +90,13 @@ const gradientTone = computed(() => {
         <div class="fixed inset-0 bg-stone-900/40" @click="close" />
         <div class="relative flex min-h-full items-center justify-center p-4 sm:p-6">
           <div
+            ref="dialogRef"
             class="relative w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-stone-900/10 ring-1 ring-stone-900/5 dark:bg-slate-900 dark:ring-white/5"
             :class="[maxWidthClass, gradientTone]"
+            role="dialog"
+            aria-modal="true"
+            :aria-labelledby="title ? titleId : undefined"
+            tabindex="-1"
           >
             <template v-if="props.gradient">
               <div class="aurora-surface pointer-events-none absolute inset-0" />
@@ -93,7 +109,7 @@ const gradientTone = computed(() => {
               class="relative flex shrink-0 items-center justify-between gap-4 border-b border-stone-100 px-6 py-4 dark:border-slate-800 sm:px-8"
               :class="props.gradient ? 'border-transparent bg-white/60 backdrop-blur dark:bg-slate-900/60' : ''"
             >
-              <h2 v-if="title" class="text-lg font-bold tracking-tight">
+              <h2 v-if="title" :id="titleId" class="text-lg font-bold tracking-tight">
                 {{ title }}
               </h2>
               <span v-else />

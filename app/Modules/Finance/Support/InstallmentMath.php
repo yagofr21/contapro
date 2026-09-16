@@ -70,11 +70,11 @@ class InstallmentMath
      */
     public static function schedule(Installment $installment): array
     {
-        $count = $installment->total_count;
-        $paidCount = $installment->paidCount();
+        $count = max(1, (int) $installment->total_count);
+        $paidCount = max(0, min($count, (int) $installment->paidCount()));
         $totalCents = InstallmentMath::amountToCents($installment->totalAmountValue());
         $amounts = InstallmentMath::amountsPerOrdinal($totalCents, $count);
-        $firstDue = $installment->next_due_date->subMonths($paidCount);
+        $firstDue = ($installment->next_due_date ?? $installment->created_at ?? now())->subMonths($paidCount);
         $dates = InstallmentMath::dueDates($firstDue, $count);
 
         $rows = [];

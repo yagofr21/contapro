@@ -74,14 +74,14 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.starts_on" />
       </label>
       <label class="sm:col-span-2">
-        <span class="mb-2 block text-sm font-semibold">Descricao <span class="font-normal text-stone-400">(opcional)</span></span>
+        <span class="mb-2 block text-sm font-semibold">Descrição <span class="font-normal text-stone-400">(opcional)</span></span>
         <textarea v-model="form.description" rows="3" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="Ex.: Celular em 10x" />
         <InputError class="mt-2" :message="form.errors.description" />
       </label>
     </div>
     <div class="mt-8 flex flex-col-reverse gap-3 border-t border-stone-100 pt-6 dark:border-slate-800 sm:flex-row sm:justify-end">
       <Link :href="route('installments.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
-      <button :disabled="form.processing || accounts.length === 0" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50"><Save :size="17" />Criar serie de parcelas</button>
+      <button :disabled="form.processing || accounts.length === 0" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50"><Save :size="17" />Criar série de parcelas</button>
     </div>
   </form>
 </template>

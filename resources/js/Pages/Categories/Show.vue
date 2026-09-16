@@ -68,9 +68,9 @@ const padCells = computed(() => [...Array(firstDayOffset.value).fill(null), ...p
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button class="inline-flex items-center justify-center rounded-xl border border-stone-200 p-2 text-stone-500 transition hover:bg-stone-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" aria-label="Mes anterior" @click="navigate(prevMonth)"><ChevronLeft :size="18" /></button>
+        <button class="inline-flex items-center justify-center rounded-xl border border-stone-200 p-2 text-stone-500 transition hover:bg-stone-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" aria-label="Mês anterior" @click="navigate(prevMonth)"><ChevronLeft :size="18" /></button>
         <span class="min-w-[120px] text-center text-sm font-semibold">{{ monthLabel }}</span>
-        <button class="inline-flex items-center justify-center rounded-xl border border-stone-200 p-2 text-stone-500 transition hover:bg-stone-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" aria-label="Proximo mes" @click="navigate(nextMonth)"><ChevronRight :size="18" /></button>
+        <button class="inline-flex items-center justify-center rounded-xl border border-stone-200 p-2 text-stone-500 transition hover:bg-stone-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" aria-label="Próximo mês" @click="navigate(nextMonth)"><ChevronRight :size="18" /></button>
       </div>
     </section>
 
@@ -92,7 +92,7 @@ const padCells = computed(() => [...Array(firstDayOffset.value).fill(null), ...p
     <div class="mt-6 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2 text-sm font-semibold"><Calendar :size="16" class="text-stone-400" />Calendario</div>
-        <p v-if="heatCurrency && heatSummary" class="flex items-center gap-1.5 text-xs text-stone-400"><Flame :size="14" class="text-amber-500" />Escala baseada em {{ heatCurrency }} (media {{ formatMoney(heatSummary.avg, heatCurrency) }})</p>
+        <p v-if="heatCurrency && heatSummary" class="flex items-center gap-1.5 text-xs text-stone-400"><Flame :size="14" class="text-amber-500" />Escala baseada em {{ heatCurrency }} (média {{ formatMoney(heatSummary.avg, heatCurrency) }})</p>
       </div>
 
       <div class="grid grid-cols-7 gap-1">

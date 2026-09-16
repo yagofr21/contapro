@@ -22,7 +22,7 @@ const usageCount = (bank: Bank) => bank.accounts_count ?? 0;
 <template>
   <Head title="Bancos" />
   <AuthenticatedLayout>
-    <PageHeader kicker="Financeiro" title="Bancos" subtitle="Catalogo de instituicoes usado na identificacao visual das contas.">
+    <PageHeader kicker="Financeiro" title="Bancos" subtitle="Catálogo de instituições usado na identificação visual das contas.">
       <template #actions>
         <Link :href="route('banks.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white"><Plus :size="18" />Novo banco</Link>
       </template>
@@ -44,6 +44,6 @@ const usageCount = (bank: Bank) => bank.accounts_count ?? 0;
         <Link :href="route('banks.edit', bank.id)" class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-600"><Pencil :size="15" />Editar</Link>
       </article>
     </div>
-    <EmptyState v-else class="mt-8" :icon="Landmark" title="Nenhum banco cadastrado" description="Cadastre as instituicoes para personalizar a identificacao das suas contas." />
+    <EmptyState v-else class="mt-8" :icon="Landmark" title="Nenhum banco cadastrado" description="Cadastre as instituições para personalizar a identificação das suas contas." />
   </AuthenticatedLayout>
 </template>

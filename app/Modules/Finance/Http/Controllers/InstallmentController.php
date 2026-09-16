@@ -43,7 +43,7 @@ class InstallmentController extends Controller
     {
         $action->handle($request->user(), $request->validated());
 
-        return to_route('installments.index')->with('success', 'Serie de parcelas criada com sucesso.');
+        return to_route('installments.index')->with('success', 'Série de parcelas criada com sucesso.');
     }
 
     public function destroy(Installment $installment, DeleteInstallment $action): RedirectResponse
@@ -51,7 +51,7 @@ class InstallmentController extends Controller
         $this->authorize('delete', $installment);
         $action->handle($installment);
 
-        return to_route('installments.index')->with('success', 'Serie de parcelas removida com sucesso.');
+        return to_route('installments.index')->with('success', 'Série de parcelas removida com sucesso.');
     }
 
     /** @return array<string, mixed> */
@@ -60,7 +60,7 @@ class InstallmentController extends Controller
         return [
             'id' => $installment->id,
             'account_id' => $installment->account_id,
-            'account_name' => $installment->account->name,
+            'account_name' => $installment->account?->name,
             'category_id' => $installment->category_id,
             'category_name' => $installment->category?->name,
             'category_color' => $installment->category?->color,
@@ -73,7 +73,7 @@ class InstallmentController extends Controller
             'current_parcela' => $installment->currentParcela(),
             'total_paid' => $installment->totalPaidValue(),
             'total_remaining' => $installment->totalRemainingValue(),
-            'next_due_date' => $installment->next_due_date->format('Y-m-d'),
+            'next_due_date' => $installment->next_due_date?->format('Y-m-d'),
             'description' => $installment->description,
             'is_finished' => $installment->isFinished(),
             'schedule' => $installment->schedule(),

@@ -13,9 +13,9 @@ const form = useForm({ symbol: '', name: '', type: 'stock', market: 'B3', curren
 <template>
   <Head title="Cadastrar ativo" />
   <AuthenticatedLayout>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Catalogo</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Catálogo</p>
     <h1 class="mt-2 text-3xl font-bold">Cadastrar ativo</h1>
-    <div class="mt-5 flex max-w-2xl gap-3 rounded-2xl border border-brand-100 bg-brand-50/60 p-4 text-sm text-brand-900 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-100"><Info :size="20" class="mt-0.5 shrink-0" /><p>Este cadastro apenas disponibiliza o ativo. Depois, use <strong>Registrar compra</strong> no catalogo para informar carteira, quantidade, preco e taxas.</p></div>
+    <div class="mt-5 flex max-w-2xl gap-3 rounded-2xl border border-brand-100 bg-brand-50/60 p-4 text-sm text-brand-900 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-100"><Info :size="20" class="mt-0.5 shrink-0" /><p>Este cadastro apenas disponibiliza o ativo. Depois, use <strong>Registrar compra</strong> no catálogo para informar carteira, quantidade, preço e taxas.</p></div>
     <form class="mt-5 max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900" @submit.prevent="form.post(route('assets.store'))">
       <div class="grid gap-5 sm:grid-cols-2">
         <label><span class="mb-2 block text-sm font-semibold">Codigo</span><input v-model="form.symbol" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 uppercase dark:border-slate-700 dark:bg-slate-950" placeholder="PETR4" /><InputError class="mt-2" :message="form.errors.symbol" /></label>

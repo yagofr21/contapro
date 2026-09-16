@@ -28,8 +28,8 @@ class InvestmentCsvExportController extends Controller
             fwrite($stream, "\xEF\xBB\xBF");
             fputcsv($stream, [
                 'Data', 'Tipo', 'Ativo', 'Mercado', 'Corretora', 'Quantidade',
-                'Preco unitario', 'Taxas', 'Valor bruto', 'Valor liquido',
-                'Proporcao origem', 'Proporcao destino', 'Observacao',
+                'Preço unitário', 'Taxas', 'Valor bruto', 'Valor líquido',
+                'Proporção origem', 'Proporção destino', 'Observação',
             ], ';', '"', '', "\r\n");
 
             foreach ($transactions->cursor() as $transaction) {

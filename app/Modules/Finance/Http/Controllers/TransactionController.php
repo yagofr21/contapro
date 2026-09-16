@@ -33,16 +33,20 @@ class TransactionController extends Controller
             'account_id' => ['nullable', 'integer'],
             'category_id' => ['nullable', 'integer'],
             'type' => ['nullable', 'in:income,expense,transfer'],
+            'status' => ['nullable', 'in:realized,future'],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
             'search' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $transactions = $request->user()->transactions()
+        $today = now($request->user()->timezone ?? config('app.timezone'))->toDateString();
+        $transactionsQuery = $request->user()->transactions()
             ->with(['account:id,name,currency', 'category:id,name,color'])
             ->where('type', '!=', TransactionType::TransferIn->value)
             ->when($filters['account_id'] ?? null, fn (Builder $query, $id) => $query->where('account_id', $id))
             ->when($filters['category_id'] ?? null, fn (Builder $query, $id) => $query->where('category_id', $id))
+            ->when(($filters['status'] ?? null) === 'realized', fn (Builder $query) => $query->whereDate('transaction_date', '<=', $today))
+            ->when(($filters['status'] ?? null) === 'future', fn (Builder $query) => $query->whereDate('transaction_date', '>', $today))
             ->when($filters['from'] ?? null, fn (Builder $query, $date) => $query->whereDate('transaction_date', '>=', $date))
             ->when($filters['to'] ?? null, fn (Builder $query, $date) => $query->whereDate('transaction_date', '<=', $date))
             ->when($filters['search'] ?? null, fn (Builder $query, $search) => $query->whereRaw(
@@ -50,18 +54,23 @@ class TransactionController extends Controller
                 ['%'.mb_strtolower((string) $search).'%'],
             ))
             ->when(($filters['type'] ?? null) === 'transfer', fn (Builder $query) => $query->where('type', TransactionType::TransferOut->value))
-            ->when(in_array($filters['type'] ?? null, ['income', 'expense'], true), fn (Builder $query) => $query->where('type', $filters['type']))
+            ->when(in_array($filters['type'] ?? null, ['income', 'expense'], true), fn (Builder $query) => $query->where('type', $filters['type']));
+
+        $summaries = $this->summaries((clone $transactionsQuery)->get());
+
+        $transactions = $transactionsQuery
             ->latest('transaction_date')
             ->latest('id')
             ->paginate(20)
             ->withQueryString()
-            ->through(fn (Transaction $transaction) => $this->serialize($transaction));
+            ->through(fn (Transaction $transaction) => $this->serialize($transaction, $today));
 
         $this->hydrateDestinations($request->user(), $transactions);
 
         return Inertia::render('Transactions/Index', [
             'transactions' => $transactions,
             'filters' => $filters,
+            'summaries' => $summaries,
             ...$this->formOptions($request),
         ]);
     }
@@ -95,9 +104,9 @@ class TransactionController extends Controller
 
             $processInstallments->handle();
 
-            $success = 'Compra parcelada lancada com sucesso.';
+            $success = 'Compra parcelada lançada com sucesso.';
             $detail = sprintf(
-                '%s em %d parcelas de R$ %s realizadas no cartao.',
+                '%s em %d parcelas de R$ %s realizadas no cartão.',
                 $this->formatCurrency($totalAmount),
                 $totalCount,
                 $this->formatCurrency($parcela),
@@ -107,15 +116,15 @@ class TransactionController extends Controller
 
             [$success, $detail] = match (true) {
                 $created->transfer_id !== null => [
-                    'Transferencia realizada com sucesso.',
+                    'Transferência realizada com sucesso.',
                     sprintf('R$ %s movimentados entre contas.', $this->formatCurrency((string) $created->amount)),
                 ],
                 $created->type === TransactionType::Income => [
-                    'Receita lancada com sucesso.',
-                    sprintf('R$ %s adicionados a conta.', $this->formatCurrency((string) $created->amount)),
+                    'Receita lançada com sucesso.',
+                    sprintf('R$ %s adicionados à conta.', $this->formatCurrency((string) $created->amount)),
                 ],
                 default => [
-                    'Despesa lancada com sucesso.',
+                    'Despesa lançada com sucesso.',
                     sprintf('R$ %s registrados na conta.', $this->formatCurrency((string) $created->amount)),
                 ],
             };
@@ -140,7 +149,7 @@ class TransactionController extends Controller
     {
         $action->handle($transaction, $request->validated());
 
-        return to_route('transactions.index')->with('success', 'Lancamento atualizado com sucesso.');
+        return to_route('transactions.index')->with('success', 'Lançamento atualizado com sucesso.');
     }
 
     public function destroy(Transaction $transaction, DeleteTransaction $action): RedirectResponse
@@ -148,7 +157,7 @@ class TransactionController extends Controller
         $this->authorize('delete', $transaction);
         $action->handle($transaction);
 
-        return to_route('transactions.index')->with('success', 'Lancamento removido com sucesso.');
+        return to_route('transactions.index')->with('success', 'Lançamento removido com sucesso.');
     }
 
     /** @return array<string, mixed> */
@@ -178,7 +187,7 @@ class TransactionController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function serialize(Transaction $transaction): array
+    private function serialize(Transaction $transaction, ?string $today = null): array
     {
         $destinationAccountId = null;
         if ($transaction->transfer_id !== null) {
@@ -201,10 +210,40 @@ class TransactionController extends Controller
             'amount' => $transaction->amount,
             'transaction_date' => $transaction->transaction_date->format('Y-m-d'),
             'description' => $transaction->description,
+            'is_future' => $transaction->transaction_date->toDateString() > ($today ?? now()->toDateString()),
             'is_transfer' => $transaction->transfer_id !== null,
             'transfer_id' => $transaction->transfer_id,
             'destination_account_id' => $destinationAccountId,
         ];
+    }
+
+    /**
+     * @param  Collection<int, Transaction>  $transactions
+     * @return list<array{currency: string, income: string, expenses: string, transfers: string, net: string, transaction_count: int}>
+     */
+    private function summaries(Collection $transactions): array
+    {
+        return $transactions
+            ->groupBy(fn (Transaction $transaction): string => $transaction->account->currency->value)
+            ->map(function (Collection $rows, string $currency): array {
+                $income = $rows->where('type', TransactionType::Income)
+                    ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
+                $expenses = $rows->where('type', TransactionType::Expense)
+                    ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
+                $transfers = $rows->where('type', TransactionType::TransferOut)
+                    ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
+
+                return [
+                    'currency' => $currency,
+                    'income' => $income,
+                    'expenses' => $expenses,
+                    'transfers' => $transfers,
+                    'net' => bcsub($income, $expenses, 4),
+                    'transaction_count' => $rows->count(),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /** @param  LengthAwarePaginator<int, array<string, mixed>>  $paginator

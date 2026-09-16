@@ -66,7 +66,7 @@ const submit = () => {
 <template>
   <form class="mt-8 max-w-3xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8" @submit.prevent="submit">
     <fieldset class="grid gap-2 sm:grid-cols-3">
-      <label v-for="option in [{ value: 'expense', label: 'Despesa' }, { value: 'income', label: 'Receita' }, { value: 'transfer', label: 'Transferencia' }]" :key="option.value" class="cursor-pointer">
+      <label v-for="option in [{ value: 'expense', label: 'Despesa' }, { value: 'income', label: 'Receita' }, { value: 'transfer', label: 'Transferência' }]" :key="option.value" class="cursor-pointer">
         <input v-model="form.type" type="radio" :value="option.value" class="peer sr-only" />
         <span class="block rounded-xl border border-stone-200 px-2 py-2.5 text-center text-xs font-semibold text-stone-500 transition peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 dark:border-slate-700 dark:peer-checked:bg-brand-950/50 dark:peer-checked:text-brand-200">{{ option.label }}</span>
       </label>
@@ -90,7 +90,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.category_id" />
       </label>
       <label>
-        <span class="mb-2 block text-sm font-semibold">Valor por ocorrencia</span>
+        <span class="mb-2 block text-sm font-semibold">Valor por ocorrência</span>
         <input v-model="form.amount" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
         <InputError class="mt-2" :message="form.errors.amount" />
       </label>
@@ -100,7 +100,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.frequency" />
       </label>
       <label>
-        <span class="mb-2 block text-sm font-semibold">Inicio</span>
+        <span class="mb-2 block text-sm font-semibold">Início</span>
         <input v-model="form.starts_on" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" />
         <InputError class="mt-2" :message="form.errors.starts_on" />
       </label>
@@ -110,7 +110,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.ends_on" />
       </label>
       <label class="sm:col-span-2">
-        <span class="mb-2 block text-sm font-semibold">Descricao <span class="font-normal text-stone-400">(opcional)</span></span>
+        <span class="mb-2 block text-sm font-semibold">Descrição <span class="font-normal text-stone-400">(opcional)</span></span>
         <textarea v-model="form.description" rows="3" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="Ex.: Assinatura mensal" />
         <InputError class="mt-2" :message="form.errors.description" />
       </label>
@@ -118,12 +118,12 @@ const submit = () => {
 
     <label v-if="schedule" class="mt-6 flex items-center gap-3">
       <input v-model="form.is_active" type="checkbox" class="h-4 w-4 rounded border-stone-300 text-brand-600 focus:ring-brand-500" />
-      <span class="text-sm font-semibold">Recorrencia ativa</span>
+      <span class="text-sm font-semibold">Recorrência ativa</span>
     </label>
 
     <div class="mt-8 flex flex-col-reverse gap-3 border-t border-stone-100 pt-6 dark:border-slate-800 sm:flex-row sm:justify-end">
       <Link :href="route('recurring.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
-      <button :disabled="form.processing || accounts.length === 0" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50"><Save :size="17" />{{ schedule ? 'Salvar alteracoes' : 'Criar recorrencia' }}</button>
+      <button :disabled="form.processing || accounts.length === 0" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50"><Save :size="17" />{{ schedule ? 'Salvar alterações' : 'Criar recorrência' }}</button>
     </div>
   </form>
 </template>

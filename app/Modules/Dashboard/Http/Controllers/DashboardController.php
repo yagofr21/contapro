@@ -35,6 +35,12 @@ class DashboardController extends Controller
             ->whereDate('transaction_date', '<=', $monthEnd)
             ->whereIn('type', [TransactionType::Income->value, TransactionType::Expense->value])
             ->get();
+        $realizedMonthTransactions = $monthTransactions->filter(
+            fn (Transaction $transaction): bool => $transaction->transaction_date->toDateString() <= $today->toDateString(),
+        );
+        $plannedMonthTransactions = $monthTransactions->filter(
+            fn (Transaction $transaction): bool => $transaction->transaction_date->toDateString() > $today->toDateString(),
+        );
         $creditCards = (new CreditCardSummaryQuery)->forUser($user);
         $accounts = $accountSummary->forUser($user)
             ->map(function (array $account) use ($creditCards): array {
@@ -44,14 +50,21 @@ class DashboardController extends Controller
 
                 return $account;
             });
-        $financialSummaries = collect(Currency::cases())->map(function (Currency $currency) use ($accounts, $monthTransactions): array {
+        $financialSummaries = collect(Currency::cases())->map(function (Currency $currency) use ($accounts, $realizedMonthTransactions, $plannedMonthTransactions): array {
             $currencyAccounts = $accounts->where('currency', $currency->value);
-            $currencyTransactions = $monthTransactions->filter(
+            $currencyTransactions = $realizedMonthTransactions->filter(
+                fn (Transaction $transaction): bool => $transaction->account->currency === $currency,
+            );
+            $plannedCurrencyTransactions = $plannedMonthTransactions->filter(
                 fn (Transaction $transaction): bool => $transaction->account->currency === $currency,
             );
             $income = $currencyTransactions->where('type', TransactionType::Income)
                 ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
             $expenses = $currencyTransactions->where('type', TransactionType::Expense)
+                ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
+            $plannedIncome = $plannedCurrencyTransactions->where('type', TransactionType::Income)
+                ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
+            $plannedExpenses = $plannedCurrencyTransactions->where('type', TransactionType::Expense)
                 ->reduce(fn (string $total, Transaction $transaction): string => bcadd($total, $transaction->amount, 4), '0.0000');
 
             return [
@@ -63,6 +76,9 @@ class DashboardController extends Controller
                 'income' => $income,
                 'expenses' => $expenses,
                 'net' => bcsub($income, $expenses, 4),
+                'planned_income' => $plannedIncome,
+                'planned_expenses' => $plannedExpenses,
+                'planned_net' => bcsub($plannedIncome, $plannedExpenses, 4),
             ];
         });
 
@@ -71,6 +87,7 @@ class DashboardController extends Controller
             ->with('account:id,currency')
             ->whereIn('type', [TransactionType::Income->value, TransactionType::Expense->value])
             ->whereDate('transaction_date', '>=', $trendStart)
+            ->whereDate('transaction_date', '<=', $today->toDateString())
             ->get();
         $monthlyTrends = collect(Currency::cases())->map(function (Currency $currency) use ($trendTransactions, $today): array {
             $months = [];
@@ -117,7 +134,7 @@ class DashboardController extends Controller
         $investments = $portfolioValuation->forUser($user)['summaries'];
         $attention = (new DashboardAttentionQuery)->forUser($user, $investments);
 
-        $categoryExpenses = $monthTransactions
+        $categoryExpenses = $realizedMonthTransactions
             ->where('type', TransactionType::Expense)
             ->groupBy(fn (Transaction $transaction): string => $transaction->account->currency->value.':'.($transaction->category_id ?? 'none'))
             ->map(function ($transactions): array {

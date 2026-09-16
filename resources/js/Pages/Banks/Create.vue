@@ -9,7 +9,7 @@ import BankForm from './Partials/BankForm.vue';
   <AuthenticatedLayout>
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Financeiro</p>
     <h1 class="mt-2 text-3xl font-bold">Novo banco</h1>
-    <p class="mt-2 text-sm text-stone-500">Adicione uma instituicao ao catalogo global de identificacao visual.</p>
+    <p class="mt-2 text-sm text-stone-500">Adicione uma instituição ao catálogo global de identificação visual.</p>
     <BankForm />
   </AuthenticatedLayout>
 </template>

@@ -62,8 +62,8 @@ const cancel = () => {
     <div class="px-6 py-5 sm:px-8">
       <div class="grid gap-5 sm:grid-cols-2">
         <label class="sm:col-span-2">
-          <span class="mb-2 block text-sm font-semibold">Descricao</span>
-          <input v-model="form.description" type="text" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="Ex.: Salario, adiantamento salarial, emprestimo a amigo..." />
+          <span class="mb-2 block text-sm font-semibold">Descrição</span>
+          <input v-model="form.description" type="text" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="Ex.: Salário, adiantamento salarial, empréstimo a amigo..." />
           <InputError class="mt-2" :message="form.errors.description" />
         </label>
         <label>
@@ -72,7 +72,7 @@ const cancel = () => {
           <InputError class="mt-2" :message="form.errors.amount" />
         </label>
         <label>
-          <span class="mb-2 block text-sm font-semibold">Previsao de entrada</span>
+          <span class="mb-2 block text-sm font-semibold">Previsão de entrada</span>
           <input v-model="form.expected_date" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" />
           <InputError class="mt-2" :message="form.errors.expected_date" />
         </label>

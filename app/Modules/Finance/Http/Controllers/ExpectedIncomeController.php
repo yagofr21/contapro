@@ -42,7 +42,7 @@ class ExpectedIncomeController extends Controller
         $this->authorize('receive', $expectedIncome);
         $action->handle($expectedIncome);
 
-        return back()->with('success', 'Recebimento registrado como lancamento no fluxo de caixa.');
+        return back()->with('success', 'Recebimento registrado como lançamento no fluxo de caixa.');
     }
 
     public function destroy(Request $request, ExpectedIncome $expectedIncome): RedirectResponse
@@ -50,7 +50,7 @@ class ExpectedIncomeController extends Controller
         $this->authorize('delete', $expectedIncome);
 
         if ($expectedIncome->received) {
-            return back()->withErrors(['expected_income' => 'Uma receita ja recebida nao pode ser removida.']);
+            return back()->withErrors(['expected_income' => 'Uma receita já recebida não pode ser removida.']);
         }
 
         $expectedIncome->delete();

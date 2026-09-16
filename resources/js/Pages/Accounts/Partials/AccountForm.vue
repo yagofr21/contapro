@@ -146,14 +146,14 @@ const cancel = () => {
         <label class="sm:col-span-2">
           <span class="mb-2 block text-sm font-semibold">Saldo inicial</span>
           <input v-model="form.initial_balance" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
-          <p class="mt-2 text-xs text-stone-400">Use virgula para centavos, por exemplo: 1.250,50. O saldo atual inclui todos os lancamentos.</p>
+          <p class="mt-2 text-xs text-stone-400">Use vírgula para centavos, por exemplo: 1.250,50. O saldo atual inclui todos os lançamentos.</p>
           <InputError class="mt-2" :message="form.errors.initial_balance" />
         </label>
         <template v-if="isCreditCard">
           <label class="sm:col-span-2">
-            <span class="mb-2 block text-sm font-semibold">Limite do cartao</span>
+            <span class="mb-2 block text-sm font-semibold">Limite do cartão</span>
             <input v-model="form.credit_limit" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
-            <p class="mt-2 text-xs text-stone-400">O limite disponivel sera calculado pela fatura atual mais as parcelas futuras.</p>
+            <p class="mt-2 text-xs text-stone-400">O limite disponível será calculado pela fatura atual mais as parcelas futuras.</p>
             <InputError class="mt-2" :message="form.errors.credit_limit" />
           </label>
           <label>
@@ -178,7 +178,7 @@ const cancel = () => {
         <button v-if="embedded" type="button" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800" @click="cancel">Cancelar</button>
         <Link v-else :href="route('accounts.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
         <button :disabled="form.processing" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50">
-          <Save :size="17" /> {{ account ? 'Salvar alteracoes' : 'Criar conta' }}
+          <Save :size="17" /> {{ account ? 'Salvar alterações' : 'Criar conta' }}
         </button>
       </div>
     </div>

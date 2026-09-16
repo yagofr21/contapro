@@ -64,7 +64,7 @@ class BudgetController extends Controller
     {
         $action->handle($request->user(), $request->validated());
 
-        return to_route('budgets.index')->with('success', 'Orcamento criado com sucesso.');
+        return to_route('budgets.index')->with('success', 'Orçamento criado com sucesso.');
     }
 
     public function edit(Request $request, Budget $budget): Response
@@ -88,7 +88,7 @@ class BudgetController extends Controller
     {
         $action->handle($budget, $request->validated());
 
-        return to_route('budgets.index')->with('success', 'Orcamento atualizado com sucesso.');
+        return to_route('budgets.index')->with('success', 'Orçamento atualizado com sucesso.');
     }
 
     public function destroy(Budget $budget): RedirectResponse
@@ -96,7 +96,7 @@ class BudgetController extends Controller
         $this->authorize('delete', $budget);
         $budget->delete();
 
-        return to_route('budgets.index')->with('success', 'Orcamento removido com sucesso.');
+        return to_route('budgets.index')->with('success', 'Orçamento removido com sucesso.');
     }
 
     /** @return array<string, mixed> */

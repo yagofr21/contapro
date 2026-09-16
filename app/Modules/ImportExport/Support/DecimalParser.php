@@ -15,20 +15,20 @@ class DecimalParser
         }
 
         if (preg_match('/^-?\d+(?:\.\d+)?$/', $value) !== 1) {
-            throw new InvalidArgumentException('Numero invalido.');
+            throw new InvalidArgumentException('Número inválido.');
         }
 
         [$integer, $fraction] = array_pad(explode('.', $value, 2), 2, '');
 
         if (strlen($fraction) > $scale) {
-            throw new InvalidArgumentException("O numero aceita no maximo {$scale} casas decimais.");
+            throw new InvalidArgumentException("O número aceita no máximo {$scale} casas decimais.");
         }
 
         $negative = str_starts_with($integer, '-');
         $integer = ltrim($integer, '-0') ?: '0';
 
         if (strlen($integer) > $maxIntegerDigits) {
-            throw new InvalidArgumentException("O numero aceita no maximo {$maxIntegerDigits} digitos inteiros.");
+            throw new InvalidArgumentException("O número aceita no máximo {$maxIntegerDigits} dígitos inteiros.");
         }
 
         $fraction = str_pad($fraction, $scale, '0');

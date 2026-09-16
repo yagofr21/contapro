@@ -9,11 +9,11 @@ defineProps<{ accounts: AccountOption[]; categories: Category[]; frequencies?: O
 </script>
 
 <template>
-  <Head title="Nova recorrencia" />
+  <Head title="Nova recorrência" />
   <AuthenticatedLayout>
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Agenda</p>
-    <h1 class="mt-2 text-3xl font-bold tracking-tight">Nova recorrencia</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Lancamentos que se repetem automaticamente na data agendada.</p>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight">Nova recorrência</h1>
+    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Lançamentos que se repetem automaticamente na data agendada.</p>
     <RecurringForm :accounts="accounts" :categories="categories" :frequencies="frequencies" :types="types" />
   </AuthenticatedLayout>
 </template>

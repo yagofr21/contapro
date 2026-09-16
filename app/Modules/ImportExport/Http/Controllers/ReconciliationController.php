@@ -30,7 +30,7 @@ class ReconciliationController extends Controller
 
     public function template(): StreamedResponse
     {
-        $headers = ['Data', 'Descricao', 'Valor'];
+        $headers = ['Data', 'Descrição', 'Valor'];
 
         return response()->streamDownload(function () use ($headers): void {
             $stream = fopen('php://output', 'wb');
@@ -54,7 +54,7 @@ class ReconciliationController extends Controller
         $reconciliation = $action->handle($request->user(), $account, $validated, $file);
 
         return to_route('reconciliations.show', $reconciliation)
-            ->with('success', 'Previa de conciliacao gerada. Confira as regras antes de confirmar.');
+            ->with('success', 'Prévia de conciliação gerada. Confira as regras antes de confirmar.');
     }
 
     public function show(Request $request, Reconciliation $reconciliation): Response
@@ -71,7 +71,7 @@ class ReconciliationController extends Controller
     ): RedirectResponse {
         $reconciliation = $action->handle($request->user(), $reconciliation);
 
-        return to_route('reconciliations.show', $reconciliation)->with('success', 'Conciliacao confirmada com sucesso.');
+        return to_route('reconciliations.show', $reconciliation)->with('success', 'Conciliação confirmada com sucesso.');
     }
 
     public function destroy(Reconciliation $reconciliation): RedirectResponse
@@ -79,12 +79,12 @@ class ReconciliationController extends Controller
         $this->authorize('delete', $reconciliation);
 
         if ($reconciliation->status !== ReconciliationStatus::Previewed) {
-            abort(422, 'Uma conciliacao confirmada nao pode ser removida.');
+            abort(422, 'Uma conciliação confirmada não pode ser removida.');
         }
 
         $reconciliation->delete();
 
-        return to_route('reconciliations.index')->with('success', 'Previa de conciliacao removida.');
+        return to_route('reconciliations.index')->with('success', 'Prévia de conciliação removida.');
     }
 
     private function page(Request $request, ?Reconciliation $reconciliation = null): Response

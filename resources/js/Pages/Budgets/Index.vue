@@ -23,31 +23,31 @@ defineProps<{ budgets: Budget[] }>();
 
 const percentage = (budget: Budget) => Math.min((Number(budget.spent) / Number(budget.limit_amount)) * 100, 100);
 const periodLabel = (budget: Budget) => {
-    if (budget.period === 'monthly') return `Mes iniciado em ${formatDate(budget.starts_on)}`;
+    if (budget.period === 'monthly') return `Mês iniciado em ${formatDate(budget.starts_on)}`;
     if (budget.period === 'yearly') return `Ano iniciado em ${formatDate(budget.starts_on)}`;
     return `${formatDate(budget.starts_on)} a ${budget.ends_on ? formatDate(budget.ends_on) : ''}`;
 };
 const remove = (budget: Budget) => {
-    if (confirm(`Remover o orcamento de ${budget.category_name}?`)) {
+    if (confirm(`Remover o orçamento de ${budget.category_name}?`)) {
         router.delete(route('budgets.destroy', budget.id));
     }
 };
 </script>
 
 <template>
-  <Head title="Orcamentos" />
+  <Head title="Orçamentos" />
   <AuthenticatedLayout>
-    <PageHeader kicker="Planejamento" title="Orcamentos" subtitle="Transforme limites em decisoes visiveis durante o mes.">
+    <PageHeader kicker="Planejamento" title="Orçamentos" subtitle="Transforme limites em decisões visíveis durante o mês.">
       <template #actions>
-        <Link :href="route('budgets.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Novo orcamento</Link>
+        <Link :href="route('budgets.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Novo orçamento</Link>
       </template>
     </PageHeader>
 
     <div v-if="budgets.length" class="mt-8 grid gap-4 lg:grid-cols-2">
       <Card v-for="budget in budgets" :key="budget.id" :title="budget.category_name" :subtitle="periodLabel(budget)">
         <template #actions>
-          <Link :href="route('budgets.edit', budget.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800"><Pencil :size="15" /></Link>
-          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" @click="remove(budget)"><Trash2 :size="15" /></button>
+          <Link :href="route('budgets.edit', budget.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar orçamento ${budget.category_name}`"><Pencil :size="15" /></Link>
+          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :aria-label="`Remover orçamento ${budget.category_name}`" @click="remove(budget)"><Trash2 :size="15" /></button>
         </template>
         <div class="p-5">
           <div class="flex items-end justify-between"><div><p class="text-xs text-stone-400">Utilizado</p><p class="mt-1 text-xl font-bold">{{ formatMoney(budget.spent) }}</p></div><p class="text-sm font-semibold text-stone-500">de {{ formatMoney(budget.limit_amount) }}</p></div>

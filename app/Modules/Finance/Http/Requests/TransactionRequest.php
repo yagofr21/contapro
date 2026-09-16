@@ -97,7 +97,20 @@ class TransactionRequest extends FormRequest
                     ->find($this->integer('account_id'));
 
                 if ($account !== null && $account->type !== FinancialAccountType::CreditCard) {
-                    $validator->errors()->add('account_id', 'Parcele somente em contas de cartao de credito.');
+                    $validator->errors()->add('account_id', 'Parcele somente em contas de cartão de crédito.');
+                }
+            }
+
+            if ($type === 'transfer') {
+                $source = FinancialAccount::query()
+                    ->whereBelongsTo($this->user())
+                    ->find($this->integer('account_id'));
+                $destination = FinancialAccount::query()
+                    ->whereBelongsTo($this->user())
+                    ->find($this->integer('destination_account_id'));
+
+                if ($source !== null && $destination !== null && $source->currency !== $destination->currency) {
+                    $validator->errors()->add('destination_account_id', 'A conta de destino deve usar a mesma moeda da origem.');
                 }
             }
         }];

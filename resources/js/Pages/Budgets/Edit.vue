@@ -10,5 +10,5 @@ defineProps<{ budget: Budget; categories: CategoryOption[]; periods: Option[] }>
 </script>
 
 <template>
-  <Head title="Editar orcamento" /><AuthenticatedLayout><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Planejamento</p><h1 class="mt-2 text-3xl font-bold tracking-tight">Editar orcamento</h1><p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Ajuste o limite ou periodo mantendo o historico.</p><BudgetForm :budget="budget" :categories="categories" :periods="periods" /></AuthenticatedLayout>
+  <Head title="Editar orçamento" /><AuthenticatedLayout><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Planejamento</p><h1 class="mt-2 text-3xl font-bold tracking-tight">Editar orçamento</h1><p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Ajuste o limite ou período mantendo o histórico.</p><BudgetForm :budget="budget" :categories="categories" :periods="periods" /></AuthenticatedLayout>
 </template>

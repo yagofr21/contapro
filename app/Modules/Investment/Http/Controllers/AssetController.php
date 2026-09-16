@@ -77,7 +77,7 @@ class AssetController extends Controller
     {
         Asset::query()->create($request->validated());
 
-        return to_route('assets.index')->with('success', 'Ativo adicionado ao catalogo.');
+        return to_route('assets.index')->with('success', 'Ativo adicionado ao catálogo.');
     }
 
     public function autoUpdate(Request $request, Asset $asset): RedirectResponse
@@ -91,8 +91,8 @@ class AssetController extends Controller
         );
 
         $message = $request->boolean('auto_update')
-            ? 'Atualizacao automatica ativada para este ativo.'
-            : 'Atualizacao automatica desativada para este ativo.';
+            ? 'Atualização automática ativada para este ativo.'
+            : 'Atualização automática desativada para este ativo.';
 
         return back()->with('success', $message);
     }

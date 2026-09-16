@@ -97,7 +97,7 @@ class AssetTransactionRequest extends FormRequest
     {
         return [
             'asset_id.exists' => 'O ativo deve existir e usar a mesma moeda da carteira.',
-            'net_amount.lte' => 'O valor liquido nao pode ser maior que o valor bruto.',
+            'net_amount.lte' => 'O valor líquido não pode ser maior que o valor bruto.',
             'broker_id.exists' => 'A corretora deve pertencer ao seu cadastro.',
             'split_from.different' => 'A proporcao deve alterar a quantidade do ativo.',
             'split_to.different' => 'A proporcao deve alterar a quantidade do ativo.',

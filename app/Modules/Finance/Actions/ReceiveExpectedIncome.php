@@ -17,7 +17,7 @@ class ReceiveExpectedIncome
                 ->findOrFail($expectedIncome->id);
 
             if ($locked->received) {
-                return $locked->transaction ?? throw new \LogicException('Recebimento sem lancamento vinculado.');
+                return $locked->transaction ?? throw new \LogicException('Recebimento sem lançamento vinculado.');
             }
 
             $transaction = app(CreateTransaction::class)->handle($locked->user, [

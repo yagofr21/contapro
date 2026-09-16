@@ -14,7 +14,7 @@ defineProps<{ goal: Goal; accounts: AccountOption[]; currencies: Option[] }>();
   <AuthenticatedLayout>
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Planejamento</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Editar meta</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Ajuste o valor, prazo ou conta mantendo o historico.</p>
+    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Ajuste o valor, prazo ou conta mantendo o histórico.</p>
     <GoalForm :goal="goal" :accounts="accounts" :currencies="currencies" />
   </AuthenticatedLayout>
 </template>

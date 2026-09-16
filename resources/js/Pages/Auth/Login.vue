@@ -44,7 +44,7 @@ const submit = () => {
     <form class="mt-7 space-y-5" @submit.prevent="submit">
       <label class="block">
         <span class="mb-2 block text-sm font-semibold">E-mail</span>
-        <span class="relative block"><Mail :size="17" class="absolute left-3 top-3 text-stone-400" /><input v-model="form.email" type="email" required autofocus autocomplete="username" class="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-10 pr-3 text-sm shadow-sm transition focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="voce@exemplo.com" /></span>
+        <span class="relative block"><Mail :size="17" class="absolute left-3 top-3 text-stone-400" /><input v-model="form.email" type="email" required autofocus autocomplete="username" class="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-10 pr-3 text-sm shadow-sm transition focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="você@exemplo.com" /></span>
         <InputError class="mt-2" :message="form.errors.email" />
       </label>
 
@@ -62,9 +62,9 @@ const submit = () => {
       <button :disabled="form.processing" class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:bg-brand-700 disabled:opacity-50">Entrar <ArrowRight :size="17" /></button>
     </form>
 
-    <div class="my-6 flex items-center gap-3 text-xs text-stone-400"><span class="h-px flex-1 bg-stone-200 dark:bg-slate-800" />acesso de demonstracao<span class="h-px flex-1 bg-stone-200 dark:bg-slate-800" /></div>
+    <div class="my-6 flex items-center gap-3 text-xs text-stone-400"><span class="h-px flex-1 bg-stone-200 dark:bg-slate-800" />acesso de demonstração<span class="h-px flex-1 bg-stone-200 dark:bg-slate-800" /></div>
     <button type="button" class="w-full rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-semibold text-stone-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30" @click="useDemoAccount">Preencher conta demo</button>
 
-    <p class="mt-7 text-center text-sm text-stone-500 dark:text-slate-400">Ainda nao tem uma conta? <Link :href="route('register')" class="font-semibold text-brand-600 hover:text-brand-700">Criar cadastro</Link></p>
+    <p class="mt-7 text-center text-sm text-stone-500 dark:text-slate-400">Ainda não tem uma conta? <Link :href="route('register')" class="font-semibold text-brand-600 hover:text-brand-700">Criar cadastro</Link></p>
   </GuestLayout>
 </template>

@@ -62,12 +62,21 @@ class Installment extends Model
     /** Original purchase total (amount * total_count for legacy rows). */
     public function totalAmountValue(): string
     {
-        return $this->total_amount ?? bcadd(bcmul($this->amount, (string) $this->total_count, 4), '0', 4);
+        return $this->total_amount ?? bcadd(bcmul((string) ($this->amount ?? '0'), (string) $this->scheduleCount(), 4), '0', 4);
+    }
+
+    /** Minimum usable schedule length, protecting against incomplete records (e.g. total_count = 0). */
+    public function scheduleCount(): int
+    {
+        return max(1, (int) $this->total_count);
     }
 
     public function paidCount(): int
     {
-        return $this->total_count - $this->remaining_count;
+        $count = $this->scheduleCount();
+        $paid = (int) $this->total_count - (int) $this->remaining_count;
+
+        return max(0, min($count, $paid));
     }
 
     public function isFinished(): bool
@@ -85,7 +94,7 @@ class Installment extends Model
         $totalCents = InstallmentMath::amountToCents($this->totalAmountValue());
 
         return InstallmentMath::centsToAmount(
-            InstallmentMath::amountsPerOrdinal($totalCents, $this->total_count)[$ordinal],
+            InstallmentMath::amountsPerOrdinal($totalCents, $this->scheduleCount())[$ordinal],
         );
     }
 
@@ -111,10 +120,10 @@ class Installment extends Model
     private function paidCents(): int
     {
         $totalCents = InstallmentMath::amountToCents($this->totalAmountValue());
-        $amounts = InstallmentMath::amountsPerOrdinal($totalCents, $this->total_count);
+        $amounts = InstallmentMath::amountsPerOrdinal($totalCents, $this->scheduleCount());
         $sum = 0;
 
-        foreach (range(1, $this->paidCount()) as $ordinal) {
+        for ($ordinal = 1; $ordinal <= $this->paidCount(); $ordinal++) {
             $sum += $amounts[$ordinal];
         }
 

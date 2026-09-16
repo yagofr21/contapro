@@ -35,7 +35,7 @@ class TransactionCsvExportController extends Controller
             }
 
             fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, ['Data', 'Tipo', 'Descricao', 'Conta', 'Conta destino', 'Categoria', 'Valor', 'Moeda'], ';', '"', '', "\r\n");
+            fputcsv($stream, ['Data', 'Tipo', 'Descrição', 'Conta', 'Conta destino', 'Categoria', 'Valor', 'Moeda'], ';', '"', '', "\r\n");
 
             foreach ($transactions->cursor() as $transaction) {
                 fputcsv($stream, [
@@ -59,8 +59,8 @@ class TransactionCsvExportController extends Controller
         return match ($transaction->type) {
             TransactionType::Income => 'Receita',
             TransactionType::Expense => 'Despesa',
-            TransactionType::TransferOut => 'Transferencia',
-            TransactionType::TransferIn => 'Transferencia recebida',
+            TransactionType::TransferOut => 'Transferência',
+            TransactionType::TransferIn => 'Transferência recebida',
         };
     }
 

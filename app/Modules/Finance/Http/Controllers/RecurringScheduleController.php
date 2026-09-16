@@ -61,7 +61,7 @@ class RecurringScheduleController extends Controller
     {
         $action->handle($request->user(), $request->validated());
 
-        return to_route('recurring.index')->with('success', 'Recorrencia criada com sucesso.');
+        return to_route('recurring.index')->with('success', 'Recorrência criada com sucesso.');
     }
 
     public function edit(Request $request, TransactionSchedule $recurring): Response
@@ -90,7 +90,7 @@ class RecurringScheduleController extends Controller
     {
         $action->handle($recurring, $request->validated());
 
-        return to_route('recurring.index')->with('success', 'Recorrencia atualizada com sucesso.');
+        return to_route('recurring.index')->with('success', 'Recorrência atualizada com sucesso.');
     }
 
     public function destroy(TransactionSchedule $recurring, DeleteTransactionSchedule $action): RedirectResponse
@@ -98,7 +98,7 @@ class RecurringScheduleController extends Controller
         $this->authorize('delete', $recurring);
         $action->handle($recurring);
 
-        return to_route('recurring.index')->with('success', 'Recorrencia removida com sucesso.');
+        return to_route('recurring.index')->with('success', 'Recorrência removida com sucesso.');
     }
 
     /** @return array<string, mixed> */
@@ -126,7 +126,7 @@ class RecurringScheduleController extends Controller
             'types' => [
                 ['value' => TransactionType::Expense->value, 'label' => 'Despesa'],
                 ['value' => TransactionType::Income->value, 'label' => 'Receita'],
-                ['value' => 'transfer', 'label' => 'Transferencia'],
+                ['value' => 'transfer', 'label' => 'Transferência'],
             ],
         ];
     }

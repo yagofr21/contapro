@@ -67,6 +67,7 @@ export type Transaction = {
     amount: string;
     transaction_date: string;
     description: string | null;
+    is_future: boolean;
     is_transfer: boolean;
 };
 

@@ -69,7 +69,7 @@ class SyncQuote implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        Log::error('Falha definitiva ao sincronizar cotacao.', [
+        Log::error('Falha definitiva ao sincronizar cotação.', [
             'asset_id' => $this->assetId,
             'exception' => $exception !== null ? $exception::class : null,
         ]);

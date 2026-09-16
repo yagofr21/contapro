@@ -70,9 +70,9 @@ type NavSection = { key: string; label: string; items: NavItem[] };
 const sections: NavSection[] = [
     {
         key: 'inicio',
-        label: 'Inicio',
+        label: 'Início',
         items: [
-            { label: 'Visao geral', route: 'dashboard', pattern: 'dashboard', icon: LayoutDashboard },
+            { label: 'Visão geral', route: 'dashboard', pattern: 'dashboard', icon: LayoutDashboard },
             { label: 'Agenda', route: 'agenda.index', pattern: 'agenda.*', icon: CalendarClock },
         ],
     },
@@ -80,11 +80,11 @@ const sections: NavSection[] = [
         key: 'finance',
         label: 'Financeiro',
         items: [
-            { label: 'Lancamentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
+            { label: 'Lançamentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
             { label: 'Contas', route: 'accounts.index', pattern: 'accounts.*', icon: WalletCards },
             { label: 'Bancos', route: 'banks.index', pattern: 'banks.*', icon: Landmark },
             { label: 'Categorias', route: 'categories.index', pattern: 'categories.*', icon: Tags },
-            { label: 'Orcamentos', route: 'budgets.index', pattern: 'budgets.*', icon: Gauge },
+            { label: 'Orçamentos', route: 'budgets.index', pattern: 'budgets.*', icon: Gauge },
             { label: 'Metas', route: 'goals.index', pattern: 'goals.*', icon: Target },
             { label: 'Receitas futuras', route: 'expected-incomes.index', pattern: 'expected-incomes.*', icon: CalendarCheck2 },
         ],
@@ -93,7 +93,7 @@ const sections: NavSection[] = [
         key: 'planning',
         label: 'Planejamento',
         items: [
-            { label: 'Recorrencias', route: 'recurring.index', pattern: 'recurring.*', icon: Repeat },
+            { label: 'Recorrências', route: 'recurring.index', pattern: 'recurring.*', icon: Repeat },
             { label: 'Parcelas', route: 'installments.index', pattern: 'installments.*', icon: CalendarRange },
         ],
     },
@@ -108,11 +108,11 @@ const sections: NavSection[] = [
     },
     {
         key: 'data',
-        label: 'Dados & Relatorios',
+        label: 'Dados & Relatórios',
         items: [
-            { label: 'Importacoes', route: 'imports.index', pattern: 'imports.*', icon: Upload },
-            { label: 'Conciliacoes', route: 'reconciliations.index', pattern: 'reconciliations.*', icon: Scale },
-            { label: 'Relatorios', route: 'reports.index', pattern: 'reports.*', icon: ChartNoAxesCombined },
+            { label: 'Importações', route: 'imports.index', pattern: 'imports.*', icon: Upload },
+            { label: 'Conciliações', route: 'reconciliations.index', pattern: 'reconciliations.*', icon: Scale },
+            { label: 'Relatórios', route: 'reports.index', pattern: 'reports.*', icon: ChartNoAxesCombined },
         ],
     },
 ];
@@ -290,7 +290,7 @@ onMounted(() => {
             <p class="text-sm font-bold" :class="toast.tone === 'error' ? 'text-rose-900 dark:text-rose-100' : 'text-emerald-900 dark:text-emerald-100'">{{ toast.title }}</p>
             <p v-if="toast.detail" class="mt-1 text-xs leading-snug text-stone-500 dark:text-slate-400">{{ toast.detail }}</p>
           </div>
-          <button type="button" class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-slate-800" aria-label="Fechar notificacao" @click="dismissToast"><X :size="15" /></button>
+          <button type="button" class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-slate-800" aria-label="Fechar notificação" @click="dismissToast"><X :size="15" /></button>
         </div>
       </div>
 

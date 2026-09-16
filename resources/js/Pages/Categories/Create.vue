@@ -12,7 +12,7 @@ defineProps<{ types: Option[]; parentOptions: Category[] }>();
   <AuthenticatedLayout>
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Categorias</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Nova categoria</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Defina como este grupo aparecera nos relatorios.</p>
+    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Defina como este grupo aparecerá nos relatórios.</p>
     <CategoryForm :types="types" :parent-options="parentOptions" />
   </AuthenticatedLayout>
 </template>

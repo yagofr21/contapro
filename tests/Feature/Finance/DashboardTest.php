@@ -16,6 +16,7 @@ use App\Modules\Investment\Models\Portfolio;
 use App\Modules\Investment\Models\PortfolioHolding;
 use App\Modules\MarketData\Models\PriceHistory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -51,6 +52,61 @@ class DashboardTest extends TestCase
                 ->where('financialSummaries.0.expenses', '125.0000')
                 ->where('financialSummaries.0.net', '375.0000')
                 ->has('recentTransactions', 2));
+    }
+
+    public function test_dashboard_separates_realized_and_planned_month_values(): void
+    {
+        Carbon::setTestNow('2026-09-16 10:00:00');
+
+        try {
+            $user = User::factory()->create();
+            $account = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => TransactionType::Income,
+                'amount' => '500.0000',
+                'transaction_date' => '2026-09-10',
+            ]);
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => TransactionType::Expense,
+                'amount' => '125.0000',
+                'transaction_date' => '2026-09-11',
+            ]);
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => TransactionType::Income,
+                'amount' => '900.0000',
+                'transaction_date' => '2026-09-20',
+            ]);
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => TransactionType::Expense,
+                'amount' => '300.0000',
+                'transaction_date' => '2026-09-21',
+            ]);
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => TransactionType::TransferOut,
+                'amount' => '777.0000',
+                'transaction_date' => '2026-09-12',
+            ]);
+
+            $this->actingAs($user)
+                ->get(route('dashboard'))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->where('financialSummaries.0.currency', 'BRL')
+                    ->where('financialSummaries.0.income', '500.0000')
+                    ->where('financialSummaries.0.expenses', '125.0000')
+                    ->where('financialSummaries.0.net', '375.0000')
+                    ->where('financialSummaries.0.planned_income', '900.0000')
+                    ->where('financialSummaries.0.planned_expenses', '300.0000')
+                    ->where('financialSummaries.0.planned_net', '600.0000')
+                    ->where('monthlyTrends.0.months.5.month', '2026-09')
+                    ->where('monthlyTrends.0.months.5.income', '500.0000')
+                    ->where('monthlyTrends.0.months.5.expenses', '125.0000')
+                    ->has('categoryExpenses', 1)
+                    ->where('categoryExpenses.0.total', '125.0000'));
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_dashboard_separates_currencies_and_summarizes_investments(): void

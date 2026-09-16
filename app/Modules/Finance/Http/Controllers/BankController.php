@@ -78,7 +78,7 @@ class BankController extends Controller
         $this->authorize('delete', $bank);
 
         if ($bank->accounts()->exists()) {
-            return back()->with('error', 'Nao e possivel remover um banco vinculado a contas.');
+            return back()->with('error', 'Não é possível remover um banco vinculado a contas.');
         }
 
         $bank->delete();

@@ -135,7 +135,7 @@ class CsvImportTest extends TestCase
 
         $response->assertOk()->assertDownload("operacoes-{$portfolio->id}.csv");
         $csv = $response->streamedContent();
-        $this->assertStringStartsWith("\xEF\xBB\xBFData;Tipo;Ativo;Mercado;Corretora;Quantidade;\"Preco unitario\";Taxas;\"Valor bruto\";\"Valor liquido\";\"Proporcao origem\";\"Proporcao destino\";Observacao", $csv);
+        $this->assertStringStartsWith("\xEF\xBB\xBFData;Tipo;Ativo;Mercado;Corretora;Quantidade;\"Preço unitário\";Taxas;\"Valor bruto\";\"Valor líquido\";\"Proporção origem\";\"Proporção destino\";Observação", $csv);
         $this->assertStringContainsString("2026-09-06;Compra;PETR4;B3;;10.00000000;25.50000000;1.5000;;;;;'=observacao", $csv);
 
         $this->actingAs(User::factory()->create())

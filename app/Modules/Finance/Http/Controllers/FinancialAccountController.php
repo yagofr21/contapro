@@ -102,9 +102,9 @@ class FinancialAccountController extends Controller
                 'label' => match ($type) {
                     FinancialAccountType::Cash => 'Dinheiro',
                     FinancialAccountType::Checking => 'Conta corrente',
-                    FinancialAccountType::CreditCard => 'Cartao de credito',
+                    FinancialAccountType::CreditCard => 'Cartão de crédito',
                     FinancialAccountType::Investment => 'Investimentos',
-                    FinancialAccountType::Savings => 'Poupanca',
+                    FinancialAccountType::Savings => 'Poupança',
                 },
             ]),
             'currencies' => collect(Currency::cases())->map(fn ($currency) => [

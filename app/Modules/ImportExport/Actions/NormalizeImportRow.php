@@ -43,7 +43,7 @@ class NormalizeImportRow
         };
 
         if ($type === null) {
-            $errors[] = 'Tipo invalido. Use Receita, Despesa ou Transferencia.';
+            $errors[] = 'Tipo inválido. Use Receita, Despesa ou Transferência.';
         }
 
         $currency = strtoupper($this->value($raw, 'Moeda'));
@@ -54,7 +54,7 @@ class NormalizeImportRow
             ->get();
 
         if ($account->count() !== 1) {
-            $errors[] = 'Conta nao encontrada ou ambigua para esta moeda.';
+            $errors[] = 'Conta não encontrada ou ambígua para esta moeda.';
         }
 
         $sourceAccount = $account->first();
@@ -68,7 +68,7 @@ class NormalizeImportRow
                 ->get();
 
             if ($destination->count() !== 1 || $destination->first()?->is($sourceAccount)) {
-                $errors[] = 'Conta de destino nao encontrada, ambigua ou igual a origem.';
+                $errors[] = 'Conta de destino não encontrada, ambígua ou igual à origem.';
             }
 
             $destinationAccount = $destination->first();
@@ -84,7 +84,7 @@ class NormalizeImportRow
                 ->get();
 
             if ($categories->count() !== 1) {
-                $errors[] = 'Categoria nao encontrada ou ambigua para o tipo do lancamento.';
+                $errors[] = 'Categoria não encontrada ou ambígua para o tipo do lançamento.';
             }
 
             $category = $categories->first();
@@ -108,7 +108,7 @@ class NormalizeImportRow
             'category_id' => $category?->id,
             'amount' => $amount,
             'transaction_date' => $date,
-            'description' => $this->value($raw, 'Descricao') ?: null,
+            'description' => $this->value($raw, 'Descrição') ?: null,
         ], 'errors' => []];
     }
 
@@ -133,7 +133,7 @@ class NormalizeImportRow
         };
 
         if ($type === null) {
-            $errors[] = 'Tipo de operacao invalido.';
+            $errors[] = 'Tipo de operação inválido.';
         }
 
         $asset = Asset::query()
@@ -144,7 +144,7 @@ class NormalizeImportRow
             ->first();
 
         if ($asset === null) {
-            $errors[] = 'Ativo nao encontrado, inativo ou com moeda diferente da carteira.';
+            $errors[] = 'Ativo não encontrado, inativo ou com moeda diferente da carteira.';
         }
 
         $broker = null;
@@ -154,7 +154,7 @@ class NormalizeImportRow
             $brokers = $user->brokers()->where('name', $brokerName)->get();
 
             if ($brokers->count() !== 1) {
-                $errors[] = 'Corretora nao encontrada ou ambigua.';
+                $errors[] = 'Corretora não encontrada ou ambígua.';
             }
 
             $broker = $brokers->first();
@@ -165,7 +165,7 @@ class NormalizeImportRow
             ? $this->decimal($this->value($raw, 'Quantidade'), 8, 'Quantidade', $errors)
             : '0.00000000';
         $unitPrice = $type === 'buy' || $type === 'sell'
-            ? $this->decimal($this->value($raw, 'Preco unitario'), 8, 'Preco unitario', $errors)
+            ? $this->decimal($this->value($raw, 'Preço unitário'), 8, 'Preço unitário', $errors)
             : '0.00000000';
         $fees = $type === 'buy' || $type === 'sell'
             ? $this->decimal($this->value($raw, 'Taxas') ?: '0', 4, 'Taxas', $errors)
@@ -174,34 +174,34 @@ class NormalizeImportRow
             ? $this->decimal($this->value($raw, 'Valor bruto'), 4, 'Valor bruto', $errors)
             : null;
         $netAmount = $type === 'dividend' || $type === 'interest'
-            ? $this->decimal($this->value($raw, 'Valor liquido'), 4, 'Valor liquido', $errors)
+            ? $this->decimal($this->value($raw, 'Valor líquido'), 4, 'Valor líquido', $errors)
             : null;
         $splitFrom = $type === 'split'
-            ? $this->decimal($this->value($raw, 'Proporcao origem'), 8, 'Proporcao origem', $errors)
+            ? $this->decimal($this->value($raw, 'Proporção origem'), 8, 'Proporção origem', $errors)
             : null;
         $splitTo = $type === 'split'
-            ? $this->decimal($this->value($raw, 'Proporcao destino'), 8, 'Proporcao destino', $errors)
+            ? $this->decimal($this->value($raw, 'Proporção destino'), 8, 'Proporção destino', $errors)
             : null;
 
         if (($type === 'buy' || $type === 'sell')
             && (($quantity !== null && bccomp($quantity, '0', 8) <= 0)
                 || ($unitPrice !== null && bccomp($unitPrice, '0', 8) <= 0))) {
-            $errors[] = 'Quantidade e preco unitario devem ser maiores que zero.';
+            $errors[] = 'Quantidade e preço unitário devem ser maiores que zero.';
         }
 
         if ($fees !== null && bccomp($fees, '0', 4) < 0) {
-            $errors[] = 'Taxas nao podem ser negativas.';
+            $errors[] = 'Taxas não podem ser negativas.';
         }
 
         if (($type === 'dividend' || $type === 'interest')
             && ($grossAmount !== null && $netAmount !== null)
             && (bccomp($grossAmount, '0', 4) <= 0 || bccomp($netAmount, '0', 4) < 0 || bccomp($netAmount, $grossAmount, 4) > 0)) {
-            $errors[] = 'Valores bruto e liquido do provento sao invalidos.';
+            $errors[] = 'Valores bruto e líquido do provento são inválidos.';
         }
 
         if ($type === 'split' && $splitFrom !== null && $splitTo !== null
             && (bccomp($splitFrom, '0', 8) <= 0 || bccomp($splitTo, '0', 8) <= 0 || bccomp($splitFrom, $splitTo, 8) === 0)) {
-            $errors[] = 'A proporcao deve usar valores positivos e diferentes.';
+            $errors[] = 'A proporção deve usar valores positivos e diferentes.';
         }
 
         if ($errors !== []) {
@@ -220,7 +220,7 @@ class NormalizeImportRow
             'split_from' => $splitFrom,
             'split_to' => $splitTo,
             'transaction_date' => $date,
-            'note' => $this->value($raw, 'Observacao') ?: null,
+            'note' => $this->value($raw, 'Observação') ?: null,
         ], 'errors' => []];
     }
 

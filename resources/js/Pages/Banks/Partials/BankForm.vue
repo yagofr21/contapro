@@ -29,7 +29,7 @@ const submit = () => (props.bank
     <label>
       <span class="mb-2 block text-sm font-semibold">Codigo interno</span>
       <input v-model="form.code" autofocus :disabled="Boolean(bank)" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm font-mono disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950" placeholder="Ex.: nubank" />
-      <span v-if="bank" class="mt-1 block text-xs text-stone-400">O codigo identifica o banco nas contas e nao pode ser alterado.</span>
+      <span v-if="bank" class="mt-1 block text-xs text-stone-400">O código identifica o banco nas contas e não pode ser alterado.</span>
       <InputError class="mt-2" :message="form.errors.code" />
     </label>
     <label class="mt-6 block">
@@ -60,12 +60,12 @@ const submit = () => (props.bank
       <input v-model="form.is_active" type="checkbox" class="rounded border-stone-300 text-brand-600 focus:ring-brand-500" />
       <span>
         <span class="block text-sm font-semibold">Banco ativo</span>
-        <span class="text-xs text-stone-400">Bancos inativos continuam no historico, mas nao aparecem na criacao de contas.</span>
+        <span class="text-xs text-stone-400">Bancos inativos continuam no histórico, mas não aparecem na criação de contas.</span>
       </span>
     </label>
     <div class="mt-8 flex flex-col-reverse gap-3 border-t border-stone-100 pt-6 dark:border-slate-800 sm:flex-row sm:justify-end">
       <Link :href="route('banks.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500">Cancelar</Link>
-      <button :disabled="form.processing" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save :size="17" />{{ bank ? 'Salvar alteracoes' : 'Cadastrar banco' }}</button>
+      <button :disabled="form.processing" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save :size="17" />{{ bank ? 'Salvar alterações' : 'Cadastrar banco' }}</button>
     </div>
   </form>
 </template>

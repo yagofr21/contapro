@@ -46,7 +46,7 @@ class CategoryRequest extends FormRequest
             $category = $this->route('category');
 
             if ($category instanceof Category && $parentId === $category->id) {
-                $validator->errors()->add('parent_id', 'Uma categoria nao pode ser pai dela mesma.');
+                $validator->errors()->add('parent_id', 'Uma categoria não pode ser pai dela mesma.');
 
                 return;
             }

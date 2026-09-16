@@ -36,12 +36,12 @@ class BrapiProvider implements MarketDataProvider
         $history = $result['historicalDataPrice'] ?? null;
 
         if (! is_array($history)) {
-            throw new MarketDataException('A resposta do provedor nao contem historico de precos.');
+            throw new MarketDataException('A resposta do provedor não contém histórico de preços.');
         }
 
         return array_map(function (mixed $row): MarketQuote {
             if (! is_array($row)) {
-                throw new MarketDataException('O provedor retornou um registro de preco invalido.');
+                throw new MarketDataException('O provedor retornou um registro de preço inválido.');
             }
 
             return new MarketQuote(
@@ -78,7 +78,7 @@ class BrapiProvider implements MarketDataProvider
             $result = $response->json('results.0');
 
             if (! is_array($result)) {
-                throw new MarketDataException('A resposta do provedor nao contem o ativo solicitado.');
+                throw new MarketDataException('A resposta do provedor não contém o ativo solicitado.');
             }
 
             return $result;
@@ -96,7 +96,7 @@ class BrapiProvider implements MarketDataProvider
     private function ensureSuccessful(Response $response, string $symbol): void
     {
         if ($response->status() === 404) {
-            throw new SymbolNotFound("Ativo {$symbol} nao encontrado no provedor.");
+            throw new SymbolNotFound("Ativo {$symbol} não encontrado no provedor.");
         }
 
         if (! $response->successful()) {
@@ -121,7 +121,7 @@ class BrapiProvider implements MarketDataProvider
         }
 
         if (! is_int($value) && ! is_float($value) && ! is_string($value)) {
-            throw new MarketDataException('O provedor retornou um preco invalido.');
+            throw new MarketDataException('O provedor retornou um preço inválido.');
         }
 
         return number_format((float) $value, 8, '.', '');

@@ -4,6 +4,7 @@ namespace App\Modules\Finance\Queries;
 
 use App\Models\User;
 use App\Modules\Finance\Enums\TransactionType;
+use App\Modules\Finance\Models\ExpectedIncome;
 use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\Installment;
 use App\Modules\Finance\Models\TransactionSchedule;
@@ -35,6 +36,7 @@ class AgendaProjectionQuery
         $events = collect()
             ->merge($this->scheduleEvents($user, $today, $horizonEnd))
             ->merge($this->installmentEvents($user, $today, $horizonEnd))
+            ->merge($this->expectedIncomeEvents($user, $today, $horizonEnd))
             ->sortBy(fn (array $event): string => $event['date'])
             ->values();
 
@@ -116,6 +118,48 @@ class AgendaProjectionQuery
 
                     $cursor = $cursor->addMonth();
                 }
+            });
+
+        return $events;
+    }
+
+    /**
+     * @return Collection<int, array{
+     *     date: non-falsy-string,
+     *     kind: 'expected_income',
+     *     type: 'income',
+     *     amount: numeric-string,
+     *     account_id: int,
+     *     account_name: string|null,
+     *     category_name: string|null,
+     *     description: string,
+     *     frequency: null,
+     * }>
+     */
+    private function expectedIncomeEvents(User $user, CarbonImmutable $today, CarbonImmutable $horizonEnd): Collection
+    {
+        $events = collect();
+
+        $user->expectedIncomes()
+            ->with(['account:id,name,currency', 'category:id,name,color'])
+            ->whereNull('received_at')
+            ->whereDate('expected_date', '>=', $today->toDateString())
+            ->whereDate('expected_date', '<=', $horizonEnd->toDateString())
+            ->orderBy('expected_date')
+            ->orderBy('id')
+            ->get()
+            ->each(function (ExpectedIncome $income) use ($events): void {
+                $events->push([
+                    'date' => $income->expected_date->format('Y-m-d'),
+                    'kind' => 'expected_income',
+                    'type' => TransactionType::Income->value,
+                    'amount' => $income->amount,
+                    'account_id' => $income->account_id,
+                    'account_name' => $income->account?->name,
+                    'category_name' => $income->category?->name,
+                    'description' => $income->description,
+                    'frequency' => null,
+                ]);
             });
 
         return $events;

@@ -17,9 +17,9 @@ const props = defineProps<{ accounts: Account[]; types: Option[]; currencies: Op
 const typeLabels: Record<string, string> = {
     cash: 'Dinheiro',
     checking: 'Conta corrente',
-    credit_card: 'Cartao de credito',
+    credit_card: 'Cartão de crédito',
     investment: 'Investimentos',
-    savings: 'Poupanca',
+    savings: 'Poupança',
 };
 
 const accountTone = (account: Account) => {
@@ -63,7 +63,7 @@ onMounted(() => {
 });
 
 const remove = (account: Account) => {
-    if (confirm(`Remover a conta "${account.name}"? Os lancamentos serao preservados.`)) {
+    if (confirm(`Remover a conta "${account.name}"? Os lançamentos serão preservados.`)) {
         router.delete(route('accounts.destroy', account.id));
     }
 };
@@ -72,7 +72,7 @@ const remove = (account: Account) => {
 <template>
   <Head title="Contas" />
   <AuthenticatedLayout>
-    <PageHeader kicker="Organizacao financeira" title="Suas contas" subtitle="Acompanhe onde o dinheiro esta e mantenha cada saldo sob controle.">
+    <PageHeader kicker="Organização financeira" title="Suas contas" subtitle="Acompanhe onde o dinheiro está e mantenha cada saldo sob controle.">
       <template #actions>
         <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700" @click="openCreate"><Plus :size="18" /> Nova conta</button>
       </template>
@@ -91,22 +91,26 @@ const remove = (account: Account) => {
         </div>
         <div class="relative mt-5">
           <p class="text-sm font-medium text-stone-500 dark:text-slate-400">{{ account.name }}</p>
-          <p class="mt-1 text-2xl font-bold tracking-tight" :class="Number(account.balance) < 0 ? 'text-rose-600' : 'text-stone-950 dark:text-white'">{{ formatMoney(account.balance ?? account.initial_balance, account.currency) }}</p>
+          <p v-if="account.credit_card" class="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-400 dark:text-slate-500">{{ account.credit_card.has_limit ? 'Limite disponível' : 'Saldo contábil' }}</p>
+          <p class="mt-1 text-2xl font-bold tracking-tight" :class="account.credit_card ? 'text-stone-950 dark:text-white' : Number(account.balance) < 0 ? 'text-rose-600' : 'text-stone-950 dark:text-white'">
+            {{ formatMoney(account.credit_card?.available ?? account.balance ?? account.initial_balance, account.currency) }}
+          </p>
           <p class="mt-2 text-xs text-stone-400">{{ typeLabels[account.type] }}</p>
         </div>
-        <div v-if="account.credit_card?.has_limit" class="relative mt-4 rounded-xl bg-stone-50 p-3 dark:bg-slate-950">
-          <div class="flex items-center justify-between text-[11px] font-medium text-stone-500 dark:text-slate-400">
+        <div v-if="account.credit_card" class="relative mt-4 rounded-xl bg-stone-50 p-3 dark:bg-slate-950">
+          <div v-if="account.credit_card.has_limit" class="flex items-center justify-between text-[11px] font-medium text-stone-500 dark:text-slate-400">
             <span>Limite</span>
             <span :class="account.credit_card.over_limit ? 'font-bold text-rose-600 dark:text-rose-400' : ''">{{ account.credit_card.utilization }}% usado</span>
           </div>
-          <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-slate-700">
+          <div v-if="account.credit_card.has_limit" class="mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-slate-700">
             <div class="h-full rounded-full transition-all duration-300" :class="account.credit_card.over_limit ? 'bg-rose-500' : account.credit_card.utilization && account.credit_card.utilization > 75 ? 'bg-amber-400' : 'bg-emerald-500'" :style="{ width: Math.min(account.credit_card.utilization ?? 0, 100) + '%' }" />
           </div>
-          <div class="mt-2 grid grid-cols-2 gap-2 text-[11px] text-stone-500 dark:text-slate-400">
-            <div><p class="text-stone-400 dark:text-slate-500">Fatura atual</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatMoney(account.credit_card.current_invoice, account.currency) }}</p></div>
-            <div><p class="text-stone-400 dark:text-slate-500">Disponivel</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatMoney(account.credit_card.available ?? '0', account.currency) }}</p></div>
-            <div><p class="text-stone-400 dark:text-slate-500">Proximas faturas</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatMoney(account.credit_card.future_invoices, account.currency) }}</p></div>
-            <div><p class="text-stone-400 dark:text-slate-500">Vence em</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatDate(account.credit_card.next_due) }}</p></div>
+          <div class="mt-3 grid gap-2 text-[11px] text-stone-500 dark:text-slate-400">
+            <div class="rounded-lg bg-white p-2 dark:bg-slate-900"><p class="text-stone-400 dark:text-slate-500">Fatura atual</p><p class="text-sm font-semibold text-stone-800 dark:text-slate-100">{{ formatMoney(account.credit_card.current_invoice, account.currency) }}</p><p class="mt-0.5 text-[10px] text-stone-400 dark:text-slate-500">Fecha em {{ formatDate(account.credit_card.next_closing) }} · vence em {{ formatDate(account.credit_card.next_due) }}</p></div>
+            <div class="grid grid-cols-2 gap-2">
+              <div><p class="text-stone-400 dark:text-slate-500">Próximas faturas</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatMoney(account.credit_card.future_invoices, account.currency) }}</p></div>
+              <div><p class="text-stone-400 dark:text-slate-500">Saldo contábil</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatMoney(account.balance ?? account.initial_balance, account.currency) }}</p></div>
+            </div>
           </div>
         </div>
         <div class="relative mt-5 flex items-center gap-2 border-t border-stone-100 pt-4 dark:border-slate-800">
@@ -116,7 +120,7 @@ const remove = (account: Account) => {
       </article>
     </div>
 
-    <EmptyState v-else class="mt-6" :icon="WalletCards" title="Nenhuma conta cadastrada" description="Comece pela conta que voce mais movimenta." />
+    <EmptyState v-else class="mt-6" :icon="WalletCards" title="Nenhuma conta cadastrada" description="Comece pela conta que você mais movimenta." />
 
     <Modal :show="modalOpen" max-width="lg" :title="editing ? 'Editar conta' : 'Nova conta'" @close="closeModal">
       <AccountForm v-if="modalOpen" :account="editing ?? undefined" :types="types" :currencies="currencies" :banks="banks" embedded @cancel="closeModal" />

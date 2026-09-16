@@ -152,7 +152,7 @@ class StoreReconciliation
             'row_number' => $index + 2,
             'date' => $date,
             'amount' => $amount,
-            'description' => $this->value($raw, 'Descricao') ?: null,
+            'description' => $this->value($raw, 'Descrição') ?: null,
             'errors' => $errors,
             'raw' => $raw,
         ];
@@ -183,14 +183,14 @@ class StoreReconciliation
         );
 
         if (count(array_unique($normalized)) !== count($normalized)) {
-            throw ValidationException::withMessages(['file' => 'O CSV possui cabecalhos equivalentes ou duplicados.']);
+            throw ValidationException::withMessages(['file' => 'O CSV possui cabeçalhos equivalentes ou duplicados.']);
         }
 
         $missing = array_diff(['data', 'descricao', 'valor'], $normalized);
 
         if ($missing !== []) {
             throw ValidationException::withMessages([
-                'file' => 'Cabecalhos obrigatorios ausentes: '.implode(', ', $missing).'.',
+                'file' => 'Cabeçalhos obrigatórios ausentes: '.implode(', ', array_map(fn (string $header) => $header === 'descricao' ? 'descrição' : $header, $missing)).'.',
             ]);
         }
     }

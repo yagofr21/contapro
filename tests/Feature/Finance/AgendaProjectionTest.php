@@ -5,6 +5,7 @@ namespace Tests\Feature\Finance;
 use App\Models\User;
 use App\Modules\Finance\Enums\ScheduleFrequency;
 use App\Modules\Finance\Enums\TransactionType;
+use App\Modules\Finance\Models\ExpectedIncome;
 use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\Installment;
 use App\Modules\Finance\Models\Transaction;
@@ -87,5 +88,54 @@ class AgendaProjectionTest extends TestCase
                 ->has('projection', 1)
                 ->where('projection.0.balance', '1500.0000')
                 ->where('projection.0.projected_balance', '1100.0000'));
+    }
+
+    public function test_agenda_includes_pending_expected_incomes_in_projection(): void
+    {
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create([
+            'currency' => 'BRL',
+            'initial_balance' => '1000.0000',
+        ]);
+
+        ExpectedIncome::factory()->for($user)->create([
+            'account_id' => $account->id,
+            'currency' => 'BRL',
+            'description' => 'Salário',
+            'amount' => '700.0000',
+            'expected_date' => '2026-09-03',
+            'received_at' => null,
+        ]);
+        ExpectedIncome::factory()->for($user)->create([
+            'account_id' => $account->id,
+            'currency' => 'BRL',
+            'description' => 'Recebida',
+            'amount' => '900.0000',
+            'expected_date' => '2026-09-04',
+            'received_at' => '2026-09-02',
+        ]);
+        ExpectedIncome::factory()->for($user)->create([
+            'account_id' => $account->id,
+            'currency' => 'BRL',
+            'description' => 'Fora do horizonte',
+            'amount' => '100.0000',
+            'expected_date' => '2026-12-01',
+            'received_at' => null,
+        ]);
+
+        $this->travelTo(CarbonImmutable::parse('2026-09-01'));
+
+        $this->actingAs($user)
+            ->get(route('agenda.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Agenda/Index')
+                ->has('events', 1)
+                ->where('events.0.date', '2026-09-03')
+                ->where('events.0.kind', 'expected_income')
+                ->where('events.0.type', 'income')
+                ->where('events.0.description', 'Salário')
+                ->where('projection.0.balance', '1000.0000')
+                ->where('projection.0.projected_balance', '1700.0000'));
     }
 }

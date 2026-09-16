@@ -13,11 +13,11 @@ class CsvReader
         $contents = file_get_contents($file->getPathname());
 
         if ($contents === false || $contents === '') {
-            throw ValidationException::withMessages(['file' => 'O arquivo CSV esta vazio.']);
+            throw ValidationException::withMessages(['file' => 'O arquivo CSV está vazio.']);
         }
 
         if (str_contains($contents, "\0")) {
-            throw ValidationException::withMessages(['file' => 'O arquivo CSV contem dados binarios invalidos.']);
+            throw ValidationException::withMessages(['file' => 'O arquivo CSV contém dados binários inválidos.']);
         }
 
         if (! mb_check_encoding($contents, 'UTF-8')) {
@@ -30,7 +30,7 @@ class CsvReader
         $stream = fopen('php://temp', 'r+b');
 
         if ($stream === false) {
-            throw ValidationException::withMessages(['file' => 'Nao foi possivel processar o arquivo.']);
+            throw ValidationException::withMessages(['file' => 'Não foi possível processar o arquivo.']);
         }
 
         fwrite($stream, $contents);
@@ -39,14 +39,14 @@ class CsvReader
 
         if ($headers === false || count($headers) < 2 || count($headers) > 100) {
             fclose($stream);
-            throw ValidationException::withMessages(['file' => 'O cabecalho do CSV e invalido.']);
+            throw ValidationException::withMessages(['file' => 'O cabeçalho do CSV é inválido.']);
         }
 
         $headers = array_map(fn ($header) => trim((string) $header), $headers);
 
         if (in_array('', $headers, true) || count(array_unique($headers)) !== count($headers)) {
             fclose($stream);
-            throw ValidationException::withMessages(['file' => 'O CSV possui cabecalhos vazios ou duplicados.']);
+            throw ValidationException::withMessages(['file' => 'O CSV possui cabeçalhos vazios ou duplicados.']);
         }
 
         $rows = [];
@@ -65,7 +65,7 @@ class CsvReader
 
             if (collect($values)->contains(fn (string $value) => mb_strlen($value) > 10000)) {
                 fclose($stream);
-                throw ValidationException::withMessages(['file' => 'O CSV possui uma celula maior que 10.000 caracteres.']);
+                throw ValidationException::withMessages(['file' => 'O CSV possui uma célula maior que 10.000 caracteres.']);
             }
 
             /** @var array<string, string> $row */
@@ -74,14 +74,14 @@ class CsvReader
 
             if (count($rows) > 1000) {
                 fclose($stream);
-                throw ValidationException::withMessages(['file' => 'O CSV pode conter no maximo 1.000 linhas.']);
+                throw ValidationException::withMessages(['file' => 'O CSV pode conter no máximo 1.000 linhas.']);
             }
         }
 
         fclose($stream);
 
         if ($rows === []) {
-            throw ValidationException::withMessages(['file' => 'O CSV nao possui linhas para importar.']);
+            throw ValidationException::withMessages(['file' => 'O CSV não possui linhas para importar.']);
         }
 
         return ['headers' => array_values($headers), 'rows' => $rows, 'delimiter' => $delimiter];
@@ -99,7 +99,7 @@ class CsvReader
         $delimiter = (string) array_key_first($counts);
 
         if (($counts[$delimiter] ?? 0) < 2) {
-            throw ValidationException::withMessages(['file' => 'Nao foi possivel identificar o separador do CSV.']);
+            throw ValidationException::withMessages(['file' => 'Não foi possível identificar o separador do CSV.']);
         }
 
         return $delimiter;

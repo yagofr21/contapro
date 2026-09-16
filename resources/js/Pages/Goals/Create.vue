@@ -13,7 +13,7 @@ defineProps<{ accounts: AccountOption[]; currencies: Option[] }>();
   <AuthenticatedLayout>
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Planejamento</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Nova meta</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Defina o que deseja economizar e acompanhe o progresso mês a mes.</p>
+    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Defina o que deseja economizar e acompanhe o progresso mês a mês.</p>
     <GoalForm :accounts="accounts" :currencies="currencies" />
   </AuthenticatedLayout>
 </template>

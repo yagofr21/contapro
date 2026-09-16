@@ -78,7 +78,7 @@ class RebuildPortfolioHolding
 
                 if (bccomp($netAmount, '0', 4) < 0) {
                     throw ValidationException::withMessages([
-                        'fees' => 'As taxas nao podem superar o valor bruto da venda.',
+                        'fees' => 'As taxas não podem superar o valor bruto da venda.',
                     ]);
                 }
 

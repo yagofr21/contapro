@@ -88,7 +88,7 @@ class StoreCsvImport
         );
 
         if (count(array_unique($normalized)) !== count($normalized)) {
-            throw ValidationException::withMessages(['file' => 'O CSV possui cabecalhos equivalentes ou duplicados.']);
+            throw ValidationException::withMessages(['file' => 'O CSV possui cabeçalhos equivalentes ou duplicados.']);
         }
 
         $required = $kind === ImportKind::Financial
@@ -97,8 +97,17 @@ class StoreCsvImport
         $missing = array_diff($required, $normalized);
 
         if ($missing !== []) {
+            $labels = [
+                'descricao' => 'descrição',
+                'preco unitario' => 'preço unitário',
+                'valor liquido' => 'valor líquido',
+                'proporcao origem' => 'proporção origem',
+                'proporcao destino' => 'proporção destino',
+                'observacao' => 'observação',
+            ];
+
             throw ValidationException::withMessages([
-                'file' => 'Cabecalhos obrigatorios ausentes: '.implode(', ', $missing).'.',
+                'file' => 'Cabeçalhos obrigatórios ausentes: '.implode(', ', array_map(fn (string $header) => $labels[$header] ?? $header, $missing)).'.',
             ]);
         }
     }

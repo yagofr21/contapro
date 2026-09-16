@@ -14,6 +14,6 @@ class AssetQuoteController extends Controller
         $this->authorize('refresh', $asset);
         SyncQuote::dispatch($asset->id);
 
-        return back()->with('success', 'Atualizacao da cotacao agendada.');
+        return back()->with('success', 'Atualização da cotação agendada.');
     }
 }

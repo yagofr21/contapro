@@ -55,7 +55,7 @@ class TransactionCsvExportTest extends TestCase
             ->assertHeader('content-type', 'text/csv; charset=UTF-8')
             ->assertDownload('transacoes-2026-01-01-a-2026-01-31-BRL.csv');
         $csv = $response->streamedContent();
-        $this->assertStringStartsWith("\xEF\xBB\xBFData;Tipo;Descricao;Conta;\"Conta destino\";Categoria;Valor;Moeda\r\n", $csv);
+        $this->assertStringStartsWith("\xEF\xBB\xBFData;Tipo;Descrição;Conta;\"Conta destino\";Categoria;Valor;Moeda\r\n", $csv);
         $this->assertStringContainsString("2026-01-01;Receita;'=FORMULA();\"Conta principal\";;;100.5000;BRL", $csv);
         $this->assertStringContainsString('Transferencia unica', $csv);
         $this->assertStringContainsString('Reserva', $csv);

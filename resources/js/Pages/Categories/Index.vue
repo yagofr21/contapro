@@ -59,8 +59,8 @@ const remove = (category: Category) => {
               <p v-if="category.parent_name" class="text-xs text-stone-400">Em {{ category.parent_name }}</p>
             </div>
             <div class="flex opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
-              <button class="rounded-lg p-2 text-stone-400 hover:bg-white hover:text-brand-600 dark:hover:bg-slate-700" @click="openEdit(category)"><Pencil :size="15" /></button>
-              <button class="rounded-lg p-2 text-stone-400 hover:bg-white hover:text-rose-600 dark:hover:bg-slate-700" @click="remove(category)"><Trash2 :size="15" /></button>
+              <button class="rounded-lg p-2 text-stone-400 hover:bg-white hover:text-brand-600 dark:hover:bg-slate-700" :aria-label="`Editar categoria ${category.name}`" @click="openEdit(category)"><Pencil :size="15" /></button>
+              <button class="rounded-lg p-2 text-stone-400 hover:bg-white hover:text-rose-600 dark:hover:bg-slate-700" :aria-label="`Remover categoria ${category.name}`" @click="remove(category)"><Trash2 :size="15" /></button>
             </div>
           </article>
           <p v-if="!group.data.length" class="py-6 text-center text-sm text-stone-400">Nenhuma categoria neste grupo.</p>
@@ -68,7 +68,7 @@ const remove = (category: Category) => {
       </Card>
     </div>
 
-    <EmptyState v-else class="mt-6" :icon="Tags" title="Organize seus lancamentos" description="Cadastre categorias de receita e despesa." />
+    <EmptyState v-else class="mt-6" :icon="Tags" title="Organize seus lançamentos" description="Cadastre categorias de receita e despesa." />
 
     <Modal :show="modalOpen" max-width="md" :title="editing ? 'Editar categoria' : 'Nova categoria'" @close="closeModal">
       <CategoryForm

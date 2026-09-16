@@ -11,8 +11,8 @@ class ImportTemplateController extends Controller
     public function __invoke(ImportKind $kind): StreamedResponse
     {
         $headers = $kind === ImportKind::Financial
-            ? ['Data', 'Tipo', 'Descricao', 'Conta', 'Conta destino', 'Categoria', 'Valor', 'Moeda']
-            : ['Data', 'Tipo', 'Ativo', 'Mercado', 'Corretora', 'Quantidade', 'Preco unitario', 'Taxas', 'Valor bruto', 'Valor liquido', 'Proporcao origem', 'Proporcao destino', 'Observacao'];
+            ? ['Data', 'Tipo', 'Descrição', 'Conta', 'Conta destino', 'Categoria', 'Valor', 'Moeda']
+            : ['Data', 'Tipo', 'Ativo', 'Mercado', 'Corretora', 'Quantidade', 'Preço unitário', 'Taxas', 'Valor bruto', 'Valor líquido', 'Proporção origem', 'Proporção destino', 'Observação'];
 
         return response()->streamDownload(function () use ($headers): void {
             $stream = fopen('php://output', 'wb');
