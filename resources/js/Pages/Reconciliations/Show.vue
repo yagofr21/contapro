@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, CheckCircle2, ShieldCheck, Trash2, XCircle } from '@lucide/vue';
 import { computed } from 'vue';
 
@@ -71,7 +71,7 @@ const discard = () => {
 </script>
 
 <template>
-  <Head title="Conciliacao" />
+  <Head title="Conciliação" />
   <AuthenticatedLayout>
     <Link :href="route('reconciliations.index')" class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-brand-600 dark:text-slate-400"><ArrowLeft :size="14" />Conciliações</Link>
 

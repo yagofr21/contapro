@@ -26,7 +26,13 @@ const submit = () => {
   <GuestLayout>
     <Head title="Criar cadastro" />
 
-    <form @submit.prevent="submit">
+    <header class="mb-7">
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Comece com segurança</p>
+      <h2 class="mt-3 text-3xl font-bold tracking-tight">Crie sua conta</h2>
+      <p class="mt-2 text-sm leading-6 text-stone-500 dark:text-slate-400">Organize contas, cartões e investimentos em um só lugar.</p>
+    </header>
+
+    <form class="space-y-5" @submit.prevent="submit">
       <div>
         <InputLabel for="name" value="Nome" />
 
@@ -34,7 +40,7 @@ const submit = () => {
           id="name"
           v-model="form.name"
           type="text"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autofocus
           autocomplete="name"
@@ -43,14 +49,14 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.name" />
       </div>
 
-      <div class="mt-4">
+      <div>
         <InputLabel for="email" value="E-mail" />
 
         <TextInput
           id="email"
           v-model="form.email"
           type="email"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autocomplete="username"
         />
@@ -58,14 +64,14 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.email" />
       </div>
 
-      <div class="mt-4">
+      <div>
         <InputLabel for="password" value="Senha" />
 
         <TextInput
           id="password"
           v-model="form.password"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autocomplete="new-password"
         />
@@ -73,7 +79,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.password" />
       </div>
 
-      <div class="mt-4">
+      <div>
         <InputLabel
           for="password_confirmation"
           value="Confirmar senha"
@@ -83,7 +89,7 @@ const submit = () => {
           id="password_confirmation"
           v-model="form.password_confirmation"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autocomplete="new-password"
         />
@@ -94,16 +100,16 @@ const submit = () => {
         />
       </div>
 
-      <div class="mt-4 flex items-center justify-end">
+      <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
         <Link
           :href="route('login')"
-          class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          class="text-sm font-semibold text-brand-600 hover:text-brand-700"
         >
           Já tem cadastro?
         </Link>
 
         <PrimaryButton
-          class="ms-4"
+          class="w-full sm:w-auto"
           :class="{ 'opacity-25': form.processing }"
           :disabled="form.processing"
         >

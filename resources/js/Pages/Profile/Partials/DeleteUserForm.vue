@@ -43,11 +43,11 @@ const closeModal = () => {
 <template>
   <section class="space-y-6">
     <header>
-      <h2 class="text-lg font-medium text-gray-900">
+      <h2 class="text-lg font-bold tracking-tight text-danger-700 dark:text-danger-500">
         Excluir conta
       </h2>
 
-      <p class="mt-1 text-sm text-gray-600">
+      <p class="mt-1 text-sm leading-6 text-stone-500 dark:text-slate-400">
         Uma vez excluída, sua conta, seus recursos e seus dados serão
         removidos permanentemente. Antes de excluir, baixe tudo o que
         deseja manter.
@@ -57,16 +57,15 @@ const closeModal = () => {
     <DangerButton @click="confirmUserDeletion">Excluir conta</DangerButton>
 
     <Modal :show="confirmingUserDeletion" @close="closeModal">
-      <div class="p-6">
+      <div class="p-6 sm:p-7">
         <h2
-          class="text-lg font-medium text-gray-900"
+          class="text-lg font-bold tracking-tight text-stone-950 dark:text-white"
         >
-          Tem certeza de que deseja excluir sua conta?
+          Excluir conta permanentemente?
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
-          Uma vez excluída, sua conta e todos os seus dados serão removidos
-          permanentemente. Digite sua senha para confirmar a exclusão.
+        <p class="mt-2 rounded-2xl border border-danger-100 bg-danger-50 p-4 text-sm leading-6 text-danger-700 dark:border-danger-900/60 dark:bg-danger-950/30 dark:text-danger-500">
+          Esta ação não poderá ser desfeita. Sua conta e todos os dados financeiros serão removidos permanentemente. Digite sua senha para confirmar.
         </p>
 
         <div class="mt-6">
@@ -81,7 +80,7 @@ const closeModal = () => {
             ref="passwordInput"
             v-model="form.password"
             type="password"
-            class="mt-1 block w-3/4"
+            class="mt-2 block w-full"
             placeholder="Senha"
             @keyup.enter="deleteUser"
           />
@@ -89,13 +88,13 @@ const closeModal = () => {
           <InputError :message="form.errors.password" class="mt-2" />
         </div>
 
-        <div class="mt-6 flex justify-end">
+        <div class="mt-6 flex flex-col-reverse justify-end gap-2 sm:flex-row">
           <SecondaryButton @click="closeModal">
             Cancelar
           </SecondaryButton>
 
           <DangerButton
-            class="ms-3"
+            class="sm:ms-3"
             :class="{ 'opacity-25': form.processing }"
             :disabled="form.processing"
             @click="deleteUser"

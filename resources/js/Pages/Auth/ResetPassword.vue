@@ -31,7 +31,13 @@ const submit = () => {
   <GuestLayout>
     <Head title="Redefinir senha" />
 
-    <form @submit.prevent="submit">
+    <header class="mb-7">
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Nova credencial</p>
+      <h2 class="mt-3 text-3xl font-bold tracking-tight">Escolha uma nova senha</h2>
+      <p class="mt-2 text-sm leading-6 text-stone-500 dark:text-slate-400">Use uma senha forte para proteger seus dados financeiros.</p>
+    </header>
+
+    <form class="space-y-5" @submit.prevent="submit">
       <div>
         <InputLabel for="email" value="E-mail" />
 
@@ -39,7 +45,7 @@ const submit = () => {
           id="email"
           v-model="form.email"
           type="email"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autofocus
           autocomplete="username"
@@ -48,14 +54,14 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.email" />
       </div>
 
-      <div class="mt-4">
+      <div>
         <InputLabel for="password" value="Nova senha" />
 
         <TextInput
           id="password"
           v-model="form.password"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autocomplete="new-password"
         />
@@ -63,7 +69,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.password" />
       </div>
 
-      <div class="mt-4">
+      <div>
         <InputLabel
           for="password_confirmation"
           value="Confirmar senha"
@@ -73,7 +79,7 @@ const submit = () => {
           id="password_confirmation"
           v-model="form.password_confirmation"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autocomplete="new-password"
         />
@@ -84,8 +90,9 @@ const submit = () => {
         />
       </div>
 
-      <div class="mt-4 flex items-center justify-end">
+      <div class="flex items-center justify-end">
         <PrimaryButton
+          class="w-full"
           :class="{ 'opacity-25': form.processing }"
           :disabled="form.processing"
         >

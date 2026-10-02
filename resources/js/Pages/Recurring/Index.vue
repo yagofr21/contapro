@@ -73,10 +73,10 @@ const remove = (schedule: Schedule) => {
               <th class="px-5 py-3">Descrição</th>
               <th class="px-5 py-3">Tipo</th>
               <th class="px-5 py-3">Valor</th>
-              <th class="px-5 py-3">Frequencia</th>
+              <th class="px-5 py-3">Frequência</th>
               <th class="px-5 py-3">Próxima data</th>
               <th class="px-5 py-3">Conta</th>
-              <th class="px-5 py-3 text-right">Acoes</th>
+              <th class="px-5 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-stone-100 dark:divide-slate-800">

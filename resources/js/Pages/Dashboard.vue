@@ -141,6 +141,7 @@ const greeting = computed(() => {
     if (h < 18) return 'Boa tarde';
     return 'Boa noite';
 });
+const currentMonthLabel = computed(() => new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date()));
 </script>
 
 <template>
@@ -150,7 +151,8 @@ const greeting = computed(() => {
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">{{ greeting }}, {{ user?.split(' ')[0] }}</p>
-          <h1 class="mt-1 text-xl font-bold text-stone-900 dark:text-white">Visão geral</h1>
+          <h1 class="mt-1 text-xl font-bold text-stone-900 dark:text-white">Aqui está o resumo da sua vida financeira.</h1>
+          <p class="mt-1 text-sm text-stone-500 dark:text-slate-400">Mês atual: <span class="font-semibold capitalize text-stone-700 dark:text-slate-200">{{ currentMonthLabel }}</span></p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <div class="flex gap-1 rounded-full bg-stone-100 p-1 dark:bg-slate-800">
@@ -164,29 +166,29 @@ const greeting = computed(() => {
         <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-5 text-white shadow-lg shadow-brand-700/20 sm:p-6">
           <div class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(closest-side_at_50%_0%,rgba(255,255,255,0.18),transparent)]" aria-hidden="true" />
           <div class="relative">
-            <p class="text-xs font-semibold uppercase tracking-wider text-brand-200">Saldo disponível</p>
-            <p class="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{{ formatMoney(summary.available_balance, selectedCurrency) }}</p>
-            <p class="mt-2 text-sm text-brand-200">Dinheiro, corrente e poupança</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-brand-200">Patrimônio líquido</p>
+            <p class="financial-value mt-2 text-2xl font-bold sm:text-3xl">{{ formatMoney(summary.net_worth, selectedCurrency) }}</p>
+            <p class="mt-2 text-sm text-brand-200">Disponível + investimentos - cartões</p>
           </div>
         </article>
-        <article class="rounded-2xl bg-slate-50 p-5 ring-1 ring-stone-200 dark:bg-slate-800/60 dark:ring-slate-700/60"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Investimentos</p><p class="mt-2 text-2xl font-bold">{{ formatMoney(summary.investments, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-500 dark:text-slate-400">Contas de investimento e carteiras</p></article>
-        <article class="rounded-2xl bg-rose-50 p-5 ring-1 ring-rose-100 dark:bg-rose-950/40 dark:ring-rose-900/60"><p class="text-xs font-semibold uppercase tracking-wider text-rose-700/70 dark:text-rose-400/70">Faturas atuais</p><p class="mt-2 text-2xl font-bold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.current_invoices, selectedCurrency) }}</p><p class="mt-1 text-xs text-rose-700/70 dark:text-rose-400/70">Dívida total: {{ formatMoney(summary.credit_card_debt, selectedCurrency) }}</p></article>
-        <article class="rounded-2xl bg-emerald-50 p-5 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:ring-emerald-900/60"><p class="text-xs font-semibold uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70">Patrimônio líquido</p><p class="mt-2 text-2xl font-bold" :class="Number(summary.net_worth) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(summary.net_worth, selectedCurrency) }}</p><p class="mt-1 text-xs text-emerald-700/70 dark:text-emerald-400/70">Disponível + investimentos - cartões</p></article>
-      </div>
-
-      <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <article class="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:ring-emerald-900/60">
           <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300"><ArrowDownLeft :size="18" /></span>
-          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70">Receitas realizadas</p><p class="mt-0.5 truncate text-lg font-bold text-emerald-700 dark:text-emerald-300">{{ formatMoney(summary.income, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-emerald-700/70 dark:text-emerald-400/70">Previsto: {{ formatMoney(summary.planned_income, selectedCurrency) }}</p></div>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70">Receitas</p><p class="financial-value mt-0.5 truncate text-lg font-bold text-emerald-700 dark:text-emerald-300">{{ formatMoney(summary.income, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-emerald-700/70 dark:text-emerald-400/70">Previsto: {{ formatMoney(summary.planned_income, selectedCurrency) }}</p></div>
         </article>
         <article class="flex items-center gap-3 rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100 dark:bg-rose-950/40 dark:ring-rose-900/60">
           <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300"><ArrowUpRight :size="18" /></span>
-          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-rose-700/70 dark:text-rose-400/70">Despesas realizadas</p><p class="mt-0.5 truncate text-lg font-bold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.expenses, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-rose-700/70 dark:text-rose-400/70">Previsto: {{ formatMoney(summary.planned_expenses, selectedCurrency) }}</p></div>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-rose-700/70 dark:text-rose-400/70">Despesas</p><p class="financial-value mt-0.5 truncate text-lg font-bold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.expenses, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-rose-700/70 dark:text-rose-400/70">Previsto: {{ formatMoney(summary.planned_expenses, selectedCurrency) }}</p></div>
         </article>
         <article class="flex items-center gap-3 rounded-2xl bg-stone-50 p-4 ring-1 ring-stone-200 dark:bg-slate-800/60 dark:ring-slate-700/60">
           <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-stone-200 text-stone-700 dark:bg-slate-700 dark:text-slate-200"><TrendingUp :size="18" /></span>
-          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Resultado realizado</p><p class="mt-0.5 truncate text-lg font-bold" :class="Number(summary.net) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(summary.net, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-stone-500 dark:text-slate-400">Previsto: {{ formatMoney(summary.planned_net, selectedCurrency) }}</p></div>
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Saldo mensal</p><p class="financial-value mt-0.5 truncate text-lg font-bold" :class="Number(summary.net) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(summary.net, selectedCurrency) }}</p><p class="mt-0.5 truncate text-xs text-stone-500 dark:text-slate-400">Previsto: {{ formatMoney(summary.planned_net, selectedCurrency) }}</p></div>
         </article>
+      </div>
+
+      <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <article class="rounded-2xl bg-slate-50 p-5 ring-1 ring-stone-200 dark:bg-slate-800/60 dark:ring-slate-700/60"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Saldo disponível</p><p class="financial-value mt-2 text-2xl font-bold">{{ formatMoney(summary.available_balance, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-500 dark:text-slate-400">Dinheiro, corrente e poupança</p></article>
+        <article class="rounded-2xl bg-slate-50 p-5 ring-1 ring-stone-200 dark:bg-slate-800/60 dark:ring-slate-700/60"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-slate-400">Investimentos</p><p class="financial-value mt-2 text-2xl font-bold">{{ formatMoney(summary.investments, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-500 dark:text-slate-400">Contas de investimento e carteiras</p></article>
+        <article class="rounded-2xl bg-rose-50 p-5 ring-1 ring-rose-100 dark:bg-rose-950/40 dark:ring-rose-900/60"><p class="text-xs font-semibold uppercase tracking-wider text-rose-700/70 dark:text-rose-400/70">Faturas atuais</p><p class="financial-value mt-2 text-2xl font-bold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.current_invoices, selectedCurrency) }}</p><p class="mt-1 text-xs text-rose-700/70 dark:text-rose-400/70">Dívida total: {{ formatMoney(summary.credit_card_debt, selectedCurrency) }}</p></article>
       </div>
     </section>
 
@@ -194,7 +196,7 @@ const greeting = computed(() => {
       <div class="flex items-center gap-2">
         <CheckCircle2 v-if="allGood" :size="16" class="text-emerald-600 dark:text-emerald-400" />
         <BellRing v-else :size="16" class="text-amber-600 dark:text-amber-400" />
-        <h2 class="text-sm font-bold" :class="allGood ? 'text-emerald-800 dark:text-emerald-200' : 'text-amber-950 dark:text-amber-200'">{{ allGood ? 'Tudo em dia' : 'Precisa da sua atencao' }}</h2>
+        <h2 class="text-sm font-bold" :class="allGood ? 'text-emerald-800 dark:text-emerald-200' : 'text-amber-950 dark:text-amber-200'">{{ allGood ? 'Tudo em dia' : 'Precisa da sua atenção' }}</h2>
       </div>
       <div v-if="hasAttention" class="mt-3 flex flex-wrap gap-2">
         <Link v-for="item in attentionItems" :key="item.key" :href="item.href" class="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold ring-1 transition dark:bg-slate-900" :class="item.pill">

@@ -95,7 +95,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.amount" />
       </label>
       <label>
-        <span class="mb-2 block text-sm font-semibold">Frequencia</span>
+        <span class="mb-2 block text-sm font-semibold">Frequência</span>
         <SelectInput v-model="form.frequency"><option v-for="freq in frequencies" :key="freq.value" :value="freq.value">{{ freq.label }}</option></SelectInput>
         <InputError class="mt-2" :message="form.errors.frequency" />
       </label>

@@ -38,11 +38,11 @@ const updatePassword = () => {
 <template>
   <section>
     <header>
-      <h2 class="text-lg font-medium text-gray-900">
+      <h2 class="text-lg font-bold tracking-tight text-stone-950 dark:text-white">
         Alterar senha
       </h2>
 
-      <p class="mt-1 text-sm text-gray-600">
+      <p class="mt-1 text-sm text-stone-500 dark:text-slate-400">
         Use uma senha longa e aleatória para manter sua conta segura.
       </p>
     </header>
@@ -56,7 +56,7 @@ const updatePassword = () => {
           ref="currentPasswordInput"
           v-model="form.current_password"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           autocomplete="current-password"
         />
 
@@ -74,7 +74,7 @@ const updatePassword = () => {
           ref="passwordInput"
           v-model="form.password"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           autocomplete="new-password"
         />
 
@@ -91,7 +91,7 @@ const updatePassword = () => {
           id="password_confirmation"
           v-model="form.password_confirmation"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           autocomplete="new-password"
         />
 
@@ -112,9 +112,9 @@ const updatePassword = () => {
         >
           <p
             v-if="form.recentlySuccessful"
-            class="text-sm text-gray-600"
+            class="text-sm font-medium text-emerald-600 dark:text-emerald-400"
           >
-            Salvo.
+            Senha atualizada.
           </p>
         </Transition>
       </div>

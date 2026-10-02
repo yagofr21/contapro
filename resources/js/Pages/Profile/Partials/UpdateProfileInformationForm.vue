@@ -16,11 +16,11 @@ const form = useForm({
 <template>
   <section>
     <header>
-      <h2 class="text-lg font-medium text-gray-900">
+      <h2 class="text-lg font-bold tracking-tight text-stone-950 dark:text-white">
         Perfil
       </h2>
 
-      <p class="mt-1 text-sm text-gray-600">
+      <p class="mt-1 text-sm text-stone-500 dark:text-slate-400">
         Atualize as informações do perfil e o endereço de e-mail da sua conta.
       </p>
     </header>
@@ -36,7 +36,7 @@ const form = useForm({
           id="name"
           v-model="form.name"
           type="text"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autofocus
           autocomplete="name"
@@ -52,7 +52,7 @@ const form = useForm({
           id="email"
           v-model="form.email"
           type="email"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autocomplete="username"
         />
@@ -71,9 +71,9 @@ const form = useForm({
         >
           <p
             v-if="form.recentlySuccessful"
-            class="text-sm text-gray-600"
+            class="text-sm font-medium text-emerald-600 dark:text-emerald-400"
           >
-            Salvo.
+            Perfil atualizado.
           </p>
         </Transition>
       </div>

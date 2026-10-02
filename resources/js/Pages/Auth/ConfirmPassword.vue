@@ -23,19 +23,20 @@ const submit = () => {
   <GuestLayout>
     <Head title="Confirmar senha" />
 
-    <div class="mb-4 text-sm text-gray-600">
-      Esta é uma área protegida do aplicativo. Confirme sua senha antes
-      de continuar.
-    </div>
+    <header class="mb-7">
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Área protegida</p>
+      <h2 class="mt-3 text-3xl font-bold tracking-tight">Confirme sua senha</h2>
+      <p class="mt-2 text-sm leading-6 text-stone-500 dark:text-slate-400">Precisamos validar sua identidade antes de continuar.</p>
+    </header>
 
-    <form @submit.prevent="submit">
+    <form class="space-y-5" @submit.prevent="submit">
       <div>
         <InputLabel for="password" value="Senha" />
         <TextInput
           id="password"
           v-model="form.password"
           type="password"
-          class="mt-1 block w-full"
+          class="mt-2 block w-full"
           required
           autocomplete="current-password"
           autofocus
@@ -43,9 +44,9 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.password" />
       </div>
 
-      <div class="mt-4 flex justify-end">
+      <div class="flex justify-end">
         <PrimaryButton
-          class="ms-4"
+          class="w-full"
           :class="{ 'opacity-25': form.processing }"
           :disabled="form.processing"
         >

@@ -74,7 +74,7 @@ const allocationOption = computed(() => ({
 
     <form class="mt-7 grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:gap-4 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_160px_auto] lg:items-end" @submit.prevent="submit">
       <label><span class="mb-2 block text-xs font-semibold text-stone-500">De</span><input v-model="form.from" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-950" /></label>
-      <label><span class="mb-2 block text-xs font-semibold text-stone-500">Ate</span><input v-model="form.to" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-950" /></label>
+      <label><span class="mb-2 block text-xs font-semibold text-stone-500">Até</span><input v-model="form.to" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-950" /></label>
       <label><span class="mb-2 block text-xs font-semibold text-stone-500">Moeda</span><SelectInput v-model="form.currency"><option v-for="currency in currencies" :key="currency" :value="currency">{{ currency }}</option></SelectInput></label>
       <button :disabled="form.processing" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"><Filter :size="17" />Aplicar</button>
     </form>

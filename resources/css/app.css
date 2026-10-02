@@ -20,6 +20,27 @@
     --color-surface: #fafaf8;
     --color-ink: #1c1917;
     --color-muted: #78716c;
+
+    --color-success-50: #ecfdf5;
+    --color-success-100: #d1fae5;
+    --color-success-500: #10b981;
+    --color-success-600: #059669;
+    --color-success-700: #047857;
+
+    --color-danger-50: #fff1f2;
+    --color-danger-100: #ffe4e6;
+    --color-danger-500: #f43f5e;
+    --color-danger-600: #e11d48;
+    --color-danger-700: #be123c;
+
+    --color-warning-50: #fffbeb;
+    --color-warning-100: #fef3c7;
+    --color-warning-500: #f59e0b;
+    --color-warning-600: #d97706;
+
+    --radius-control: 0.75rem;
+    --radius-card: 1.5rem;
+    --shadow-soft: 0 18px 45px -28px rgb(15 23 42 / 0.35);
 }
 
 /* Base do tema escuro via variavel de preferencia. */
@@ -78,6 +99,54 @@ body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+    .cp-card {
+        border: 1px solid color-mix(in oklab, var(--color-stone-200) 92%, transparent);
+        border-radius: var(--radius-card);
+        background: rgb(255 255 255 / 0.94);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .dark .cp-card {
+        border-color: rgb(30 41 59 / 0.9);
+        background: rgb(15 23 42 / 0.9);
+    }
+
+    .financial-value {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.035em;
+    }
+
+    .form-control {
+        width: 100%;
+        border-radius: var(--radius-control);
+        border: 1px solid var(--color-stone-200);
+        background: rgb(255 255 255 / 0.96);
+        padding: 0.625rem 0.75rem;
+        font-size: 0.875rem;
+        color: var(--color-stone-900);
+        box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+        transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+    }
+
+    .form-control:focus {
+        border-color: var(--color-brand-500);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand-500) 16%, transparent);
+        outline: none;
+    }
+
+    .form-control:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .dark .form-control {
+        border-color: var(--color-slate-700);
+        background: rgb(2 6 23 / 0.8);
+        color: var(--color-slate-100);
+    }
 }
 
 ::selection {

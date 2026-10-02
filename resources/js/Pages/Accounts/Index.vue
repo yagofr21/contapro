@@ -27,7 +27,7 @@ const accountTone = (account: Account) => {
     const color = account.color ?? meta?.color ?? '#1b6ef5';
     return {
         color,
-        initials: meta?.initials ?? (account.type === 'cash' ? '💰' : '🏦'),
+        initials: meta?.initials ?? account.name.slice(0, 2).toUpperCase(),
         isBank: Boolean(meta),
     };
 };
