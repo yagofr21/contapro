@@ -32,9 +32,9 @@ const submit = () => {
     <Head title="Redefinir senha" />
 
     <header class="mb-7">
-      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Nova credencial</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700 dark:text-brand-300 ">Nova credencial</p>
       <h2 class="mt-3 text-3xl font-bold tracking-tight">Escolha uma nova senha</h2>
-      <p class="mt-2 text-sm leading-6 text-stone-500 dark:text-slate-400">Use uma senha forte para proteger seus dados financeiros.</p>
+      <p class="mt-2 text-sm leading-6 text-stone-600 dark:text-slate-400">Use uma senha forte para proteger seus dados financeiros.</p>
     </header>
 
     <form class="space-y-5" @submit.prevent="submit">

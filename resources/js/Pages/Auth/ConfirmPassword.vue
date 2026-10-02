@@ -24,9 +24,9 @@ const submit = () => {
     <Head title="Confirmar senha" />
 
     <header class="mb-7">
-      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Área protegida</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700 dark:text-brand-300 ">Área protegida</p>
       <h2 class="mt-3 text-3xl font-bold tracking-tight">Confirme sua senha</h2>
-      <p class="mt-2 text-sm leading-6 text-stone-500 dark:text-slate-400">Precisamos validar sua identidade antes de continuar.</p>
+      <p class="mt-2 text-sm leading-6 text-stone-600 dark:text-slate-400">Precisamos validar sua identidade antes de continuar.</p>
     </header>
 
     <form class="space-y-5" @submit.prevent="submit">

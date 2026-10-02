@@ -42,7 +42,7 @@ const updatePassword = () => {
         Alterar senha
       </h2>
 
-      <p class="mt-1 text-sm text-stone-500 dark:text-slate-400">
+      <p class="mt-1 text-sm text-stone-600 dark:text-slate-400">
         Use uma senha longa e aleatória para manter sua conta segura.
       </p>
     </header>
@@ -112,7 +112,7 @@ const updatePassword = () => {
         >
           <p
             v-if="form.recentlySuccessful"
-            class="text-sm font-medium text-emerald-600 dark:text-emerald-400"
+            class="text-sm font-medium text-emerald-700 dark:text-emerald-300 "
           >
             Senha atualizada.
           </p>

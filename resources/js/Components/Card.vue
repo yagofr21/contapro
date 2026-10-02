@@ -13,7 +13,7 @@ withDefaults(defineProps<{ title?: string; subtitle?: string }>(), {
     >
       <div class="min-w-0">
         <h2 v-if="title" class="font-semibold tracking-tight">{{ title }}</h2>
-        <p v-if="subtitle" class="mt-0.5 text-xs text-stone-400 dark:text-slate-500">{{ subtitle }}</p>
+        <p v-if="subtitle" class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">{{ subtitle }}</p>
       </div>
       <div v-if="$slots.actions" class="flex shrink-0 items-center gap-2"><slot name="actions" /></div>
     </header>

@@ -10,9 +10,9 @@ defineProps<{ types: Option[]; parentOptions: Category[] }>();
 <template>
   <Head title="Nova categoria" />
   <AuthenticatedLayout>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Categorias</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Categorias</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Nova categoria</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Defina como este grupo aparecerá nos relatórios.</p>
+    <p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Defina como este grupo aparecerá nos relatórios.</p>
     <CategoryForm :types="types" :parent-options="parentOptions" />
   </AuthenticatedLayout>
 </template>

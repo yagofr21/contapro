@@ -64,11 +64,11 @@ const submit = () => {
 </script>
 
 <template>
-  <form class="mt-8 max-w-4xl overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900" @submit.prevent="submit">
+  <form class="mt-8 max-w-4xl overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900" @submit.prevent="submit">
     <div class="border-b border-stone-100 bg-stone-50/70 px-6 py-5 dark:border-slate-800 dark:bg-slate-950/40 sm:px-8">
-      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">Lançamento na carteira</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700 dark:text-brand-300">Lançamento na carteira</p>
       <h2 class="mt-1 text-lg font-bold">Dados da operação</h2>
-      <p class="mt-1 text-sm text-stone-500">Informe os valores como no Brasil: <strong>1.234,56</strong>.</p>
+      <p class="mt-1 text-sm text-stone-600 dark:text-slate-400">Informe os valores como no Brasil: <strong>1.234,56</strong>.</p>
     </div>
 
     <div class="grid gap-6 p-6 sm:grid-cols-2 sm:p-8">
@@ -83,12 +83,12 @@ const submit = () => {
       </label>
 
       <label class="sm:col-span-2">
-        <span class="mb-2 block text-sm font-semibold">Corretora <span class="font-normal text-stone-400">(opcional)</span></span>
+        <span class="mb-2 block text-sm font-semibold">Corretora <span class="font-normal text-stone-600 dark:text-slate-400">(opcional)</span></span>
         <SelectInput v-model="form.broker_id">
           <option value="">Sem corretora informada</option>
           <option v-for="broker in brokers" :key="broker.id" :value="String(broker.id)">{{ broker.name }}{{ broker.is_active ? '' : ' (inativa)' }}</option>
         </SelectInput>
-        <p v-if="!brokers.length" class="mt-2 text-xs text-stone-400">Cadastre corretoras pelo menu para identificá-las nas operações.</p>
+        <p v-if="!brokers.length" class="mt-2 text-xs text-stone-600 dark:text-slate-400">Cadastre corretoras pelo menu para identificá-las nas operações.</p>
         <InputError class="mt-2" :message="form.errors.broker_id" />
       </label>
 
@@ -113,7 +113,7 @@ const submit = () => {
         <label>
           <span class="mb-2 flex items-center justify-between gap-2 text-sm font-semibold">
             Quantidade
-            <span v-if="form.type === 'sell'" class="text-xs font-normal text-stone-400">Disponível: {{ availableQuantity }}</span>
+            <span v-if="form.type === 'sell'" class="text-xs font-normal text-stone-600 dark:text-slate-400">Disponível: {{ availableQuantity }}</span>
           </span>
           <input v-model="form.quantity" type="text" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="100 ou 0,12345678" />
           <InputError class="mt-2" :message="form.errors.quantity" />
@@ -129,9 +129,9 @@ const submit = () => {
           <InputError class="mt-2" :message="form.errors.fees" />
         </label>
         <div class="rounded-2xl border border-brand-100 bg-brand-50/60 p-4 dark:border-brand-900 dark:bg-brand-950/30">
-          <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-600"><Calculator :size="15" />{{ form.type === 'sell' ? 'Valor líquido estimado' : 'Total da compra' }}</div>
+          <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300"><Calculator :size="15" />{{ form.type === 'sell' ? 'Valor líquido estimado' : 'Total da compra' }}</div>
           <p class="mt-2 text-2xl font-bold">{{ formatMoney(String(operationTotal), portfolio.currency) }}</p>
-          <p class="mt-1 text-xs text-stone-500">Quantidade x preço {{ form.type === 'sell' ? '-' : '+' }} taxas</p>
+          <p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Quantidade x preço {{ form.type === 'sell' ? '-' : '+' }} taxas</p>
         </div>
       </template>
 
@@ -147,7 +147,7 @@ const submit = () => {
           <input v-model="form.split_to" type="text" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="5" />
           <InputError class="mt-2" :message="form.errors.split_to" />
         </label>
-        <p class="sm:col-span-2 text-xs text-stone-500">Posição atual do ativo: <strong>{{ availableQuantity }}</strong> unidades.</p>
+        <p class="sm:col-span-2 text-xs text-stone-600 dark:text-slate-400">Posição atual do ativo: <strong>{{ availableQuantity }}</strong> unidades.</p>
       </template>
 
       <template v-else-if="isIncome">
@@ -165,14 +165,14 @@ const submit = () => {
       </template>
 
       <label class="sm:col-span-2">
-        <span class="mb-2 block text-sm font-semibold">Observação <span class="font-normal text-stone-400">(opcional)</span></span>
+        <span class="mb-2 block text-sm font-semibold">Observação <span class="font-normal text-stone-600 dark:text-slate-400">(opcional)</span></span>
         <textarea v-model="form.note" rows="3" class="w-full resize-none rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="Estratégia ou detalhes da operação" />
         <InputError class="mt-2" :message="form.errors.note" />
       </label>
     </div>
 
     <div class="flex flex-col-reverse gap-3 border-t border-stone-100 px-6 py-5 dark:border-slate-800 sm:flex-row sm:justify-end sm:px-8">
-      <Link :href="route('portfolios.show', portfolio.id)" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500">Cancelar</Link>
+      <Link :href="route('portfolios.show', portfolio.id)" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-600 dark:text-slate-400">Cancelar</Link>
       <button :disabled="form.processing || !assets.length" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"><Save :size="17" />Salvar operação</button>
     </div>
   </form>

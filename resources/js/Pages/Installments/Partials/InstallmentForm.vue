@@ -38,11 +38,11 @@ const submit = () => {
 </script>
 
 <template>
-  <form class="mt-8 max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8" @submit.prevent="submit">
+  <form class="mt-8 max-w-2xl rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8" @submit.prevent="submit">
     <fieldset class="grid grid-cols-2 gap-2">
       <label v-for="option in [{ value: 'expense', label: 'Despesa' }, { value: 'income', label: 'Receita' }]" :key="option.value" class="cursor-pointer">
         <input v-model="form.type" type="radio" :value="option.value" class="peer sr-only" />
-        <span class="block rounded-xl border border-stone-200 px-2 py-2.5 text-center text-xs font-semibold text-stone-500 transition peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 dark:border-slate-700 dark:peer-checked:bg-brand-950/50 dark:peer-checked:text-brand-200">{{ option.label }}</span>
+        <span class="block rounded-xl border border-stone-200 px-2 py-2.5 text-center text-xs font-semibold text-stone-600 dark:text-slate-400 transition peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 dark:border-slate-700 dark:peer-checked:bg-brand-950/50 dark:peer-checked:text-brand-200">{{ option.label }}</span>
       </label>
     </fieldset>
     <InputError class="mt-2" :message="form.errors.type" />
@@ -54,7 +54,7 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.account_id" />
       </label>
       <label>
-        <span class="mb-2 block text-sm font-semibold">Categoria <span class="font-normal text-stone-400">(opcional)</span></span>
+        <span class="mb-2 block text-sm font-semibold">Categoria <span class="font-normal text-stone-600 dark:text-slate-400">(opcional)</span></span>
         <SelectInput v-model="form.category_id"><option value="">Sem categoria</option><option v-for="category in availableCategories" :key="category.id" :value="String(category.id)">{{ category.name }}</option></SelectInput>
         <InputError class="mt-2" :message="form.errors.category_id" />
       </label>
@@ -74,14 +74,14 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.starts_on" />
       </label>
       <label class="sm:col-span-2">
-        <span class="mb-2 block text-sm font-semibold">Descrição <span class="font-normal text-stone-400">(opcional)</span></span>
+        <span class="mb-2 block text-sm font-semibold">Descrição <span class="font-normal text-stone-600 dark:text-slate-400">(opcional)</span></span>
         <textarea v-model="form.description" rows="3" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="Ex.: Celular em 10x" />
         <InputError class="mt-2" :message="form.errors.description" />
       </label>
     </div>
     <div class="mt-8 flex flex-col-reverse gap-3 border-t border-stone-100 pt-6 dark:border-slate-800 sm:flex-row sm:justify-end">
-      <Link :href="route('installments.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
-      <button :disabled="form.processing || accounts.length === 0" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50"><Save :size="17" />Criar série de parcelas</button>
+      <Link :href="route('installments.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
+      <button :disabled="form.processing || accounts.length === 0" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"><Save :size="17" />Criar série de parcelas</button>
     </div>
   </form>
 </template>

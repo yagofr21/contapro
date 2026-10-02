@@ -10,7 +10,7 @@ defineProps<{ bank: Bank }>();
 <template>
   <Head title="Editar banco" />
   <AuthenticatedLayout>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Financeiro</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Financeiro</p>
     <h1 class="mt-2 text-3xl font-bold">Editar banco</h1>
     <BankForm :bank="bank" />
   </AuthenticatedLayout>

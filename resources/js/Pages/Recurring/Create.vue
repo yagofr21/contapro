@@ -11,9 +11,9 @@ defineProps<{ accounts: AccountOption[]; categories: Category[]; frequencies?: O
 <template>
   <Head title="Nova recorrência" />
   <AuthenticatedLayout>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Agenda</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Agenda</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Nova recorrência</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Lançamentos que se repetem automaticamente na data agendada.</p>
+    <p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Lançamentos que se repetem automaticamente na data agendada.</p>
     <RecurringForm :accounts="accounts" :categories="categories" :frequencies="frequencies" :types="types" />
   </AuthenticatedLayout>
 </template>

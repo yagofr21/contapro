@@ -20,7 +20,7 @@ const form = useForm({
         Perfil
       </h2>
 
-      <p class="mt-1 text-sm text-stone-500 dark:text-slate-400">
+      <p class="mt-1 text-sm text-stone-600 dark:text-slate-400">
         Atualize as informações do perfil e o endereço de e-mail da sua conta.
       </p>
     </header>
@@ -71,7 +71,7 @@ const form = useForm({
         >
           <p
             v-if="form.recentlySuccessful"
-            class="text-sm font-medium text-emerald-600 dark:text-emerald-400"
+            class="text-sm font-medium text-emerald-700 dark:text-emerald-300 "
           >
             Perfil atualizado.
           </p>

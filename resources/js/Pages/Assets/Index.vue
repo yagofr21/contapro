@@ -69,34 +69,34 @@ const toggleAutoUpdate = (asset: MarketAsset) => {
     </div>
 
     <label class="mt-6 flex items-center gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-3 shadow-sm focus-within:border-brand-400 dark:border-slate-800 dark:bg-slate-900">
-      <Search :size="18" class="shrink-0 text-stone-400" />
+      <Search :size="18" class="shrink-0 text-stone-600 dark:text-slate-400" />
       <input v-model="query" type="search" placeholder="Buscar por simbolo, nome, mercado ou tipo..." class="w-full bg-transparent text-sm outline-none placeholder:text-stone-400 dark:placeholder:text-slate-500">
     </label>
 
     <Card v-if="assets.length && filteredAssets.length" class="mt-6">
       <article v-for="asset in filteredAssets" :key="asset.id" class="grid gap-5 border-b border-stone-100 px-5 py-5 last:border-0 dark:border-slate-800 lg:grid-cols-[1fr_auto] lg:items-center">
         <div class="flex items-center gap-3">
-          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40"><CandlestickChart :size="19" /></span>
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 dark:text-brand-300 dark:bg-brand-950/40"><CandlestickChart :size="19" /></span>
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <p class="font-bold">{{ asset.symbol }}</p>
               <StatusBadge tone="slate" :label="`${asset.market} · ${asset.type}`" />
               <StatusBadge v-if="!asset.is_active" tone="rose" label="Inativo" />
             </div>
-            <p class="mt-1 text-xs text-stone-400">{{ asset.name }}</p>
+            <p class="mt-1 text-xs text-stone-600 dark:text-slate-400">{{ asset.name }}</p>
           </div>
         </div>
 
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <div class="sm:min-w-32 sm:text-right">
             <p class="font-bold">{{ asset.price ? formatMoney(asset.price, asset.currency) : 'Sem cotação' }}</p>
-            <p v-if="asset.price_date" class="text-xs text-stone-400">{{ formatDate(asset.price_date) }}</p>
+            <p v-if="asset.price_date" class="text-xs text-stone-600 dark:text-slate-400">{{ formatDate(asset.price_date) }}</p>
           </div>
           <div v-if="asset.can_refresh" class="flex items-center gap-2" title="Se ativado, a cotação desse ativo é atualizada automaticamente todos os dias">
             <ToggleSwitch :checked="asset.auto_update" :disabled="toggling === asset.id" @update:checked="toggleAutoUpdate(asset)" />
-            <span class="text-[11px] font-medium text-stone-400">Atualizar automaticamente</span>
+            <span class="text-[11px] font-medium text-stone-600 dark:text-slate-400">Atualizar automaticamente</span>
           </div>
-          <button v-if="asset.can_refresh" type="button" :disabled="refreshing === asset.id" title="Atualizar cotação" :aria-label="`Atualizar cotação de ${asset.symbol}`" class="rounded-xl border border-stone-200 p-2.5 text-stone-400 transition hover:border-brand-300 hover:text-brand-600 disabled:opacity-50 dark:border-slate-700" @click="refresh(asset)"><RefreshCw :size="17" :class="{ 'animate-spin': refreshing === asset.id }" /></button>
+          <button v-if="asset.can_refresh" type="button" :disabled="refreshing === asset.id" title="Atualizar cotação" :aria-label="`Atualizar cotação de ${asset.symbol}`" class="rounded-xl border border-stone-200 p-2.5 text-stone-600 dark:text-slate-400 transition hover:border-brand-300 hover:text-brand-600 disabled:opacity-50 dark:border-slate-700" @click="refresh(asset)"><RefreshCw :size="17" :class="{ 'animate-spin': refreshing === asset.id }" /></button>
           <template v-if="asset.is_active && compatiblePortfolios(asset).length">
             <select v-model="selectedPortfolios[asset.id]" aria-label="Carteira para a operação" class="rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950">
               <option v-for="portfolio in compatiblePortfolios(asset)" :key="portfolio.id" :value="String(portfolio.id)">{{ portfolio.name }}</option>

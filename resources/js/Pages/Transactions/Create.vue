@@ -11,9 +11,9 @@ defineProps<{ accounts: AccountOption[]; categories: Category[] }>();
 <template>
   <Head title="Novo lançamento" />
   <AuthenticatedLayout>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Fluxo de caixa</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Fluxo de caixa</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Novo lançamento</h1>
-    <p v-if="accounts.length" class="mt-2 text-sm text-stone-500 dark:text-slate-400">Registre uma receita, despesa ou transferencia entre contas.</p>
+    <p v-if="accounts.length" class="mt-2 text-sm text-stone-600 dark:text-slate-400">Registre uma receita, despesa ou transferencia entre contas.</p>
     <div v-else class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200">Cadastre uma conta antes de criar lançamentos. <Link :href="route('accounts.create')" class="font-bold underline">Criar conta</Link></div>
     <TransactionForm :accounts="accounts" :categories="categories" />
   </AuthenticatedLayout>

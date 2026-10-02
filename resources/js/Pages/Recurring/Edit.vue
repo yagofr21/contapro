@@ -24,9 +24,9 @@ defineProps<{ schedule: Schedule; accounts: AccountOption[]; categories: Categor
 <template>
   <Head title="Editar recorrência" />
   <AuthenticatedLayout>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Agenda</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Agenda</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Editar recorrência</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Ajuste a regra mantendo o histórico já lançado.</p>
+    <p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Ajuste a regra mantendo o histórico já lançado.</p>
     <RecurringForm :schedule="schedule" :accounts="accounts" :categories="categories" :frequencies="frequencies" :types="types" />
   </AuthenticatedLayout>
 </template>

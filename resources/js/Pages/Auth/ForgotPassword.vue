@@ -24,9 +24,9 @@ const submit = () => {
     <Head title="Esqueceu a senha" />
 
     <header class="mb-7">
-      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Recuperação de acesso</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700 dark:text-brand-300 ">Recuperação de acesso</p>
       <h2 class="mt-3 text-3xl font-bold tracking-tight">Redefinir senha</h2>
-      <p class="mt-2 text-sm leading-6 text-stone-500 dark:text-slate-400">Informe seu e-mail e enviaremos um link seguro para criar uma nova senha.</p>
+      <p class="mt-2 text-sm leading-6 text-stone-600 dark:text-slate-400">Informe seu e-mail e enviaremos um link seguro para criar uma nova senha.</p>
     </header>
 
     <div

@@ -46,6 +46,15 @@ const close = () => {
 };
 
 const closeOnEscape = (e: KeyboardEvent) => {
+    if (!props.show) return;
+    if (e.key === 'Tab' && dialogRef.value) {
+        const focusable = [...dialogRef.value.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]')].filter((element) => element.getClientRects().length > 0);
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!first) { e.preventDefault(); dialogRef.value.focus(); }
+        else if (e.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.value)) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || document.activeElement === dialogRef.value)) { e.preventDefault(); first.focus(); }
+    }
     if (e.key === 'Escape' && props.show) {
         e.preventDefault();
         close();
@@ -69,11 +78,6 @@ const maxWidthClass = computed(() => {
     }[props.maxWidth];
 });
 
-const gradientTone = computed(() => {
-    if (props.gradient === 'green') return 'aurora-green';
-    if (props.gradient === 'rose') return 'aurora-rose';
-    return '';
-});
 </script>
 
 <template>
@@ -92,22 +96,15 @@ const gradientTone = computed(() => {
           <div
             ref="dialogRef"
             class="relative w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-stone-900/10 ring-1 ring-stone-900/5 dark:bg-slate-900 dark:ring-white/5"
-            :class="[maxWidthClass, gradientTone]"
+            :class="maxWidthClass"
             role="dialog"
             aria-modal="true"
             :aria-labelledby="title ? titleId : undefined"
             tabindex="-1"
           >
-            <template v-if="props.gradient">
-              <div class="aurora-surface pointer-events-none absolute inset-0" />
-              <div class="aurora-blob pointer-events-none aurora-blob-1" />
-              <div class="aurora-blob pointer-events-none aurora-blob-2" />
-              <div class="aurora-blob pointer-events-none aurora-blob-3" />
-            </template>
             <header
               v-if="title || closeable"
               class="relative flex shrink-0 items-center justify-between gap-4 border-b border-stone-100 px-6 py-4 dark:border-slate-800 sm:px-8"
-              :class="props.gradient ? 'border-transparent bg-white/60 backdrop-blur dark:bg-slate-900/60' : ''"
             >
               <h2 v-if="title" :id="titleId" class="text-lg font-bold tracking-tight">
                 {{ title }}
@@ -116,7 +113,7 @@ const gradientTone = computed(() => {
               <button
                 v-if="closeable"
                 type="button"
-                class="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                class="grid h-11 w-11 place-items-center rounded-lg text-stone-600 dark:text-slate-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 aria-label="Fechar"
                 @click="close"
               >
@@ -124,7 +121,7 @@ const gradientTone = computed(() => {
               </button>
             </header>
 
-            <div class="relative max-h-[calc(100dvh-3.5rem)] min-h-0 overflow-y-auto">
+            <div class="relative max-h-[calc(100dvh-10rem)] min-h-0 overflow-y-auto">
               <slot />
             </div>
           </div>

@@ -235,6 +235,8 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_provides_monthly_income_vs_expense_trend(): void
     {
+        $this->travelTo(Carbon::parse('2026-09-15 12:00:00'));
+
         $user = User::factory()->create();
         $account = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
         $thisMonth = now()->format('Y-m');

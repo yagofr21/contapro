@@ -34,7 +34,7 @@ const submit = () => {
 </script>
 
 <template>
-  <form class="mt-8 max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8" @submit.prevent="submit">
+  <form class="mt-8 max-w-2xl rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8" @submit.prevent="submit">
     <div class="grid gap-6 sm:grid-cols-2">
       <label class="sm:col-span-2">
         <span class="mb-2 block text-sm font-semibold">Nome da meta</span>
@@ -49,7 +49,7 @@ const submit = () => {
       <label>
         <span class="mb-2 block text-sm font-semibold">Valor da meta</span>
         <input v-model="form.target_amount" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="10.000,00" />
-        <p class="mt-2 text-xs text-stone-400">Use vírgula para os centavos.</p>
+        <p class="mt-2 text-xs text-stone-600 dark:text-slate-400">Use vírgula para os centavos.</p>
         <InputError class="mt-2" :message="form.errors.target_amount" />
       </label>
       <label>
@@ -65,7 +65,7 @@ const submit = () => {
           <option value="">Todas as contas na moeda</option>
           <option v-for="account in accounts" :key="account.id" :value="String(account.id)">{{ account.name }} ({{ account.currency }})</option>
         </SelectInput>
-        <p class="mt-2 text-xs text-stone-400">Sem vínculo, o progresso soma o saldo de todas as contas na moeda da meta.</p>
+        <p class="mt-2 text-xs text-stone-600 dark:text-slate-400">Sem vínculo, o progresso soma o saldo de todas as contas na moeda da meta.</p>
         <InputError class="mt-2" :message="form.errors.account_id" />
       </label>
       <label>
@@ -75,8 +75,8 @@ const submit = () => {
       </label>
     </div>
     <div class="mt-8 flex flex-col-reverse gap-3 border-t border-stone-100 pt-6 dark:border-slate-800 sm:flex-row sm:justify-end">
-      <Link :href="route('goals.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
-      <button :disabled="form.processing" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50">
+      <Link :href="route('goals.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
+      <button :disabled="form.processing" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50">
         <Save :size="17" /> {{ goal ? 'Salvar alterações' : 'Criar meta' }}
       </button>
     </div>

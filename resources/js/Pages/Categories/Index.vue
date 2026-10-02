@@ -45,7 +45,7 @@ const remove = (category: Category) => {
   <AuthenticatedLayout>
     <PageHeader kicker="Classificacao" title="Categorias" subtitle="Crie uma linguagem consistente para entender para onde seu dinheiro vai.">
       <template #actions>
-        <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Nova categoria</button>
+        <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700" @click="openCreate"><Plus :size="18" />Nova categoria</button>
       </template>
     </PageHeader>
 
@@ -56,14 +56,14 @@ const remove = (category: Category) => {
             <span class="h-3 w-3 shrink-0 rounded-full ring-4 ring-stone-100 dark:ring-slate-800" :style="{ backgroundColor: category.color ?? '#94a3b8' }" />
             <div class="min-w-0 flex-1">
               <Link :href="route('categories.show', category.id)" class="truncate text-sm font-semibold hover:text-brand-600">{{ category.name }}</Link>
-              <p v-if="category.parent_name" class="text-xs text-stone-400">Em {{ category.parent_name }}</p>
+              <p v-if="category.parent_name" class="text-xs text-stone-600 dark:text-slate-400">Em {{ category.parent_name }}</p>
             </div>
             <div class="flex opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
-              <button class="rounded-lg p-2 text-stone-400 hover:bg-white hover:text-brand-600 dark:hover:bg-slate-700" :aria-label="`Editar categoria ${category.name}`" @click="openEdit(category)"><Pencil :size="15" /></button>
-              <button class="rounded-lg p-2 text-stone-400 hover:bg-white hover:text-rose-600 dark:hover:bg-slate-700" :aria-label="`Remover categoria ${category.name}`" @click="remove(category)"><Trash2 :size="15" /></button>
+              <button class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-white hover:text-brand-600 dark:hover:bg-slate-700" :aria-label="`Editar categoria ${category.name}`" @click="openEdit(category)"><Pencil :size="15" /></button>
+              <button class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-white hover:text-rose-600 dark:hover:bg-slate-700" :aria-label="`Remover categoria ${category.name}`" @click="remove(category)"><Trash2 :size="15" /></button>
             </div>
           </article>
-          <p v-if="!group.data.length" class="py-6 text-center text-sm text-stone-400">Nenhuma categoria neste grupo.</p>
+          <p v-if="!group.data.length" class="py-6 text-center text-sm text-stone-600 dark:text-slate-400">Nenhuma categoria neste grupo.</p>
         </div>
       </Card>
     </div>

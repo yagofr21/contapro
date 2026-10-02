@@ -83,7 +83,7 @@ const cancel = () => {
 </script>
 
 <template>
-  <form :class="embedded ? '' : 'mt-8 max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8'" @submit.prevent="submit">
+  <form :class="embedded ? '' : 'mt-8 max-w-2xl rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8'" @submit.prevent="submit">
     <div class="px-6 py-5 sm:px-7">
       <div class="grid gap-5 sm:grid-cols-2">
         <label class="sm:col-span-2">
@@ -99,7 +99,7 @@ const cancel = () => {
               :key="bank.value"
               type="button"
               class="flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition"
-              :class="form.bank === bank.value ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-500/30 dark:bg-brand-950/50 dark:text-brand-200' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-600'"
+              :class="form.bank === bank.value ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-500/30 dark:bg-brand-950/50 dark:text-brand-200' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600 dark:text-slate-400'"
               @click="selectBank(bank.value)"
             >
               <span class="grid h-6 w-6 place-items-center rounded-lg text-[10px] font-extrabold text-white" :style="{ backgroundColor: bank.color }">
@@ -110,7 +110,7 @@ const cancel = () => {
             <button
               v-if="form.bank"
               type="button"
-              class="inline-flex items-center rounded-xl border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-500 transition hover:border-stone-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400"
+              class="inline-flex items-center rounded-xl border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-600 dark:text-slate-400 transition hover:border-stone-300 dark:border-slate-700 dark:bg-slate-950"
               @click="form.bank = ''"
             >
               Limpar
@@ -146,14 +146,14 @@ const cancel = () => {
         <label class="sm:col-span-2">
           <span class="mb-2 block text-sm font-semibold">{{ isCreditCard ? 'Dívida inicial do cartão' : 'Saldo inicial' }}</span>
           <input v-model="form.initial_balance" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
-          <p class="mt-2 text-xs text-stone-400">{{ isCreditCard ? 'Informe o valor que já estava pendente quando o cartão foi cadastrado no ContaPro. Valores positivos ou negativos serão tratados como dívida inicial, sem alterar seus dados.' : 'Use vírgula para centavos, por exemplo: 1.250,50. O saldo atual inclui todos os lançamentos.' }}</p>
+          <p class="mt-2 text-xs text-stone-600 dark:text-slate-400">{{ isCreditCard ? 'Informe o valor que já estava pendente quando o cartão foi cadastrado no ContaPro. Valores positivos ou negativos serão tratados como dívida inicial, sem alterar seus dados.' : 'Use vírgula para centavos, por exemplo: 1.250,50. O saldo atual inclui todos os lançamentos.' }}</p>
           <InputError class="mt-2" :message="form.errors.initial_balance" />
         </label>
         <template v-if="isCreditCard">
           <label class="sm:col-span-2">
             <span class="mb-2 block text-sm font-semibold">Limite do cartão</span>
             <input v-model="form.credit_limit" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
-            <p class="mt-2 text-xs text-stone-400">O limite disponível será calculado pela dívida total do cartão: saldo vencido, fatura atual e próximas faturas.</p>
+            <p class="mt-2 text-xs text-stone-600 dark:text-slate-400">O limite disponível será calculado pela dívida total do cartão: saldo vencido, fatura atual e próximas faturas.</p>
             <InputError class="mt-2" :message="form.errors.credit_limit" />
           </label>
           <label>
@@ -168,16 +168,16 @@ const cancel = () => {
           </label>
         </template>
         <label v-if="account" class="flex items-center gap-3 sm:col-span-2">
-          <input v-model="form.is_archived" type="checkbox" class="rounded border-stone-300 text-brand-600 focus:ring-brand-500" />
+          <input v-model="form.is_archived" type="checkbox" class="rounded border-stone-300 text-brand-700 dark:text-brand-300 focus:ring-brand-500" />
           <span class="text-sm font-medium">Conta arquivada</span>
         </label>
       </div>
     </div>
     <div class="px-6 pb-6 sm:px-7">
       <div class="flex flex-col-reverse gap-3 border-t border-stone-100 pt-5 dark:border-slate-800 sm:flex-row sm:justify-end">
-        <button v-if="embedded" type="button" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800" @click="cancel">Cancelar</button>
-        <Link v-else :href="route('accounts.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
-        <button :disabled="form.processing" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-50">
+        <button v-if="embedded" type="button" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800" @click="cancel">Cancelar</button>
+        <Link v-else :href="route('accounts.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
+        <button :disabled="form.processing" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50">
           <Save :size="17" /> {{ account ? 'Salvar alterações' : 'Criar conta' }}
         </button>
       </div>

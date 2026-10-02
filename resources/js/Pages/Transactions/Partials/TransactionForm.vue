@@ -102,12 +102,12 @@ const cancel = () => {
 </script>
 
 <template>
-  <form :class="embedded ? '' : 'mt-8 max-w-3xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8'" @submit.prevent="submit">
+  <form :class="embedded ? '' : 'mt-8 max-w-3xl rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8'" @submit.prevent="submit">
     <div class="px-6 py-5 sm:px-8">
       <fieldset class="grid gap-2 sm:grid-cols-3" :disabled="disableTypeToggle">
         <label v-for="option in [{ value: 'expense', label: 'Despesa' }, { value: 'income', label: 'Receita' }, { value: 'transfer', label: 'Transferência' }]" :key="option.value" class="cursor-pointer">
           <input v-model="form.type" type="radio" :value="option.value" class="peer sr-only" />
-          <span class="flex items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white px-2 py-2.5 text-center text-xs font-semibold text-stone-500 transition dark:border-slate-700 dark:bg-slate-900" :class="typePalette(option.value, form.type === option.value, disableTypeToggle)">
+          <span class="flex items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white px-2 py-2.5 text-center text-xs font-semibold text-stone-600 dark:text-slate-400 transition dark:border-slate-700 dark:bg-slate-900" :class="typePalette(option.value, form.type === option.value, disableTypeToggle)">
             <component :is="typeIcon(option.value)" :size="14" />
             {{ option.label }}
           </span>
@@ -127,14 +127,14 @@ const cancel = () => {
           <InputError class="mt-2" :message="form.errors.destination_account_id" />
         </label>
         <label v-else>
-          <span class="mb-2 block text-sm font-semibold">Categoria <span class="font-normal text-stone-400">(opcional)</span></span>
+          <span class="mb-2 block text-sm font-semibold">Categoria <span class="font-normal text-stone-600 dark:text-slate-400">(opcional)</span></span>
           <SelectInput v-model="form.category_id"><option value="">Sem categoria</option><option v-for="category in availableCategories" :key="category.id" :value="String(category.id)">{{ category.name }}</option></SelectInput>
           <InputError class="mt-2" :message="form.errors.category_id" />
         </label>
         <label>
           <span class="mb-2 block text-sm font-semibold">Valor</span>
           <input v-model="form.amount" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" />
-          <p class="mt-2 text-xs text-stone-400">Use vírgula para os centavos, por exemplo: 89,90.</p>
+          <p class="mt-2 text-xs text-stone-600 dark:text-slate-400">Use vírgula para os centavos, por exemplo: 89,90.</p>
           <InputError class="mt-2" :message="form.errors.amount" />
         </label>
         <label v-if="!form.install_in">
@@ -145,11 +145,11 @@ const cancel = () => {
         <label v-else>
           <span class="mb-2 block text-sm font-semibold">Vencimento da 1a parcela</span>
           <input v-model="form.transaction_date" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-950" />
-          <p class="mt-2 text-xs text-stone-400">Cada parcela vence na mesma data nos meses seguintes.</p>
+          <p class="mt-2 text-xs text-stone-600 dark:text-slate-400">Cada parcela vence na mesma data nos meses seguintes.</p>
           <InputError class="mt-2" :message="form.errors.transaction_date" />
         </label>
         <label class="sm:col-span-2">
-          <span class="mb-2 block text-sm font-semibold">Descrição <span class="font-normal text-stone-400">(opcional)</span></span>
+          <span class="mb-2 block text-sm font-semibold">Descrição <span class="font-normal text-stone-600 dark:text-slate-400">(opcional)</span></span>
           <textarea v-model="form.description" rows="3" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950" placeholder="Detalhes deste lançamento" />
           <InputError class="mt-2" :message="form.errors.description" />
         </label>
@@ -157,7 +157,7 @@ const cancel = () => {
 
       <div v-if="canInstall" class="mt-5 rounded-2xl border border-rose-200 bg-rose-50/50 p-4 dark:border-rose-900/60 dark:bg-rose-950/30">
         <label class="flex cursor-pointer items-center gap-2.5">
-          <input v-model="form.install_in" type="checkbox" class="h-4 w-4 rounded border-stone-300 text-rose-600 focus:ring-rose-500" />
+          <input v-model="form.install_in" type="checkbox" class="h-4 w-4 rounded border-stone-300 text-rose-700 dark:text-rose-300 focus:ring-rose-500" />
           <span class="text-sm font-semibold text-rose-800 dark:text-rose-200">Parcelar esta despesa no cartão</span>
         </label>
         <div v-if="form.install_in" class="mt-3 grid gap-4 sm:grid-cols-2">
@@ -170,7 +170,7 @@ const cancel = () => {
             <p v-if="selectedInstallmentAmount !== null" class="w-full rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-slate-900">
               {{ installCount }}x de {{ formatMoney(String(selectedInstallmentAmount.toFixed(2)), selectedCurrency) }}
             </p>
-            <p v-else class="w-full rounded-xl px-3 py-2.5 text-xs text-stone-400">Informe o valor total para calcular as parcelas.</p>
+            <p v-else class="w-full rounded-xl px-3 py-2.5 text-xs text-stone-600 dark:text-slate-400">Informe o valor total para calcular as parcelas.</p>
           </div>
         </div>
       </div>
@@ -178,8 +178,8 @@ const cancel = () => {
 
     <div class="px-6 pb-6 sm:px-8">
       <div class="flex flex-col-reverse gap-3 border-t border-stone-100 pt-5 dark:border-slate-800 sm:flex-row sm:justify-end">
-        <button v-if="embedded" type="button" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800" @click="cancel">Cancelar</button>
-        <Link v-else :href="route('transactions.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
+        <button v-if="embedded" type="button" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800" @click="cancel">Cancelar</button>
+        <Link v-else :href="route('transactions.index')" class="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800">Cancelar</Link>
         <button
           :disabled="form.processing || accounts.length === 0"
           class="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg disabled:opacity-50"

@@ -1,0 +1,221 @@
+{
+  "results": [
+    {
+      "route": "dashboard",
+      "width": 1440,
+      "url": "http://localhost:8000/dashboard",
+      "overflow": false
+    },
+    {
+      "route": "dashboard",
+      "width": 390,
+      "url": "http://localhost:8000/dashboard",
+      "overflow": false
+    },
+    {
+      "route": "transactions",
+      "width": 1440,
+      "url": "http://localhost:8000/transactions",
+      "overflow": false
+    },
+    {
+      "route": "transactions",
+      "width": 390,
+      "url": "http://localhost:8000/transactions",
+      "overflow": false
+    },
+    {
+      "route": "accounts",
+      "width": 1440,
+      "url": "http://localhost:8000/accounts",
+      "overflow": false
+    },
+    {
+      "route": "accounts",
+      "width": 390,
+      "url": "http://localhost:8000/accounts",
+      "overflow": false
+    },
+    {
+      "route": "portfolios",
+      "width": 1440,
+      "url": "http://localhost:8000/portfolios",
+      "overflow": false
+    },
+    {
+      "route": "portfolios",
+      "width": 390,
+      "url": "http://localhost:8000/portfolios",
+      "overflow": false
+    },
+    {
+      "route": "reports",
+      "width": 1440,
+      "url": "http://localhost:8000/reports",
+      "overflow": false
+    },
+    {
+      "route": "reports",
+      "width": 390,
+      "url": "http://localhost:8000/reports",
+      "overflow": false
+    },
+    {
+      "route": "agenda",
+      "width": 1440,
+      "url": "http://localhost:8000/agenda",
+      "overflow": false
+    },
+    {
+      "route": "agenda",
+      "width": 390,
+      "url": "http://localhost:8000/agenda",
+      "overflow": false
+    },
+    {
+      "route": "expected-incomes",
+      "width": 1440,
+      "url": "http://localhost:8000/expected-incomes",
+      "overflow": false
+    },
+    {
+      "route": "expected-incomes",
+      "width": 390,
+      "url": "http://localhost:8000/expected-incomes",
+      "overflow": false
+    },
+    {
+      "route": "recurring",
+      "width": 1440,
+      "url": "http://localhost:8000/recurring",
+      "overflow": false
+    },
+    {
+      "route": "recurring",
+      "width": 390,
+      "url": "http://localhost:8000/recurring",
+      "overflow": false
+    },
+    {
+      "route": "installments",
+      "width": 1440,
+      "url": "http://localhost:8000/installments",
+      "overflow": false
+    },
+    {
+      "route": "installments",
+      "width": 390,
+      "url": "http://localhost:8000/installments",
+      "overflow": false
+    },
+    {
+      "route": "budgets",
+      "width": 1440,
+      "url": "http://localhost:8000/budgets",
+      "overflow": false
+    },
+    {
+      "route": "budgets",
+      "width": 390,
+      "url": "http://localhost:8000/budgets",
+      "overflow": false
+    },
+    {
+      "route": "goals",
+      "width": 1440,
+      "url": "http://localhost:8000/goals",
+      "overflow": false
+    },
+    {
+      "route": "goals",
+      "width": 390,
+      "url": "http://localhost:8000/goals",
+      "overflow": false
+    },
+    {
+      "route": "assets",
+      "width": 1440,
+      "url": "http://localhost:8000/assets",
+      "overflow": false
+    },
+    {
+      "route": "assets",
+      "width": 390,
+      "url": "http://localhost:8000/assets",
+      "overflow": false
+    },
+    {
+      "route": "brokers",
+      "width": 1440,
+      "url": "http://localhost:8000/brokers",
+      "overflow": false
+    },
+    {
+      "route": "brokers",
+      "width": 390,
+      "url": "http://localhost:8000/brokers",
+      "overflow": false
+    },
+    {
+      "route": "banks",
+      "width": 1440,
+      "url": "http://localhost:8000/banks",
+      "overflow": false
+    },
+    {
+      "route": "banks",
+      "width": 390,
+      "url": "http://localhost:8000/banks",
+      "overflow": false
+    },
+    {
+      "route": "categories",
+      "width": 1440,
+      "url": "http://localhost:8000/categories",
+      "overflow": false
+    },
+    {
+      "route": "categories",
+      "width": 390,
+      "url": "http://localhost:8000/categories",
+      "overflow": false
+    },
+    {
+      "route": "imports",
+      "width": 1440,
+      "url": "http://localhost:8000/imports",
+      "overflow": false
+    },
+    {
+      "route": "imports",
+      "width": 390,
+      "url": "http://localhost:8000/imports",
+      "overflow": false
+    },
+    {
+      "route": "reconciliations",
+      "width": 1440,
+      "url": "http://localhost:8000/reconciliations",
+      "overflow": false
+    },
+    {
+      "route": "reconciliations",
+      "width": 390,
+      "url": "http://localhost:8000/reconciliations",
+      "overflow": false
+    },
+    {
+      "route": "profile",
+      "width": 1440,
+      "url": "http://localhost:8000/profile",
+      "overflow": false
+    },
+    {
+      "route": "profile",
+      "width": 390,
+      "url": "http://localhost:8000/profile",
+      "overflow": false
+    }
+  ],
+  "errors": []
+}

@@ -47,7 +47,7 @@ const closeModal = () => {
         Excluir conta
       </h2>
 
-      <p class="mt-1 text-sm leading-6 text-stone-500 dark:text-slate-400">
+      <p class="mt-1 text-sm leading-6 text-stone-600 dark:text-slate-400">
         Uma vez excluída, sua conta, seus recursos e seus dados serão
         removidos permanentemente. Antes de excluir, baixe tudo o que
         deseja manter.

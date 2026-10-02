@@ -27,9 +27,9 @@ const submit = () => {
     <Head title="Criar cadastro" />
 
     <header class="mb-7">
-      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Comece com segurança</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700 dark:text-brand-300 ">Comece com segurança</p>
       <h2 class="mt-3 text-3xl font-bold tracking-tight">Crie sua conta</h2>
-      <p class="mt-2 text-sm leading-6 text-stone-500 dark:text-slate-400">Organize contas, cartões e investimentos em um só lugar.</p>
+      <p class="mt-2 text-sm leading-6 text-stone-600 dark:text-slate-400">Organize contas, cartões e investimentos em um só lugar.</p>
     </header>
 
     <form class="space-y-5" @submit.prevent="submit">
@@ -103,7 +103,7 @@ const submit = () => {
       <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
         <Link
           :href="route('login')"
-          class="text-sm font-semibold text-brand-600 hover:text-brand-700"
+          class="text-sm font-semibold text-brand-700 dark:text-brand-300 hover:text-brand-700"
         >
           Já tem cadastro?
         </Link>

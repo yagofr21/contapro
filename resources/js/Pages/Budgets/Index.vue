@@ -39,20 +39,20 @@ const remove = (budget: Budget) => {
   <AuthenticatedLayout>
     <PageHeader kicker="Planejamento" title="Orçamentos" subtitle="Transforme limites em decisões visíveis durante o mês.">
       <template #actions>
-        <Link :href="route('budgets.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Novo orçamento</Link>
+        <Link :href="route('budgets.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"><Plus :size="18" />Novo orçamento</Link>
       </template>
     </PageHeader>
 
     <div v-if="budgets.length" class="mt-8 grid gap-4 lg:grid-cols-2">
       <Card v-for="budget in budgets" :key="budget.id" :title="budget.category_name" :subtitle="periodLabel(budget)">
         <template #actions>
-          <Link :href="route('budgets.edit', budget.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar orçamento ${budget.category_name}`"><Pencil :size="15" /></Link>
-          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :aria-label="`Remover orçamento ${budget.category_name}`" @click="remove(budget)"><Trash2 :size="15" /></button>
+          <Link :href="route('budgets.edit', budget.id)" class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar orçamento ${budget.category_name}`"><Pencil :size="15" /></Link>
+          <button class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :aria-label="`Remover orçamento ${budget.category_name}`" @click="remove(budget)"><Trash2 :size="15" /></button>
         </template>
         <div class="p-5">
-          <div class="flex items-end justify-between"><div><p class="text-xs text-stone-400">Utilizado</p><p class="mt-1 text-xl font-bold">{{ formatMoney(budget.spent) }}</p></div><p class="text-sm font-semibold text-stone-500">de {{ formatMoney(budget.limit_amount) }}</p></div>
+          <div class="flex items-end justify-between"><div><p class="text-xs text-stone-600 dark:text-slate-400">Utilizado</p><p class="mt-1 text-xl font-bold">{{ formatMoney(budget.spent) }}</p></div><p class="text-sm font-semibold text-stone-600 dark:text-slate-400">de {{ formatMoney(budget.limit_amount) }}</p></div>
           <div class="mt-4 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-slate-800"><div class="h-full rounded-full transition-all" :class="percentage(budget) >= 100 ? 'bg-rose-500' : percentage(budget) >= 80 ? 'bg-amber-500' : 'bg-brand-500'" :style="{ width: `${percentage(budget)}%` }" /></div>
-          <p class="mt-2 text-right text-xs font-semibold" :class="percentage(budget) >= 100 ? 'text-rose-600' : 'text-stone-400'">{{ percentage(budget).toFixed(0) }}%</p>
+          <p class="mt-2 text-right text-xs font-semibold" :class="percentage(budget) >= 100 ? 'text-rose-700 dark:text-rose-300' : 'text-stone-600 dark:text-slate-400'">{{ percentage(budget).toFixed(0) }}%</p>
         </div>
       </Card>
     </div>

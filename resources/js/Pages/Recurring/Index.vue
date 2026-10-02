@@ -40,7 +40,7 @@ const remove = (schedule: Schedule) => {
   <AuthenticatedLayout>
     <PageHeader kicker="Agenda" title="Recorrências" subtitle="Transações que se repetem sozinhas no dia marcado.">
       <template #actions>
-        <Link :href="route('recurring.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova recorrência</Link>
+        <Link :href="route('recurring.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"><Plus :size="18" />Nova recorrência</Link>
       </template>
     </PageHeader>
 
@@ -50,25 +50,25 @@ const remove = (schedule: Schedule) => {
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <p class="truncate font-semibold">{{ schedule.description ?? 'Sem descrição' }}</p>
-              <p class="mt-0.5 truncate text-xs text-stone-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
+              <p class="mt-0.5 truncate text-xs text-stone-600 dark:text-slate-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
             </div>
             <StatusBadge class="shrink-0" :tone="schedule.type === 'income' ? 'emerald' : schedule.type === 'expense' ? 'rose' : 'sky'" :label="schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferência'" />
           </div>
           <div class="mt-3 flex items-end justify-between gap-3">
             <div class="min-w-0">
-              <p class="font-semibold" :class="schedule.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'">{{ schedule.type === 'expense' ? '-' : '+' }}{{ formatMoney(schedule.amount) }}</p>
-              <p class="mt-0.5 text-xs text-stone-400">{{ schedule.frequency_label }} · próxima {{ formatDate(schedule.next_run_date) }}</p>
+              <p class="font-semibold" :class="schedule.type === 'expense' ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'">{{ schedule.type === 'expense' ? '-' : '+' }}{{ formatMoney(schedule.amount) }}</p>
+              <p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">{{ schedule.frequency_label }} · próxima {{ formatDate(schedule.next_run_date) }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-1">
-              <Link :href="route('recurring.edit', schedule.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar recorrência ${schedule.description ?? ''}`"><Pencil :size="15" /></Link>
-              <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" aria-label="Remover recorrência" @click="remove(schedule)"><Trash2 :size="15" /></button>
+              <Link :href="route('recurring.edit', schedule.id)" class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar recorrência ${schedule.description ?? ''}`"><Pencil :size="15" /></Link>
+              <button class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" aria-label="Remover recorrência" @click="remove(schedule)"><Trash2 :size="15" /></button>
             </div>
           </div>
         </li>
       </ul>
       <div class="hidden overflow-x-auto md:block">
         <table class="w-full text-sm">
-          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wider text-stone-400 dark:bg-slate-950/60">
+          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wider text-stone-600 dark:text-slate-400 dark:bg-slate-950/60">
             <tr>
               <th class="px-5 py-3">Descrição</th>
               <th class="px-5 py-3">Tipo</th>
@@ -83,17 +83,17 @@ const remove = (schedule: Schedule) => {
             <tr v-for="schedule in schedules" :key="schedule.id" :class="schedule.is_active ? '' : 'opacity-60'">
               <td class="px-5 py-4">
                 <p class="truncate font-semibold">{{ schedule.description ?? 'Sem descrição' }}</p>
-                <p class="truncate text-xs text-stone-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
+                <p class="truncate text-xs text-stone-600 dark:text-slate-400">{{ schedule.category_name ?? 'Sem categoria' }} · {{ schedule.account_name }}</p>
               </td>
               <td class="px-5 py-4"><StatusBadge :tone="schedule.type === 'income' ? 'emerald' : schedule.type === 'expense' ? 'rose' : 'sky'" :label="schedule.type === 'income' ? 'Receita' : schedule.type === 'expense' ? 'Despesa' : 'Transferência'" /></td>
-              <td class="px-5 py-4 font-semibold" :class="schedule.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'">{{ schedule.type === 'expense' ? '-' : '+' }}{{ formatMoney(schedule.amount) }}</td>
+              <td class="px-5 py-4 font-semibold" :class="schedule.type === 'expense' ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'">{{ schedule.type === 'expense' ? '-' : '+' }}{{ formatMoney(schedule.amount) }}</td>
               <td class="px-5 py-4">{{ schedule.frequency_label }}</td>
               <td class="px-5 py-4">{{ formatDate(schedule.next_run_date) }}</td>
               <td class="px-5 py-4">{{ schedule.account_name }}</td>
               <td class="px-5 py-4">
                 <div class="flex justify-end gap-1">
-                  <Link :href="route('recurring.edit', schedule.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar recorrência ${schedule.description ?? ''}`"><Pencil :size="15" /></Link>
-                  <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :aria-label="`Remover recorrência ${schedule.description ?? ''}`" @click="remove(schedule)"><Trash2 :size="15" /></button>
+                  <Link :href="route('recurring.edit', schedule.id)" class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar recorrência ${schedule.description ?? ''}`"><Pencil :size="15" /></Link>
+                  <button class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :aria-label="`Remover recorrência ${schedule.description ?? ''}`" @click="remove(schedule)"><Trash2 :size="15" /></button>
                 </div>
               </td>
             </tr>

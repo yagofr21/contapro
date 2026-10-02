@@ -41,21 +41,21 @@ const remove = (goal: Goal) => {
   <AuthenticatedLayout>
     <PageHeader kicker="Planejamento" title="Metas" subtitle="Transforme objetivos em economia com progresso mensal.">
       <template #actions>
-        <Link :href="route('goals.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700"><Plus :size="18" />Nova meta</Link>
+        <Link :href="route('goals.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"><Plus :size="18" />Nova meta</Link>
       </template>
     </PageHeader>
 
     <div v-if="goals.length" class="mt-8 grid gap-4 lg:grid-cols-2">
       <Card v-for="goal in goals" :key="goal.id" :title="goal.name" :subtitle="`${scope(goal)} · prazo ${formatDate(goal.target_date)}`">
         <template #actions>
-          <Link :href="route('goals.edit', goal.id)" class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar meta ${goal.name}`"><Pencil :size="15" /></Link>
-          <button class="rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :aria-label="`Remover meta ${goal.name}`" @click="remove(goal)"><Trash2 :size="15" /></button>
+          <Link :href="route('goals.edit', goal.id)" class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-brand-600 dark:hover:bg-slate-800" :aria-label="`Editar meta ${goal.name}`"><Pencil :size="15" /></Link>
+          <button class="rounded-lg p-2 text-stone-600 dark:text-slate-400 hover:bg-stone-100 hover:text-rose-600 dark:hover:bg-slate-800" :aria-label="`Remover meta ${goal.name}`" @click="remove(goal)"><Trash2 :size="15" /></button>
         </template>
         <div class="p-5">
-          <p v-if="goal.description" class="text-sm text-stone-500 dark:text-slate-400">{{ goal.description }}</p>
-          <div class="mt-5 flex items-end justify-between"><div><p class="text-xs text-stone-400">Guardado</p><p class="mt-1 text-xl font-bold">{{ formatMoney(goal.saved_amount, goal.currency) }}</p></div><p class="text-sm font-semibold text-stone-500">de {{ formatMoney(goal.target_amount, goal.currency) }}</p></div>
+          <p v-if="goal.description" class="text-sm text-stone-600 dark:text-slate-400">{{ goal.description }}</p>
+          <div class="mt-5 flex items-end justify-between"><div><p class="text-xs text-stone-600 dark:text-slate-400">Guardado</p><p class="mt-1 text-xl font-bold">{{ formatMoney(goal.saved_amount, goal.currency) }}</p></div><p class="text-sm font-semibold text-stone-600 dark:text-slate-400">de {{ formatMoney(goal.target_amount, goal.currency) }}</p></div>
           <div class="mt-4 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-slate-800"><div class="h-full rounded-full transition-all" :class="goal.is_achieved ? 'bg-emerald-500' : 'bg-brand-500'" :style="{ width: `${percentage(goal)}%` }" /></div>
-          <div class="mt-2 flex items-center justify-between text-xs"><p class="font-semibold text-stone-500">{{ remainingLabel(goal) }}</p><p class="font-bold" :class="goal.is_achieved ? 'text-emerald-600' : 'text-stone-400'">{{ percentage(goal).toFixed(1) }}%</p></div>
+          <div class="mt-2 flex items-center justify-between text-xs"><p class="font-semibold text-stone-600 dark:text-slate-400">{{ remainingLabel(goal) }}</p><p class="font-bold" :class="goal.is_achieved ? 'text-emerald-700 dark:text-emerald-300' : 'text-stone-600 dark:text-slate-400'">{{ percentage(goal).toFixed(1) }}%</p></div>
         </div>
       </Card>
     </div>

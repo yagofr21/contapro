@@ -11,9 +11,9 @@ defineProps<{ types: Option[]; currencies: Option[]; banks: BankOption[] }>();
 <template>
   <Head title="Nova conta" />
   <AuthenticatedLayout>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Contas</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Contas</p>
     <h1 class="mt-2 text-3xl font-bold tracking-tight">Nova conta</h1>
-    <p class="mt-2 text-sm text-stone-500 dark:text-slate-400">Cadastre o ponto de partida para organizar seus lançamentos.</p>
+    <p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Cadastre o ponto de partida para organizar seus lançamentos.</p>
     <AccountForm :types="types" :currencies="currencies" :banks="banks" />
   </AuthenticatedLayout>
 </template>
