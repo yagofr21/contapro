@@ -115,7 +115,6 @@ docs/ui-audit/after/goals-1440.png
 docs/ui-audit/after/goals-390.png
 docs/ui-audit/after/imports-1440.png
 docs/ui-audit/after/imports-390.png
-docs/ui-audit/after/inspect.png
 docs/ui-audit/after/installments-1440.png
 docs/ui-audit/after/installments-390.png
 docs/ui-audit/after/invoice-1440.png
