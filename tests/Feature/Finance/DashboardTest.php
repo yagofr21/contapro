@@ -16,6 +16,7 @@ use App\Modules\Investment\Models\AssetTransaction;
 use App\Modules\Investment\Models\Portfolio;
 use App\Modules\Investment\Models\PortfolioHolding;
 use App\Modules\MarketData\Models\PriceHistory;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -304,5 +305,26 @@ class DashboardTest extends TestCase
                 ->where('attention.due_events', 1)
                 ->where('attention.budgets_over_limit', 1)
                 ->where('attention.unpriced_holdings', 1));
+    }
+
+    public function test_open_invoices_include_unpaid_closed_and_overdue_cycles_but_not_future_cycles(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-09-18'));
+        $user = User::factory()->create();
+        $card = FinancialAccount::factory()->for($user)->creditCard()->create([
+            'currency' => 'BRL', 'initial_balance' => '0', 'credit_closing_day' => 15, 'credit_due_day' => 22,
+        ]);
+        foreach (['2026-08-10' => '100', '2026-09-10' => '200', '2026-09-20' => '300', '2026-10-20' => '400'] as $date => $amount) {
+            Transaction::factory()->for($user)->for($card, 'account')->create([
+                'type' => TransactionType::Expense, 'amount' => $amount, 'transaction_date' => $date,
+            ]);
+        }
+        Transaction::factory()->for($user)->for($card, 'account')->create([
+            'type' => TransactionType::TransferIn, 'amount' => '100', 'transaction_date' => '2026-09-18', 'invoice_cycle' => '2026-09-15',
+        ]);
+        $this->actingAs($user)->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page
+            ->where('financialSummaries.0.open_invoices', '500.0000')
+            ->where('financialSummaries.0.current_invoices', '300.0000')
+            ->where('financialSummaries.0.credit_card_debt', '900.0000'));
     }
 }

@@ -103,6 +103,13 @@ class DashboardController extends Controller
                 fn (string $total, array $account): string => bcadd($total, (string) ($account['credit_card']['current_invoice'] ?? '0.0000'), 4),
                 '0.0000',
             );
+            $openInvoices = $cardAccounts->reduce(
+                fn (string $total, array $account): string => bcadd($total, bcadd(
+                    bcadd((string) ($account['credit_card']['overdue_balance'] ?? '0.0000'), (string) ($account['credit_card']['closed_balance'] ?? '0.0000'), 4),
+                    (string) ($account['credit_card']['current_invoice'] ?? '0.0000'), 4,
+                ), 4),
+                '0.0000',
+            );
             $creditCardDebt = $cardAccounts->reduce(
                 fn (string $total, array $account): string => bcadd($total, (string) ($account['credit_card']['total_debt'] ?? '0.0000'), 4),
                 '0.0000',
@@ -118,6 +125,7 @@ class DashboardController extends Controller
                 'scheduled_balance' => $availableAccounts->reduce(fn (string $total, array $account): string => bcadd($total, (string) ($cashProjections->get($account['id'])['projected_balance'] ?? $account['balance']), 4), '0.0000'),
                 'investments' => $investmentTotal,
                 'current_invoices' => $currentInvoices,
+                'open_invoices' => $openInvoices,
                 'credit_card_debt' => $creditCardDebt,
                 'net_worth' => bcsub(bcadd($availableBalance, $investmentTotal, 4), $creditCardDebt, 4),
                 'income' => $income,

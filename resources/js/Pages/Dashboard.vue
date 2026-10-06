@@ -23,7 +23,7 @@ import TransactionForm from './Transactions/Partials/TransactionForm.vue';
 
 use([CanvasRenderer, BarChart, PieChart, TooltipComponent, LegendComponent, GridComponent]);
 
-type Summary = { currency: string; balance: string; available_balance: string; scheduled_balance: string; investments: string; current_invoices: string; credit_card_debt: string; net_worth: string; income: string; expenses: string; net: string; planned_income: string; planned_expenses: string; planned_net: string };
+type Summary = { currency: string; balance: string; available_balance: string; scheduled_balance: string; investments: string; current_invoices: string; open_invoices: string; credit_card_debt: string; net_worth: string; income: string; expenses: string; net: string; planned_income: string; planned_expenses: string; planned_net: string };
 type MonthlyTrend = { currency: string; months: { month: string; income: string; expenses: string }[] };
 type InvestmentSummary = { currency: string; cost: string; current_value: string; market_return: string; market_return_percentage: string; realized_profit_loss: string; net_income: string; total_return: string; unpriced_holdings: number; price_date: string | null };
 type RecentTransaction = { id: number; description: string; type: string; amount: string; currency: string; date: string; account: string; category: string | null; color: string | null };
@@ -89,7 +89,7 @@ const receiveIncome = (income: ExpectedIncome) => router.post(route('expected-in
     onStart: () => receiving.value = income.id,
     onFinish: () => receiving.value = null,
 });
-const summary = computed(() => props.financialSummaries.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, balance: '0', available_balance: '0', scheduled_balance: '0', investments: '0', current_invoices: '0', credit_card_debt: '0', net_worth: '0', income: '0', expenses: '0', net: '0', planned_income: '0', planned_expenses: '0', planned_net: '0' });
+const summary = computed(() => props.financialSummaries.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, balance: '0', available_balance: '0', scheduled_balance: '0', investments: '0', current_invoices: '0', open_invoices: '0', credit_card_debt: '0', net_worth: '0', income: '0', expenses: '0', net: '0', planned_income: '0', planned_expenses: '0', planned_net: '0' });
 const investment = computed(() => props.investments.find((item) => item.currency === selectedCurrency.value));
 const selectedCategoryExpenses = computed(() => props.categoryExpenses.filter((item) => item.currency === selectedCurrency.value));
 const selectedCreditCards = computed(() => props.creditCards.filter((card) => card.currency === selectedCurrency.value));
@@ -191,7 +191,7 @@ const currentMonthLabel = computed(() => {
     <section aria-label="Composição do patrimônio" class="cp-card mt-4 grid divide-y divide-stone-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-slate-800">
       <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Patrimônio líquido</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.net_worth, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Disponível + investimentos − dívida dos cartões</p></div>
       <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Investimentos</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.investments, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Contas de investimento e carteiras</p></div>
-      <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Faturas em aberto</p><p class="financial-value mt-1 text-lg font-semibold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.current_invoices, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Dívida total: {{ formatMoney(summary.credit_card_debt, selectedCurrency) }}</p></div>
+      <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Faturas em aberto</p><p class="financial-value mt-1 text-lg font-semibold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.open_invoices, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Vencidas, fechadas e em formação · Dívida com ciclos futuros: {{ formatMoney(summary.credit_card_debt, selectedCurrency) }}</p></div>
     </section>
 
     <section class="mt-5 rounded-2xl p-4 sm:p-5 transition-colors" :class="hasAttention ? 'border border-amber-200/70 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/30' : 'border border-emerald-200/60 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20'">
