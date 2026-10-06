@@ -26,11 +26,17 @@ class UpdateTransaction
                 ->where('transfer_id', $transaction->transfer_id)
                 ->get();
 
+            $incoming = $pair->firstWhere('type', TransactionType::TransferIn);
+            $invoiceCycle = $incoming && $incoming->account_id === (int) $data['destination_account_id']
+                ? $incoming->invoice_cycle
+                : null;
+
             foreach ($pair as $entry) {
                 $entry->update([
                     'account_id' => $entry->type === TransactionType::TransferOut
                         ? $data['account_id']
                         : $data['destination_account_id'],
+                    'invoice_cycle' => $invoiceCycle,
                     'amount' => $data['amount'],
                     'transaction_date' => $data['transaction_date'],
                     'description' => $data['description'] ?? null,

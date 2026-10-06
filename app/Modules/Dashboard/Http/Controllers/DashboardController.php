@@ -206,7 +206,7 @@ class DashboardController extends Controller
             'attention' => $attention,
             'accounts' => $accounts,
             'creditCards' => $creditCards->values()->sortBy(fn (array $card): array => [
-                ['overdue' => 0, 'due_soon' => 1, 'closing_soon' => 2, 'open' => 3][$card['status']] ?? 4,
+                ['overdue' => 0, 'due_soon' => 1, 'closed' => 2, 'closing_soon' => 3, 'open' => 4][$card['status']] ?? 4,
                 -((float) $card['current_invoice']),
             ])->values(),
             'banks' => (new BankOptionsQuery)->active(),

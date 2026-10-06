@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FinanceHero from '@/Components/FinanceHero.vue';
 import PageHeader from '@/Components/PageHeader.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import EmptyState from '@/Components/EmptyState.vue';
@@ -27,8 +28,10 @@ const usageCount = (bank: Bank) => bank.accounts_count ?? 0;
         <Link :href="route('banks.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white"><Plus :size="18" />Novo banco</Link>
       </template>
     </PageHeader>
+    <FinanceHero title="Bancos com a sua identidade." description="Personalize cada instituição e reconheça suas contas de relance." kicker="Seu catálogo financeiro" />
     <div v-if="banks.length" class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <article v-for="bank in banks" :key="bank.id" class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <article v-for="bank in banks" :key="bank.id" class="relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div class="absolute inset-x-0 top-0 h-1" :style="{ backgroundColor: bank.color }" />
         <div class="flex items-start justify-between">
           <span class="grid h-11 w-11 place-items-center rounded-2xl text-sm font-extrabold text-white" :style="{ backgroundColor: bank.color }">{{ bank.initials }}</span>
           <div class="flex items-center gap-1">

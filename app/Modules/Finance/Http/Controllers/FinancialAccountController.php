@@ -13,8 +13,11 @@ use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Queries\AccountSummaryQuery;
 use App\Modules\Finance\Queries\BankOptionsQuery;
 use App\Modules\Finance\Queries\CreditCardSummaryQuery;
+use App\Modules\Finance\Support\InstallmentMath;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -101,6 +104,7 @@ class FinancialAccountController extends Controller
             'amount' => ['required', 'decimal:0,4', 'gt:0', 'max:999999999999999.9999'],
             'transaction_date' => ['required', 'date_format:Y-m-d'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'invoice_cycle' => ['nullable', 'date_format:Y-m-d'],
         ]);
         $source = FinancialAccount::query()
             ->whereBelongsTo($request->user())
@@ -109,14 +113,25 @@ class FinancialAccountController extends Controller
 
         abort_if($source->id === $account->id || $source->currency !== $account->currency || $source->type === FinancialAccountType::CreditCard, 422);
 
-        $createTransaction->handle($request->user(), [
-            'type' => 'transfer',
-            'account_id' => $source->id,
-            'destination_account_id' => $account->id,
-            'amount' => $validated['amount'],
-            'transaction_date' => $validated['transaction_date'],
-            'description' => $validated['description'] ?? 'Pagamento de fatura',
-        ]);
+        DB::transaction(function () use ($request, $account, $source, $validated, $createTransaction): void {
+            $locked = FinancialAccount::query()->lockForUpdate()->findOrFail($account->id);
+            if (! empty($validated['invoice_cycle'])) {
+                $invoice = collect((new CreditCardSummaryQuery)->forAccount($locked)['invoices'])
+                    ->firstWhere('cycle', $validated['invoice_cycle']);
+                if ($invoice === null || $invoice['status'] === 'paid') {
+                    throw ValidationException::withMessages(['invoice_cycle' => 'Selecione uma fatura deste cartão com saldo pendente.']);
+                }
+                if (InstallmentMath::amountToCents($validated['amount']) > InstallmentMath::amountToCents($invoice['amount'])) {
+                    throw ValidationException::withMessages(['amount' => 'O valor supera o saldo da fatura selecionada.']);
+                }
+            }
+            $createTransaction->handle($request->user(), [
+                'type' => 'transfer', 'account_id' => $source->id, 'destination_account_id' => $account->id,
+                'amount' => $validated['amount'], 'transaction_date' => $validated['transaction_date'],
+                'invoice_cycle' => $validated['invoice_cycle'] ?? null,
+                'description' => $validated['description'] ?? 'Pagamento de fatura',
+            ]);
+        });
 
         return back()->with('success', 'Pagamento de fatura registrado com sucesso.');
     }

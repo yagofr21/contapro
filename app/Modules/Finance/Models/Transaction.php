@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $transfer_id
  * @property TransactionType $type
  * @property numeric-string $amount
+ * @property Carbon|null $invoice_cycle
  * @property Carbon $transaction_date
  * @property string|null $description
  * @property bool $is_transfer
@@ -28,7 +29,7 @@ use Illuminate\Support\Carbon;
  * @property Transaction|null $transferCounterpart
  * @property Installment|null $installment
  */
-#[Fillable(['user_id', 'account_id', 'category_id', 'transfer_id', 'installment_id', 'type', 'amount', 'transaction_date', 'description'])]
+#[Fillable(['user_id', 'account_id', 'category_id', 'transfer_id', 'installment_id', 'type', 'amount', 'transaction_date', 'description', 'invoice_cycle'])]
 #[UseFactory(TransactionFactory::class)]
 class Transaction extends Model
 {
@@ -72,6 +73,7 @@ class Transaction extends Model
             'type' => TransactionType::class,
             'amount' => 'decimal:4',
             'transaction_date' => 'date',
+            'invoice_cycle' => 'date',
         ];
     }
 }

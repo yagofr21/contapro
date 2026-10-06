@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FinanceHero from '@/Components/FinanceHero.vue';
 import InputError from '@/Components/InputError.vue';
 import SelectInput from '@/Components/SelectInput.vue';
 import { bankMeta, type BankMeta, type BankOption } from '@/lib/banks';
@@ -6,7 +7,7 @@ import { formatDecimal, parseDecimalInput } from '@/lib/format';
 import type { Account, Option } from '@/types/finance';
 import { Link, useForm } from '@inertiajs/vue3';
 import { Save } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = withDefaults(
     defineProps<{
@@ -46,6 +47,8 @@ const selectedBank = computed<BankMeta | null>(() => {
     const found = props.banks.find((bank) => bank.value === form.bank);
     return found ? bankMeta(found.value) ?? { ...found } : bankMeta(form.bank);
 });
+const bankSearch = ref('');
+const filteredBanks = computed(() => props.banks.filter((bank) => bank.label.toLocaleLowerCase('pt-BR').includes(bankSearch.value.toLocaleLowerCase('pt-BR'))));
 const colorOptions = ['#1b6ef5', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#14b8a6', '#f97316', '#64748b'];
 
 const selectBank = (value: string) => {
@@ -83,8 +86,10 @@ const cancel = () => {
 </script>
 
 <template>
-  <form :class="embedded ? '' : 'mt-8 max-w-2xl rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8'" @submit.prevent="submit">
+  <form :class="embedded ? '' : 'mt-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8'" @submit.prevent="submit">
+    <FinanceHero v-if="!embedded" title="Sua próxima conta começa aqui." description="Escolha o banco e organize o saldo, o limite e as datas do cartão." />
     <div class="px-6 py-5 sm:px-7">
+      <div class="mb-6 flex items-center gap-4 rounded-2xl bg-stone-50 p-4 dark:bg-slate-950"><span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-lg font-bold text-white" :style="{ backgroundColor: form.color || selectedBank?.color || '#0f766e' }">{{ selectedBank?.initials ?? '#' }}</span><div><p class="font-semibold">{{ form.name || 'Sua conta' }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">{{ selectedBank?.label ?? 'Selecione uma instituição' }} · {{ isCreditCard ? 'Cartão de crédito' : 'Conta financeira' }} · {{ form.currency }}</p></div></div>
       <div class="grid gap-5 sm:grid-cols-2">
         <label class="sm:col-span-2">
           <span class="mb-2 block text-sm font-semibold">Nome da conta</span>
@@ -92,13 +97,15 @@ const cancel = () => {
           <InputError class="mt-2" :message="form.errors.name" />
         </label>
         <div class="sm:col-span-2">
-          <span class="mb-2 block text-sm font-semibold">Identificacao visual</span>
-          <div class="flex flex-wrap gap-2">
+          <span class="mb-2 block text-sm font-semibold">Escolha seu banco</span>
+          <input v-model="bankSearch" type="search" aria-label="Buscar banco" placeholder="Buscar instituição…" class="mb-3 w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          <div class="grid max-h-60 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
             <button
-              v-for="bank in banks"
+              v-for="bank in filteredBanks"
               :key="bank.value"
+              :aria-pressed="form.bank === bank.value"
               type="button"
-              class="flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition"
+              class="flex min-h-14 items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition"
               :class="form.bank === bank.value ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-500/30 dark:bg-brand-950/50 dark:text-brand-200' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600 dark:text-slate-400'"
               @click="selectBank(bank.value)"
             >

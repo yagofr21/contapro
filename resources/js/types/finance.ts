@@ -3,6 +3,14 @@ export type Option = {
     label: string;
 };
 
+export type CardInvoice = {
+    cycle: string;
+    start: string;
+    due_date: string;
+    amount: string;
+    status: 'open' | 'closed' | 'overdue' | 'paid';
+};
+
 export type CreditCardInfo = {
     id: number;
     name: string;
@@ -15,6 +23,11 @@ export type CreditCardInfo = {
     utilization: number | null;
     initial_debt: string;
     overdue_balance: string;
+    closed_balance: string;
+    suggested_invoice_cycle: string | null;
+    suggested_payment: string;
+    suggested_due: string | null;
+    invoices: CardInvoice[];
     current_invoice: string;
     future_invoices: string;
     total_debt: string;
@@ -23,7 +36,7 @@ export type CreditCardInfo = {
     current_invoice_end: string;
     next_closing: string;
     next_due: string;
-    status: 'open' | 'closing_soon' | 'due_soon' | 'overdue';
+    status: 'open' | 'closed' | 'closing_soon' | 'due_soon' | 'overdue';
     future_by_month: { month: string; amount: string }[];
     current_purchases?: { date: string; description: string; amount: string; remaining: string }[];
     current_refunds?: { date: string; description: string; amount: string; remaining: string }[];

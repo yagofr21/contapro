@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import CardPaymentForm from '@/Components/CardPaymentForm.vue';
+import FinanceHero from '@/Components/FinanceHero.vue';
 import CreditCardLimit from '@/Components/CreditCardLimit.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import Modal from '@/Components/Modal.vue';
@@ -6,9 +8,9 @@ import PageHeader from '@/Components/PageHeader.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { bankMetaFrom, type BankOption } from '@/lib/banks';
-import { formatDate, formatMoney, parseDecimalInput } from '@/lib/format';
+import { formatDate, formatMoney } from '@/lib/format';
 import type { Account, Option } from '@/types/finance';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Archive, ArrowUpRight, Landmark, Plus, WalletCards } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import AccountForm from './Partials/AccountForm.vue';
@@ -48,8 +50,6 @@ const presented = (accounts: Account[]) =>
 const modalOpen = ref(false);
 const editing = ref<Account | null>(null);
 const paying = ref<Account | null>(null);
-const paymentForm = useForm({ account_id: '', amount: '', transaction_date: new Date().toISOString().slice(0, 10), description: '' });
-
 const openCreate = () => {
     editing.value = null;
     modalOpen.value = true;
@@ -67,27 +67,14 @@ const closeModal = () => {
 
 const openPayment = (account: Account) => {
     paying.value = account;
-    paymentForm.defaults({
-        account_id: '',
-        amount: account.credit_card?.current_invoice ?? '',
-        transaction_date: new Date().toISOString().slice(0, 10),
-        description: `Pagamento de fatura ${account.name}`,
-    });
-    paymentForm.reset();
+
 };
 
 const closePayment = () => {
     paying.value = null;
-    paymentForm.clearErrors();
 };
 
 const paymentAccounts = (card: Account) => props.accounts.filter((account) => !account.is_archived && account.id !== card.id && account.type !== 'credit_card' && account.currency === card.currency);
-
-const submitPayment = () => {
-    if (!paying.value) return;
-    paymentForm.transform((data) => ({ ...data, amount: parseDecimalInput(data.amount) }))
-        .post(route('accounts.pay-card', paying.value.id), { onSuccess: closePayment });
-};
 
 onMounted(() => {
     const url = new URL(window.location.href);
@@ -114,6 +101,7 @@ const remove = (account: Account) => {
       </template>
     </PageHeader>
 
+    <FinanceHero title="Cada conta no seu lugar." description="Organize saldos, acompanhe seus cartões e escolha a fatura certa para pagar." kicker="Contas e cartões" />
     <section v-if="balances.length" aria-label="Saldo disponível por moeda" class="cp-card mt-6 flex flex-wrap gap-x-10 gap-y-4 p-5">
       <div v-for="balance in balances" :key="balance.currency" class="min-w-0"><p class="text-xs text-stone-600 dark:text-slate-400">Saldo disponível · {{ balance.currency }}</p><p class="financial-value mt-1 text-2xl font-bold">{{ formatMoney(balance.balance, balance.currency) }}</p></div>
       <p class="w-full text-xs text-stone-600 dark:text-slate-400">Dinheiro, contas correntes e poupanças ativas. Cartões e investimentos apresentados separadamente.</p>
@@ -134,15 +122,17 @@ const remove = (account: Account) => {
         </div>
         <div class="relative mt-5">
           <p class="text-sm font-medium text-stone-600 dark:text-slate-400">{{ account.name }}</p>
-          <p v-if="account.credit_card" class="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-600 dark:text-slate-400 ">Fatura atual</p>
+          <p v-if="account.credit_card" class="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-600 dark:text-slate-400 ">Fatura para pagar</p>
           <p class="financial-value mt-1 text-2xl font-bold" :class="account.credit_card ? 'text-rose-700 dark:text-rose-300 ' : Number(account.balance) < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-stone-950 dark:text-white'">
-            {{ formatMoney(account.credit_card?.current_invoice ?? account.balance ?? account.initial_balance, account.currency) }}
+            {{ formatMoney(account.credit_card?.suggested_payment ?? account.balance ?? account.initial_balance, account.currency) }}
           </p>
+          <p v-if="account.credit_card?.suggested_invoice_cycle" class="mt-2 text-xs text-stone-600 dark:text-slate-400">Ciclo até {{ formatDate(account.credit_card.suggested_invoice_cycle) }} · vence {{ formatDate(account.credit_card.suggested_due ?? account.credit_card.next_due) }}</p>
           <p class="mt-2 text-xs text-stone-600 dark:text-slate-400">{{ typeLabels[account.type] }}</p>
         </div>
         <div v-if="account.credit_card" class="relative mt-4 rounded-xl bg-stone-50 p-3 dark:bg-slate-950">
           <div class="rounded-lg bg-white p-2 dark:bg-slate-900"><p class="text-stone-600 dark:text-slate-400 ">Situação da fatura</p><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400 ">Fecha em {{ formatDate(account.credit_card.next_closing) }} · vence em {{ formatDate(account.credit_card.next_due) }}</p></div>
           <div class="mt-3 grid grid-cols-2 gap-2 text-[11px] text-stone-600 dark:text-slate-400">
+            <div v-if="Number(account.credit_card.closed_balance) > 0"><p>Fechadas a vencer</p><p class="font-semibold text-teal-800 dark:text-teal-200">{{ formatMoney(account.credit_card.closed_balance, account.currency) }}</p></div>
             <div v-if="Number(account.credit_card.overdue_balance) > 0"><p class="text-stone-600 dark:text-slate-400 ">Saldo vencido</p><p class="font-semibold text-rose-700 dark:text-rose-300 ">{{ formatMoney(account.credit_card.overdue_balance, account.currency) }}</p></div>
             <div><p class="text-stone-600 dark:text-slate-400 ">Próximas faturas</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatMoney(account.credit_card.future_invoices, account.currency) }}</p></div>
             <div><p class="text-stone-600 dark:text-slate-400 ">Dívida total</p><p class="font-semibold text-stone-700 dark:text-slate-200">{{ formatMoney(account.credit_card.total_debt, account.currency) }}</p></div>
@@ -161,19 +151,11 @@ const remove = (account: Account) => {
 
     <EmptyState v-else class="mt-6" :icon="WalletCards" title="Nenhuma conta nesta seleção" description="Cadastre uma conta ou cartão para começar a acompanhar suas finanças."><template #action><button class="cp-button" @click="openCreate"><Plus :size="17" />Nova conta</button></template></EmptyState>
 
-    <Modal :show="modalOpen" max-width="lg" :title="editing ? 'Editar conta' : 'Nova conta'" @close="closeModal">
+    <Modal :show="modalOpen" max-width="2xl" :title="editing ? 'Editar conta' : 'Nova conta'" @close="closeModal">
       <AccountForm v-if="modalOpen" :account="editing ?? undefined" :types="types" :currencies="currencies" :banks="banks" embedded @cancel="closeModal" />
     </Modal>
     <Modal :show="Boolean(paying)" max-width="lg" title="Pagar fatura" @close="closePayment">
-      <form v-if="paying" class="px-6 py-5 sm:px-7" @submit.prevent="submitPayment">
-        <div class="space-y-4">
-          <label><span class="mb-2 block text-sm font-semibold">Conta de origem</span><select v-model="paymentForm.account_id" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950"><option value="" disabled>Selecione</option><option v-for="account in paymentAccounts(paying)" :key="account.id" :value="String(account.id)">{{ account.name }} · {{ account.currency }}</option></select><p v-if="paymentForm.errors.account_id" class="mt-2 text-sm text-rose-700 dark:text-rose-300">{{ paymentForm.errors.account_id }}</p></label>
-          <label><span class="mb-2 block text-sm font-semibold">Valor pago</span><input v-model="paymentForm.amount" inputmode="decimal" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="0,00" /><p v-if="paymentForm.errors.amount" class="mt-2 text-sm text-rose-700 dark:text-rose-300">{{ paymentForm.errors.amount }}</p></label>
-          <label><span class="mb-2 block text-sm font-semibold">Data</span><input v-model="paymentForm.transaction_date" type="date" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" /><p v-if="paymentForm.errors.transaction_date" class="mt-2 text-sm text-rose-700 dark:text-rose-300">{{ paymentForm.errors.transaction_date }}</p></label>
-          <label><span class="mb-2 block text-sm font-semibold">Observação <span class="font-normal text-stone-600 dark:text-slate-400">(opcional)</span></span><textarea v-model="paymentForm.description" rows="3" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" /></label>
-        </div>
-        <div class="mt-5 flex justify-end gap-2 border-t border-stone-100 pt-5 dark:border-slate-800"><button type="button" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800" @click="closePayment">Cancelar</button><button :disabled="paymentForm.processing" class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Registrar pagamento</button></div>
-      </form>
+      <CardPaymentForm v-if="paying" :account="paying" :payment-accounts="paymentAccounts(paying)" @close="closePayment" />
     </Modal>
   </AuthenticatedLayout>
 </template>

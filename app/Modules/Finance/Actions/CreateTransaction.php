@@ -29,6 +29,7 @@ class CreateTransaction
                 'amount' => $data['amount'],
                 'transaction_date' => $data['transaction_date'],
                 'description' => $data['description'] ?? null,
+                'invoice_cycle' => $data['invoice_cycle'] ?? null,
             ];
 
             $outgoing = Transaction::query()->create([

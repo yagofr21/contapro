@@ -5,6 +5,7 @@ namespace Tests\Feature\Finance;
 use App\Models\User;
 use App\Modules\Finance\Actions\CreateInstallment;
 use App\Modules\Finance\Actions\ProcessInstallments;
+use App\Modules\Finance\Actions\UpdateTransaction;
 use App\Modules\Finance\Enums\FinancialAccountType;
 use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\FinancialAccount;
@@ -295,5 +296,92 @@ class CreditCardTest extends TestCase
                 ->where('account.credit_limit', '5000.0000')
                 ->where('account.credit_closing_day', 15)
                 ->where('account.credit_due_day', 22));
+    }
+
+    public function test_closed_invoice_only_becomes_overdue_after_due_date(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->card($user);
+        $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '120.0000', 'transaction_date' => '2026-09-10']);
+        $query = new CreditCardSummaryQuery;
+        foreach (['2026-09-16', '2026-09-22'] as $date) {
+            $s = $query->forAccount($card, CarbonImmutable::parse($date));
+            $this->assertSame('0.0000', $s['overdue_balance']);
+            $this->assertSame('120.0000', $s['closed_balance']);
+            $this->assertSame('2026-09-15', $s['suggested_invoice_cycle']);
+            $this->assertSame('120.0000', $s['suggested_payment']);
+        }
+        $this->assertSame('120.0000', $query->forAccount($card, CarbonImmutable::parse('2026-09-23'))['overdue_balance']);
+    }
+
+    public function test_payment_selected_invoice_preserves_older_debt(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-06'));
+        $user = User::factory()->create();
+        $card = $this->card($user);
+        $checking = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        foreach (['2026-08-10' => '100.0000', '2026-09-10' => '200.0000', '2026-09-20' => '300.0000'] as $date => $amount) {
+            $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => $amount, 'transaction_date' => $date]);
+        }
+        $this->actingAs($user)->post(route('accounts.pay-card', $card), ['account_id' => $checking->id, 'amount' => '200.0000', 'transaction_date' => '2026-10-06', 'invoice_cycle' => '2026-09-15'])->assertSessionHasNoErrors()->assertRedirect();
+        $s = (new CreditCardSummaryQuery)->forAccount($card);
+        $this->assertSame('100.0000', $s['overdue_balance']);
+        $this->assertSame('300.0000', $s['current_invoice']);
+        $this->assertSame('400.0000', $s['total_debt']);
+        $this->assertSame('2026-09-15', $card->transactions()->where('type', TransactionType::TransferIn)->firstOrFail()->invoice_cycle->format('Y-m-d'));
+        $this->assertSame('paid', collect($s['invoices'])->firstWhere('cycle', '2026-09-15')['status']);
+    }
+
+    public function test_payment_rejects_cycle_without_balance(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->card($user);
+        $checking = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $this->actingAs($user)->post(route('accounts.pay-card', $card), ['account_id' => $checking->id, 'amount' => '10.0000', 'transaction_date' => '2026-10-06', 'invoice_cycle' => '2026-09-15'])->assertSessionHasErrors('invoice_cycle');
+        $this->assertDatabaseCount('transactions', 0);
+    }
+
+    public function test_initial_debt_payment_stays_on_its_cycle_after_month_changes(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-09-20'));
+        $user = User::factory()->create();
+        $card = FinancialAccount::factory()->for($user)->creditCard()->create(['initial_balance' => '450.0000']);
+        $checking = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '100.0000', 'transaction_date' => '2026-08-10']);
+        $this->actingAs($user)->post(route('accounts.pay-card', $card), ['account_id' => $checking->id, 'amount' => '450.0000', 'transaction_date' => '2026-09-20', 'invoice_cycle' => '2026-09-15'])->assertSessionHasNoErrors();
+        $this->travelTo(CarbonImmutable::parse('2026-10-20'));
+        $invoices = collect((new CreditCardSummaryQuery)->forAccount($card)['invoices']);
+        $this->assertSame('100.0000', $invoices->firstWhere('cycle', '2026-08-15')['amount']);
+        $this->assertSame('paid', $invoices->firstWhere('cycle', '2026-09-15')['status']);
+    }
+
+    public function test_payment_cannot_exceed_selected_invoice_balance(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->card($user);
+        $checking = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $card->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '100.0000', 'transaction_date' => '2026-09-10']);
+        $this->actingAs($user)->post(route('accounts.pay-card', $card), ['account_id' => $checking->id, 'amount' => '101.0000', 'transaction_date' => '2026-10-06', 'invoice_cycle' => '2026-09-15'])->assertSessionHasErrors('amount');
+        $this->assertSame(0, $card->transactions()->where('type', TransactionType::TransferIn)->count());
+    }
+
+    public function test_changing_payment_destination_clears_previous_card_invoice(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-06'));
+        $user = User::factory()->create();
+        $card = $this->card($user);
+        $other = $this->card($user);
+        $checking = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        foreach ([$card, $other] as $target) {
+            $target->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '200.0000', 'transaction_date' => '2026-09-10']);
+        }
+        $other->transactions()->create(['user_id' => $user->id, 'type' => TransactionType::Expense, 'amount' => '100.0000', 'transaction_date' => '2026-08-10']);
+        $this->actingAs($user)->post(route('accounts.pay-card', $card), ['account_id' => $checking->id, 'amount' => '200.0000', 'transaction_date' => '2026-10-06', 'invoice_cycle' => '2026-09-15'])->assertSessionHasNoErrors();
+        $payment = $checking->transactions()->where('type', TransactionType::TransferOut)->firstOrFail();
+        app(UpdateTransaction::class)->handle($payment, ['account_id' => $checking->id, 'destination_account_id' => $other->id, 'amount' => '200.0000', 'transaction_date' => '2026-10-06']);
+        $this->assertNull($other->transactions()->where('type', TransactionType::TransferIn)->firstOrFail()->invoice_cycle);
+        $invoices = collect((new CreditCardSummaryQuery)->forAccount($other)['invoices']);
+        $this->assertSame('paid', $invoices->firstWhere('cycle', '2026-08-15')['status']);
+        $this->assertSame('100.0000', $invoices->firstWhere('cycle', '2026-09-15')['amount']);
     }
 }

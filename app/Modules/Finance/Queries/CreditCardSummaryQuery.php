@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 class CreditCardSummaryQuery
 {
     /**
-     * @return Collection<int, array<string, mixed>> Keyed by account id.
+     * @return Collection<int|string, array{invoices: list<array<string, string>>, ...<string, mixed>}> Keyed by account id.
      */
     public function forUser(User $user, ?CarbonImmutable $today = null): Collection
     {
@@ -26,7 +26,7 @@ class CreditCardSummaryQuery
             ->keyBy('id');
     }
 
-    /** @return array<string, mixed> */
+    /** @return array{invoices: list<array<string, string>>, ...<string, mixed>} */
     public function forAccount(FinancialAccount $card, ?CarbonImmutable $today = null): array
     {
         $today = ($today ?? CarbonImmutable::now())->startOfDay();
@@ -35,12 +35,12 @@ class CreditCardSummaryQuery
         $limitCents = $card->credit_limit !== null ? InstallmentMath::amountToCents($card->credit_limit) : null;
 
         $obligations = $this->obligations($card, $today);
-        $paymentsCents = $this->paymentsCents($card);
-        $allocation = $this->allocatePayments($obligations, $paymentsCents);
+        $allocation = $this->allocatePayments($obligations, $card);
         $remaining = $allocation['remaining'];
         $creditCents = $allocation['creditCents'];
 
         $overdueCents = 0;
+        $closedCents = 0;
         $currentCents = 0;
         $futureCents = 0;
         $futureByMonth = [];
@@ -50,8 +50,10 @@ class CreditCardSummaryQuery
                 continue;
             }
 
-            if ($row['cycle_end']->lt($start)) {
+            if ($row['due_date']->lt($today)) {
                 $overdueCents += $row['remaining_cents'];
+            } elseif ($row['cycle_end']->lt($start)) {
+                $closedCents += $row['remaining_cents'];
             } elseif ($row['cycle_end']->between($start, $end)) {
                 $currentCents += $row['remaining_cents'];
             } else {
@@ -63,13 +65,22 @@ class CreditCardSummaryQuery
 
         ksort($futureByMonth);
 
-        $debtCents = $overdueCents + $currentCents + $futureCents;
+        $debtCents = $overdueCents + $closedCents + $currentCents + $futureCents;
         $availableCents = $limitCents !== null ? max(0, $limitCents - $debtCents) : null;
         $utilization = $limitCents !== null && $limitCents > 0
             ? (int) round($debtCents / $limitCents * 100)
             : null;
 
+        $invoices = $this->invoices($remaining, $today);
+        $suggested = collect($invoices)->first(fn (array $invoice): bool => $invoice['status'] !== 'paid' && $invoice['cycle'] < $today->format('Y-m-d'))
+            ?? collect($invoices)->first(fn (array $invoice): bool => $invoice['status'] !== 'paid');
+
         return [
+            'invoices' => $invoices,
+            'closed_balance' => InstallmentMath::centsToAmount($closedCents),
+            'suggested_invoice_cycle' => $suggested['cycle'] ?? null,
+            'suggested_payment' => $suggested['amount'] ?? '0.0000',
+            'suggested_due' => $suggested['due_date'] ?? null,
             'id' => $card->id,
             'name' => $card->name,
             'currency' => $card->currency->value,
@@ -89,7 +100,7 @@ class CreditCardSummaryQuery
             'current_invoice_end' => $end->format('Y-m-d'),
             'next_closing' => $end->format('Y-m-d'),
             'next_due' => $due->format('Y-m-d'),
-            'status' => $this->status($overdueCents, $due, $end, $today),
+            'status' => $overdueCents > 0 ? 'overdue' : ($closedCents > 0 ? (($suggested && CarbonImmutable::parse($suggested['due_date'])->diffInDays($today, false) >= -3) ? 'due_soon' : 'closed') : $this->status($overdueCents, $due, $end, $today)),
             'future_by_month' => array_map(
                 fn (string $month, int $cents): array => ['month' => $month, 'amount' => InstallmentMath::centsToAmount($cents)],
                 array_keys(array_slice($futureByMonth, 0, 6, true)),
@@ -110,7 +121,8 @@ class CreditCardSummaryQuery
         $initialDebt = $this->initialDebtCents($card);
 
         if ($initialDebt > 0) {
-            $cycleEnd = $this->invoicePeriodStart($card, $today)->subDay();
+            $registered = CarbonImmutable::parse($card->created_at)->startOfDay()->min($today);
+            $cycleEnd = $this->invoicePeriodStart($card, $registered)->subDay();
             $rows[] = [
                 'date' => $cycleEnd,
                 'cycle_end' => $cycleEnd,
@@ -169,39 +181,66 @@ class CreditCardSummaryQuery
      * @param  list<array<string, mixed>>  $rows
      * @return array{remaining: list<array<string, mixed>>, creditCents: int}
      */
-    private function allocatePayments(array $rows, int $paymentsCents): array
+    private function allocatePayments(array $rows, FinancialAccount $card): array
     {
+        $generalCredit = 0;
         foreach ($rows as &$row) {
             if ($row['remaining_cents'] < 0) {
-                $paymentsCents += abs($row['remaining_cents']);
+                $generalCredit += abs($row['remaining_cents']);
                 $row['remaining_cents'] = 0;
             }
         }
+        unset($row);
+        $payments = $card->transactions()->where('type', TransactionType::TransferIn->value)
+            ->orderBy('transaction_date')->orderBy('id')->get();
+        foreach ($payments as $payment) {
+            $amount = InstallmentMath::amountToCents($payment->amount);
+            if ($payment->invoice_cycle === null) {
+                $generalCredit += $amount;
 
-        foreach ($rows as &$row) {
-            if ($paymentsCents <= 0 || $row['remaining_cents'] <= 0) {
                 continue;
             }
-
-            $paid = min($paymentsCents, $row['remaining_cents']);
-            $row['remaining_cents'] -= $paid;
-            $paymentsCents -= $paid;
+            $cycle = $payment->invoice_cycle->format('Y-m-d');
+            foreach ($rows as &$row) {
+                if ($row['cycle_end']->format('Y-m-d') !== $cycle || $row['remaining_cents'] <= 0) {
+                    continue;
+                }
+                $paid = min($amount, $row['remaining_cents']);
+                $row['remaining_cents'] -= $paid;
+                $amount -= $paid;
+            }
+            unset($row);
+            $generalCredit += $amount;
         }
+        foreach ($rows as &$row) {
+            $paid = min($generalCredit, max(0, $row['remaining_cents']));
+            $row['remaining_cents'] -= $paid;
+            $generalCredit -= $paid;
+        }
+        unset($row);
 
-        return ['remaining' => $rows, 'creditCents' => max(0, $paymentsCents)];
+        return ['remaining' => $rows, 'creditCents' => max(0, $generalCredit)];
+    }
+
+    /** @param list<array<string, mixed>> $rows
+     * @return list<array<string, string>>
+     */
+    private function invoices(array $rows, CarbonImmutable $today): array
+    {
+        return collect($rows)->groupBy(fn (array $row): string => $row['cycle_end']->format('Y-m-d'))
+            ->map(function (Collection $items, string $cycle) use ($today): array {
+                $remaining = $items->reduce(fn (int $sum, array $row): int => $sum + max(0, $row['remaining_cents']), 0);
+                $due = $items->first()['due_date'];
+                $status = $remaining === 0 ? 'paid' : ($due->lt($today) ? 'overdue' : ($cycle < $today->format('Y-m-d') ? 'closed' : 'open'));
+
+                return ['cycle' => $cycle, 'start' => CarbonImmutable::parse($cycle)->subMonthNoOverflow()->addDay()->format('Y-m-d'),
+                    'due_date' => $due->format('Y-m-d'), 'amount' => InstallmentMath::centsToAmount($remaining), 'status' => $status];
+            })->sortBy('cycle')->values()->all();
     }
 
     private function initialDebtCents(FinancialAccount $card): int
     {
         return abs(InstallmentMath::amountToCents($card->initial_balance));
-    }
-
-    private function paymentsCents(FinancialAccount $card): int
-    {
-        return (int) $card->transactions()
-            ->where('type', TransactionType::TransferIn->value)
-            ->get(['amount'])
-            ->reduce(fn (int $total, Transaction $transaction): int => $total + InstallmentMath::amountToCents($transaction->amount), 0);
     }
 
     /** @return list<array{date: string, amount: string, description: string|null}> */
