@@ -220,7 +220,7 @@ class DashboardTest extends TestCase
         $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('financialSummaries.0.balance', '1119.0000')
+                ->where('financialSummaries.0.balance', '120.0000')
                 ->where('financialSummaries.0.income', '20.0000')
                 ->where('financialSummaries.2.currency', 'USD')
                 ->where('financialSummaries.2.balance', '60.0000')

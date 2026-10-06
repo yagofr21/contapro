@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SpendingProjection from '@/Components/SpendingProjection.vue';
+import type { SpendingBaseline } from '@/lib/projections';
 import StatCard from '@/Components/StatCard.vue';
 import CashFlowValues from '@/Components/CashFlowValues.vue';
 import EmptyState from '@/Components/EmptyState.vue';
@@ -21,7 +23,7 @@ import TransactionForm from './Transactions/Partials/TransactionForm.vue';
 
 use([CanvasRenderer, BarChart, PieChart, TooltipComponent, LegendComponent, GridComponent]);
 
-type Summary = { currency: string; balance: string; available_balance: string; investments: string; current_invoices: string; credit_card_debt: string; net_worth: string; income: string; expenses: string; net: string; planned_income: string; planned_expenses: string; planned_net: string };
+type Summary = { currency: string; balance: string; available_balance: string; scheduled_balance: string; investments: string; current_invoices: string; credit_card_debt: string; net_worth: string; income: string; expenses: string; net: string; planned_income: string; planned_expenses: string; planned_net: string };
 type MonthlyTrend = { currency: string; months: { month: string; income: string; expenses: string }[] };
 type InvestmentSummary = { currency: string; cost: string; current_value: string; market_return: string; market_return_percentage: string; realized_profit_loss: string; net_income: string; total_return: string; unpriced_holdings: number; price_date: string | null };
 type RecentTransaction = { id: number; description: string; type: string; amount: string; currency: string; date: string; account: string; category: string | null; color: string | null };
@@ -31,6 +33,7 @@ type NextEvent = { date: string; description: string; account_name: string | nul
 
 const chartPalette = useChartPalette();
 const props = defineProps<{
+    spendingBaselines: SpendingBaseline[];
     financialSummaries: Summary[];
     monthlyTrends: MonthlyTrend[];
     expectedIncomes: ExpectedIncome[];
@@ -86,7 +89,7 @@ const receiveIncome = (income: ExpectedIncome) => router.post(route('expected-in
     onStart: () => receiving.value = income.id,
     onFinish: () => receiving.value = null,
 });
-const summary = computed(() => props.financialSummaries.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, balance: '0', available_balance: '0', investments: '0', current_invoices: '0', credit_card_debt: '0', net_worth: '0', income: '0', expenses: '0', net: '0', planned_income: '0', planned_expenses: '0', planned_net: '0' });
+const summary = computed(() => props.financialSummaries.find((item) => item.currency === selectedCurrency.value) ?? { currency: selectedCurrency.value, balance: '0', available_balance: '0', scheduled_balance: '0', investments: '0', current_invoices: '0', credit_card_debt: '0', net_worth: '0', income: '0', expenses: '0', net: '0', planned_income: '0', planned_expenses: '0', planned_net: '0' });
 const investment = computed(() => props.investments.find((item) => item.currency === selectedCurrency.value));
 const selectedCategoryExpenses = computed(() => props.categoryExpenses.filter((item) => item.currency === selectedCurrency.value));
 const selectedCreditCards = computed(() => props.creditCards.filter((card) => card.currency === selectedCurrency.value));
@@ -171,8 +174,8 @@ const currentMonthLabel = computed(() => {
     </header>
 
     <section aria-label="Resumo financeiro do mês" class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard label="Patrimônio líquido" :value="formatMoney(summary.net_worth, selectedCurrency)" tone="brand" bar-class="bg-brand-600">
-        <template #footer>Disponível + investimentos − dívida dos cartões</template>
+      <StatCard label="Saldo disponível hoje" :value="formatMoney(summary.available_balance, selectedCurrency)" tone="brand" bar-class="bg-brand-600">
+        <template #footer>Dinheiro, corrente e poupança · até hoje</template>
       </StatCard>
       <StatCard label="Receitas realizadas" :value="formatMoney(summary.income, selectedCurrency)" :icon="ArrowDownLeft" tone="positive">
         <template #footer>A receber: {{ formatMoney(summary.planned_income, selectedCurrency) }}</template>
@@ -180,13 +183,13 @@ const currentMonthLabel = computed(() => {
       <StatCard label="Despesas realizadas" :value="formatMoney(summary.expenses, selectedCurrency)" :icon="ArrowUpRight" tone="negative">
         <template #footer>A pagar: {{ formatMoney(summary.planned_expenses, selectedCurrency) }}</template>
       </StatCard>
-      <StatCard label="Saldo do mês" :value="formatMoney(summary.net, selectedCurrency)" :icon="TrendingUp" :tone="Number(summary.net) >= 0 ? 'positive' : 'negative'">
-        <template #footer>Saldo dos lançamentos futuros: {{ formatMoney(summary.planned_net, selectedCurrency) }}</template>
+      <StatCard label="Previsto em 30 dias" :value="formatMoney(summary.scheduled_balance, selectedCurrency)" :icon="TrendingUp" :tone="Number(summary.scheduled_balance) >= 0 ? 'positive' : 'negative'">
+        <template #footer><Link :href="route('agenda.index')" class="underline">Somente movimentos cadastrados · ver agenda</Link></template>
       </StatCard>
     </section>
 
     <section aria-label="Composição do patrimônio" class="cp-card mt-4 grid divide-y divide-stone-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-slate-800">
-      <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Saldo disponível</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.available_balance, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Dinheiro, corrente e poupança</p></div>
+      <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Patrimônio líquido</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.net_worth, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Disponível + investimentos − dívida dos cartões</p></div>
       <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Investimentos</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.investments, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Contas de investimento e carteiras</p></div>
       <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Faturas em aberto</p><p class="financial-value mt-1 text-lg font-semibold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.current_invoices, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Dívida total: {{ formatMoney(summary.credit_card_debt, selectedCurrency) }}</p></div>
     </section>
@@ -204,48 +207,6 @@ const currentMonthLabel = computed(() => {
         </Link>
       </div>
       <p v-else class="mt-1.5 text-xs text-emerald-600/80 dark:text-emerald-400/70">Nenhum vencimento, orçamento estourado ou posição sem cotação.</p>
-    </section>
-
-    <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-      <article class="min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
-        <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">Últimos 6 meses · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-300 transition hover:bg-brand-50 dark:hover:bg-brand-950/40">Ver relatório</Link></header>
-        <div v-if="hasMonthlyData && isDesktop" class="mt-4 h-72 min-w-0"><VChart aria-label="Comparação de receitas e despesas dos últimos seis meses" :option="monthlyChartOption" autoresize style="width: 100%; height: 100%;" /></div>
-        <div v-else-if="hasMonthlyData" class="mt-4 space-y-3">
-          <div v-for="month in selectedMonthlyTrend.months" :key="month.month" class="rounded-2xl bg-stone-50 px-3 py-2.5 dark:bg-slate-950">
-            <p class="mb-2 text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-slate-400">{{ formatMonth(month.month) }}</p>
-            <div class="space-y-1.5">
-              <div class="flex items-center gap-2">
-                <span class="w-16 shrink-0 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 ">Receita</span>
-                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-950/60"><div class="h-full rounded-full bg-emerald-500" :style="{ width: monthWidth(month.income) }" /></div>
-                <span class="shrink-0 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">{{ formatMoney(month.income, selectedCurrency) }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-16 shrink-0 text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300 ">Despesa</span>
-                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-rose-100 dark:bg-rose-950/60"><div class="h-full rounded-full bg-rose-500" :style="{ width: monthWidth(month.expenses) }" /></div>
-                <span class="shrink-0 text-[11px] font-semibold text-rose-700 dark:text-rose-400">{{ formatMoney(month.expenses, selectedCurrency) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-600 dark:text-slate-400 sm:h-72">Sem lançamentos nos últimos 6 meses</div>
-        <CashFlowValues v-if="hasMonthlyData" :months="selectedMonthlyTrend.months" :currency="selectedCurrency" />
-      </article>
-
-      <article class="min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
-        <header><h2 class="font-semibold">Despesas por categoria</h2><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">Distribuição no mês atual</p></header>
-        <div v-if="sortedCategoryExpenses.length" class="mt-3">
-          <div class="h-48 sm:h-56"><VChart :option="chartOption" autoresize style="width: 100%; height: 100%;" /></div>
-          <ul class="mt-3 space-y-2.5 border-t border-stone-100 pt-3 dark:border-slate-800">
-            <li v-for="category in sortedCategoryExpenses" :key="category.name" class="flex items-center gap-2.5">
-              <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: category.color }" />
-              <span class="min-w-0 flex-1 truncate text-sm text-stone-600 dark:text-slate-300">{{ category.name }}</span>
-              <span class="whitespace-nowrap text-sm font-bold">{{ formatMoney(category.total, selectedCurrency) }}</span><span class="w-10 shrink-0 text-right text-xs text-stone-600 dark:text-slate-400">{{ Number(summary.expenses) > 0 ? Math.round(Number(category.total) / Number(summary.expenses) * 100) : 0 }}%</span>
-            </li>
-          </ul>
-          <Link :href="route('reports.index', { currency: selectedCurrency })" class="mt-3 inline-flex text-xs font-semibold text-brand-700 dark:text-brand-300 hover:text-brand-700">Ver todas</Link>
-        </div>
-        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-600 dark:text-slate-400 sm:h-56">Categorize despesas para visualizar a distribuição</div>
-      </article>
     </section>
 
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
@@ -278,6 +239,50 @@ const currentMonthLabel = computed(() => {
       </article>
     </section>
 
+    <SpendingProjection :baseline="spendingBaselines.find(item => item.currency === selectedCurrency)" :balance="summary.available_balance" :currency="selectedCurrency" />
+
+    <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <article class="min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <header class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="font-semibold">Receitas x despesas</h2><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">{{ isDesktop ? 'Últimos 6 meses' : 'Últimos 3 meses' }} · {{ selectedCurrency }}</p></div><Link :href="route('reports.index', { currency: selectedCurrency })" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-300 transition hover:bg-brand-50 dark:hover:bg-brand-950/40">Ver relatório</Link></header>
+        <div v-if="hasMonthlyData && isDesktop" class="mt-4 h-72 min-w-0"><VChart aria-label="Comparação de receitas e despesas dos últimos seis meses" :option="monthlyChartOption" autoresize style="width: 100%; height: 100%;" /></div>
+        <div v-else-if="hasMonthlyData" class="mt-4 space-y-3">
+          <div v-for="month in selectedMonthlyTrend.months.slice(-3)" :key="month.month" class="rounded-2xl bg-stone-50 px-3 py-2.5 dark:bg-slate-950">
+            <p class="mb-2 text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-slate-400">{{ formatMonth(month.month) }}</p>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-16 shrink-0 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 ">Receita</span>
+                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-950/60"><div class="h-full rounded-full bg-emerald-500" :style="{ width: monthWidth(month.income) }" /></div>
+                <span class="shrink-0 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">{{ formatMoney(month.income, selectedCurrency) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-16 shrink-0 text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300 ">Despesa</span>
+                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-rose-100 dark:bg-rose-950/60"><div class="h-full rounded-full bg-rose-500" :style="{ width: monthWidth(month.expenses) }" /></div>
+                <span class="shrink-0 text-[11px] font-semibold text-rose-700 dark:text-rose-400">{{ formatMoney(month.expenses, selectedCurrency) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-600 dark:text-slate-400 sm:h-72">Sem lançamentos nos últimos 6 meses</div>
+        <details v-if="hasMonthlyData && isDesktop" class="mt-4"><summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-300">Ver valores mês a mês</summary><CashFlowValues :months="selectedMonthlyTrend.months" :currency="selectedCurrency" /></details>
+      </article>
+
+      <article class="min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <header><h2 class="font-semibold">Despesas por categoria</h2><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">Distribuição no mês atual</p></header>
+        <div v-if="sortedCategoryExpenses.length" class="mt-3">
+          <div class="h-48 sm:h-56"><VChart :option="chartOption" autoresize style="width: 100%; height: 100%;" /></div>
+          <ul class="mt-3 space-y-2.5 border-t border-stone-100 pt-3 dark:border-slate-800">
+            <li v-for="category in sortedCategoryExpenses.slice(0, 5)" :key="category.name" class="flex items-center gap-2.5">
+              <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: category.color }" />
+              <span class="min-w-0 flex-1 truncate text-sm text-stone-600 dark:text-slate-300">{{ category.name }}</span>
+              <span class="whitespace-nowrap text-sm font-bold">{{ formatMoney(category.total, selectedCurrency) }}</span><span class="w-10 shrink-0 text-right text-xs text-stone-600 dark:text-slate-400">{{ Number(summary.expenses) > 0 ? Math.round(Number(category.total) / Number(summary.expenses) * 100) : 0 }}%</span>
+            </li>
+          </ul>
+          <Link :href="route('reports.index', { currency: selectedCurrency })" class="mt-3 inline-flex text-xs font-semibold text-brand-700 dark:text-brand-300 hover:text-brand-700">Ver todas</Link>
+        </div>
+        <div v-else class="grid h-48 place-items-center text-center text-sm text-stone-600 dark:text-slate-400 sm:h-56">Categorize despesas para visualizar a distribuição</div>
+      </article>
+    </section>
+
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <article class="min-w-0 rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <header class="flex flex-wrap items-start justify-between gap-3 border-b border-stone-100 px-4 py-4 sm:px-5 dark:border-slate-800"><div><h2 class="font-semibold">Movimentações recentes</h2><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">Últimos registros do fluxo de caixa</p></div><Link :href="route('transactions.index')" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-300 transition hover:bg-brand-50 dark:hover:bg-brand-950/40">Ver todas</Link></header>
@@ -294,7 +299,7 @@ const currentMonthLabel = computed(() => {
       <article class="min-w-0 rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <header class="flex flex-wrap items-start justify-between gap-3 border-b border-stone-100 px-4 py-4 sm:px-5 dark:border-slate-800"><div><h2 class="font-semibold">Próximos lançamentos</h2><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">Agenda de receitas futuras, recorrências e parcelas</p></div><Link :href="route('agenda.index')" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-300 transition hover:bg-brand-50 dark:hover:bg-brand-950/40">Ver agenda</Link></header>
         <div v-if="selectedNextEvents.length">
-          <div v-for="event in selectedNextEvents" :key="`${event.kind}-${event.date}-${event.description}`" class="flex items-center gap-3 border-b border-stone-100 px-4 py-3.5 last:border-0 sm:px-5 sm:py-4 dark:border-slate-800"><span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl" :class="event.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : event.type === 'transfer' ? 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'"><ArrowDownLeft v-if="event.type === 'income'" :size="17" /><ArrowLeftRight v-else-if="event.type === 'transfer'" :size="17" /><ArrowUpRight v-else :size="17" /></span><div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ event.description }}</p><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">{{ formatDate(event.date) }} · {{ event.account_name }} · {{ event.kind === 'expected_income' ? 'receita futura' : event.kind === 'installment' ? 'parcela' : 'recorrência' }}</p></div><p class="whitespace-nowrap text-sm font-bold" :class="event.type === 'income' ? 'text-emerald-700 dark:text-emerald-400' : event.type === 'transfer' ? 'text-brand-700 dark:text-brand-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(event.amount, selectedCurrency) }}</p></div>
+          <div v-for="event in selectedNextEvents" :key="`${event.kind}-${event.date}-${event.description}`" class="flex items-center gap-3 border-b border-stone-100 px-4 py-3.5 last:border-0 sm:px-5 sm:py-4 dark:border-slate-800"><span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl" :class="event.type === 'income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : ['transfer', 'transfer_in', 'transfer_out'].includes(event.type) ? 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'"><ArrowDownLeft v-if="event.type === 'income'" :size="17" /><ArrowLeftRight v-else-if="['transfer', 'transfer_in', 'transfer_out'].includes(event.type)" :size="17" /><ArrowUpRight v-else :size="17" /></span><div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ event.description }}</p><p class="mt-0.5 text-xs text-stone-600 dark:text-slate-400">{{ formatDate(event.date) }} · {{ event.account_name }} · {{ event.kind === 'expected_income' ? 'receita futura' : event.kind === 'installment' ? 'parcela' : event.kind === 'transaction' ? 'lançamento futuro' : 'recorrência' }}</p></div><p class="whitespace-nowrap text-sm font-bold" :class="event.type === 'income' ? 'text-emerald-700 dark:text-emerald-400' : ['transfer', 'transfer_in', 'transfer_out'].includes(event.type) ? 'text-brand-700 dark:text-brand-300' : 'text-rose-700 dark:text-rose-300'">{{ formatMoney(event.amount, selectedCurrency) }}</p></div>
         </div>
         <p v-else class="px-6 py-14 text-center text-sm text-stone-600 dark:text-slate-400">Sem próximos lançamentos no horizonte.</p>
       </article>

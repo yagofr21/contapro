@@ -7,19 +7,21 @@ import { computed } from 'vue';
 
 type AgendaEvent = {
     date: string;
-    kind: 'schedule' | 'installment' | 'expected_income';
+    kind: 'schedule' | 'installment' | 'expected_income' | 'transaction';
     type: string;
     amount: string;
     account_id: number;
     account_name: string;
+    currency: string;
     category_name: string | null;
     description: string | null;
-    frequency: string;
+    frequency: string | null;
 };
 
 type Projection = {
     id: number;
     name: string;
+    currency: string;
     balance: string;
     projected_balance: string;
 };
@@ -35,7 +37,7 @@ const groups = computed(() => {
     return Array.from(map.entries());
 });
 const eventIcon = (kind: AgendaEvent['kind']) => kind === 'schedule' ? Repeat : kind === 'installment' ? CalendarDays : ArrowDownLeft;
-const eventKindLabel = (kind: AgendaEvent['kind']) => kind === 'schedule' ? 'Recorrência' : kind === 'installment' ? 'Parcela' : 'Receita futura';
+const eventKindLabel = (kind: AgendaEvent['kind']) => kind === 'schedule' ? 'Recorrência' : kind === 'installment' ? 'Parcela' : kind === 'transaction' ? 'Lançamento futuro' : 'Receita futura';
 const eventTone = (kind: AgendaEvent['kind']) => kind === 'schedule'
     ? 'bg-brand-50 text-brand-700 dark:text-brand-300 dark:bg-brand-950 dark:text-brand-300'
     : kind === 'installment'
@@ -47,7 +49,7 @@ const eventTone = (kind: AgendaEvent['kind']) => kind === 'schedule'
   <Head title="Agenda e projeção" />
   <AuthenticatedLayout>
     <section class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Agenda</p><h1 class="mt-2 text-3xl font-bold tracking-tight">Agenda e projeção</h1><p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Próximos {{ horizonDays }} dias de recorrências, parcelas e receitas futuras pendentes.</p></div>
+      <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-300">Agenda</p><h1 class="mt-2 text-3xl font-bold tracking-tight">Agenda e projeção</h1><p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Próximos {{ horizonDays }} dias de lançamentos futuros, recorrências, parcelas e receitas pendentes.</p></div>
       <div class="flex gap-2">
         <Link :href="route('recurring.create')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"><Repeat :size="18" />Recorrência</Link>
         <Link :href="route('installments.create')" class="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 hover:bg-stone-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"><CalendarDays :size="18" />Parcelas</Link>
@@ -57,8 +59,8 @@ const eventTone = (kind: AgendaEvent['kind']) => kind === 'schedule'
     <section v-if="projection.length" class="mt-8 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
       <article v-for="account in projection" :key="account.id" class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <p class="text-sm font-semibold text-stone-600 dark:text-slate-400">{{ account.name }}</p>
-        <p class="mt-3 text-2xl font-bold">{{ formatMoney(account.projected_balance) }}</p>
-        <p class="mt-1 text-xs text-stone-600 dark:text-slate-400">saldo atual {{ formatMoney(account.balance) }} ao fim dos {{ horizonDays }} dias</p>
+        <p class="mt-3 text-2xl font-bold">{{ formatMoney(account.projected_balance, account.currency) }}</p>
+        <p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Hoje: {{ formatMoney(account.balance, account.currency) }} · acima: previsto em {{ horizonDays }} dias</p>
       </article>
     </section>
 
@@ -75,7 +77,7 @@ const eventTone = (kind: AgendaEvent['kind']) => kind === 'schedule'
                 <p class="text-xs text-stone-600 dark:text-slate-400">{{ eventKindLabel(event.kind) }} · {{ event.account_name }}{{ event.category_name ? ' · ' + event.category_name : '' }}</p>
               </div>
             </div>
-            <p class="text-sm font-bold" :class="event.type === 'expense' ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'">{{ event.type === 'expense' ? '-' : '+' }}{{ formatMoney(event.amount) }}</p>
+            <p class="text-sm font-bold" :class="['expense', 'transfer_out'].includes(event.type) ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'">{{ ['expense', 'transfer_out'].includes(event.type) ? '-' : '+' }}{{ formatMoney(event.amount, event.currency) }}</p>
           </li>
         </ul>
       </div>

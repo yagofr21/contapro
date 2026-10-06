@@ -22,6 +22,7 @@ class AgendaProjectionQuery
      *     projection: Collection<int, array{
      *         id: int,
      *         name: string,
+     *         currency: string,
      *         balance: string,
      *         projected_balance: string,
      *     }>,
@@ -30,17 +31,18 @@ class AgendaProjectionQuery
      */
     public function forUser(User $user, int $horizonDays = 60): array
     {
-        $today = CarbonImmutable::now()->startOfDay();
+        $today = CarbonImmutable::now($user->timezone ?? config('app.timezone'))->startOfDay();
         $horizonEnd = $today->addDays($horizonDays);
 
         $events = collect()
+            ->merge($this->transactionEvents($user, $today, $horizonEnd))
             ->merge($this->scheduleEvents($user, $today, $horizonEnd))
             ->merge($this->installmentEvents($user, $today, $horizonEnd))
             ->merge($this->expectedIncomeEvents($user, $today, $horizonEnd))
             ->sortBy(fn (array $event): string => $event['date'])
             ->values();
 
-        $currentBalances = $this->currentBalances($user);
+        $currentBalances = $this->currentBalances($user, $today);
         $projection = $this->projectBalances($currentBalances, $events);
 
         return [
@@ -48,6 +50,29 @@ class AgendaProjectionQuery
             'projection' => $projection,
             'horizonDays' => $horizonDays,
         ];
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    private function transactionEvents(User $user, CarbonImmutable $today, CarbonImmutable $horizonEnd): Collection
+    {
+        $events = $user->transactions()->with('account:id,name,currency')
+            ->whereDate('transaction_date', '>', $today->toDateString())
+            ->whereDate('transaction_date', '<=', $horizonEnd->toDateString())
+            ->get()->map(fn ($transaction): array => [
+                'date' => $transaction->transaction_date->format('Y-m-d'),
+                'kind' => 'transaction',
+                'type' => $transaction->type->value,
+                'amount' => $transaction->amount,
+                'account_id' => $transaction->account_id,
+                'account_name' => $transaction->account?->name,
+                'currency' => $transaction->account?->currency->value,
+                'category_name' => null,
+                'description' => $transaction->description,
+                'frequency' => null,
+            ]);
+
+        /** @var Collection<int, array<string, mixed>> $events */
+        return $events;
     }
 
     /** @return Collection<int, array<string, mixed>> */
@@ -172,20 +197,21 @@ class AgendaProjectionQuery
      * @return Collection<int, array{
      *     id: int,
      *     name: string,
+     *     currency: string,
      *     balance: string,
      * }>
      */
-    private function currentBalances(User $user): Collection
+    private function currentBalances(User $user, CarbonImmutable $today): Collection
     {
         return $user->financialAccounts()
             ->withSum([
-                'transactions as credits' => fn ($query) => $query->whereIn('type', [
+                'transactions as credits' => fn ($query) => $query->whereDate('transaction_date', '<=', $today->toDateString())->whereIn('type', [
                     TransactionType::Income->value,
                     TransactionType::TransferIn->value,
                 ]),
             ], 'amount')
             ->withSum([
-                'transactions as debits' => fn ($query) => $query->whereIn('type', [
+                'transactions as debits' => fn ($query) => $query->whereDate('transaction_date', '<=', $today->toDateString())->whereIn('type', [
                     TransactionType::Expense->value,
                     TransactionType::TransferOut->value,
                 ]),
@@ -196,6 +222,7 @@ class AgendaProjectionQuery
             ->map(fn (FinancialAccount $account): array => [
                 'id' => $account->id,
                 'name' => $account->name,
+                'currency' => $this->stringify($account->currency->value),
                 'balance' => $this->stringify(bcsub(
                     bcadd((string) $account->initial_balance, (string) ($account->credits ?? 0), 4),
                     (string) ($account->debits ?? 0),
@@ -211,12 +238,14 @@ class AgendaProjectionQuery
      * @param Collection<int, array{
      *     id: int,
      *     name: string,
+     *     currency: string,
      *     balance: string,
      * }> $currentBalances
      * @param  Collection<int, array<string, mixed>>  $events
      * @return Collection<int, array{
      *     id: int,
      *     name: string,
+     *     currency: string,
      *     balance: string,
      *     projected_balance: string,
      * }>
@@ -226,7 +255,7 @@ class AgendaProjectionQuery
         $projection = [];
 
         foreach ($currentBalances->all() as $account) {
-            /** @var array{id: int, name: string, balance: string} $account */
+            /** @var array{id: int, name: string, currency: string, balance: string} $account */
             $net = $events->filter(fn (array $event): bool => $event['account_id'] === $account['id'])
                 ->reduce(fn (string $carry, array $event): string => bcadd(
                     $carry,
@@ -239,6 +268,7 @@ class AgendaProjectionQuery
             $projection[] = [
                 'id' => $account['id'],
                 'name' => $account['name'],
+                'currency' => $account['currency'],
                 'balance' => $this->stringify($account['balance']),
                 'projected_balance' => $this->stringify(bcadd($account['balance'], $net, 4)),
             ];

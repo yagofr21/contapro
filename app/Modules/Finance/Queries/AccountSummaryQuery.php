@@ -12,17 +12,17 @@ class AccountSummaryQuery
     /**
      * @return Collection<int, array<string, mixed>>
      */
-    public function forUser(User $user): Collection
+    public function forUser(User $user, ?string $throughDate = null): Collection
     {
         $rows = $user->financialAccounts()
             ->withSum([
-                'transactions as credits' => fn ($query) => $query->whereIn('type', [
+                'transactions as credits' => fn ($query) => $query->when($throughDate, fn ($dated) => $dated->whereDate('transaction_date', '<=', $throughDate))->whereIn('type', [
                     TransactionType::Income->value,
                     TransactionType::TransferIn->value,
                 ]),
             ], 'amount')
             ->withSum([
-                'transactions as debits' => fn ($query) => $query->whereIn('type', [
+                'transactions as debits' => fn ($query) => $query->when($throughDate, fn ($dated) => $dated->whereDate('transaction_date', '<=', $throughDate))->whereIn('type', [
                     TransactionType::Expense->value,
                     TransactionType::TransferOut->value,
                 ]),

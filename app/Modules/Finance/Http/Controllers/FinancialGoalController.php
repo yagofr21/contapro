@@ -21,6 +21,7 @@ class FinancialGoalController extends Controller
         $this->authorize('viewAny', FinancialGoal::class);
 
         return Inertia::render('Goals/Index', [
+            'asOf' => now($request->user()->timezone ?? config('app.timezone'))->toDateString(),
             'goals' => $query->forUser($request->user()),
         ]);
     }

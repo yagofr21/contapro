@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import dayjs from 'dayjs';
+import { ref } from 'vue';
+import { estimateGoal } from '@/lib/projections';
 import Card from '@/Components/Card.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import PageHeader from '@/Components/PageHeader.vue';
@@ -22,7 +25,17 @@ type Goal = {
     is_achieved: boolean;
 };
 
-defineProps<{ goals: Goal[] }>();
+const props = defineProps<{ goals: Goal[]; asOf: string }>();
+const contributions = ref<Record<number, number | string>>({});
+const monthlyRequired = (goal: Goal) => {
+    const months = dayjs(goal.target_date).diff(dayjs(props.asOf), 'month');
+    return months > 0 ? Math.ceil(Number(goal.remaining) / months * 100) / 100 : null;
+};
+const estimatedMonths = (goal: Goal) => estimateGoal(Number(goal.remaining), Number(contributions.value[goal.id] ?? 0));
+const estimatedDate = (goal: Goal) => {
+    const months = estimatedMonths(goal);
+    return months !== null ? formatDate(dayjs(props.asOf).add(months, 'month').format('YYYY-MM-DD')) : null;
+};
 
 const percentage = (goal: Goal) => Number(goal.progress);
 const scope = (goal: Goal) =>
@@ -56,6 +69,13 @@ const remove = (goal: Goal) => {
           <div class="mt-5 flex items-end justify-between"><div><p class="text-xs text-stone-600 dark:text-slate-400">Guardado</p><p class="mt-1 text-xl font-bold">{{ formatMoney(goal.saved_amount, goal.currency) }}</p></div><p class="text-sm font-semibold text-stone-600 dark:text-slate-400">de {{ formatMoney(goal.target_amount, goal.currency) }}</p></div>
           <div class="mt-4 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-slate-800"><div class="h-full rounded-full transition-all" :class="goal.is_achieved ? 'bg-emerald-500' : 'bg-brand-500'" :style="{ width: `${percentage(goal)}%` }" /></div>
           <div class="mt-2 flex items-center justify-between text-xs"><p class="font-semibold text-stone-600 dark:text-slate-400">{{ remainingLabel(goal) }}</p><p class="font-bold" :class="goal.is_achieved ? 'text-emerald-700 dark:text-emerald-300' : 'text-stone-600 dark:text-slate-400'">{{ percentage(goal).toFixed(1) }}%</p></div>
+          <div v-if="!goal.is_achieved" class="mt-5 rounded-xl bg-stone-50 p-4 dark:bg-slate-950">
+            <p class="text-sm font-semibold">Planeje seu aporte</p>
+            <p class="mt-1 text-xs text-stone-600 dark:text-slate-400">{{ monthlyRequired(goal) !== null ? `Para cumprir o prazo: ${formatMoney(String(monthlyRequired(goal)), goal.currency)} por mês.` : (goal.target_date <= asOf ? 'O prazo já chegou. Defina um aporte para estimar uma nova data.' : 'Prazo menor que um mês: será necessário um aporte antes da data alvo.') }}</p>
+            <label class="mt-4 block text-xs font-semibold">Quanto pretende guardar por mês ({{ goal.currency }})<input v-model="contributions[goal.id]" type="number" min="0" step="0.01" class="mt-2 block min-h-11 w-full rounded-lg border-stone-300 bg-white text-sm dark:border-slate-700 dark:bg-slate-900" /></label>
+            <p class="mt-3 text-sm font-semibold text-brand-700 dark:text-brand-300" aria-live="polite">{{ estimatedMonths(goal) !== null ? `Meta em ${estimatedMonths(goal)} meses · ${estimatedDate(goal)}` : 'Informe um aporte maior que zero para estimar o prazo.' }}</p>
+            <p class="mt-2 text-xs leading-relaxed text-stone-600 dark:text-slate-400">Simulação com aportes mensais constantes, sem rendimentos. O saldo acompanhado é uma referência; não representa uma reserva exclusiva para esta meta.</p>
+          </div>
         </div>
       </Card>
     </div>

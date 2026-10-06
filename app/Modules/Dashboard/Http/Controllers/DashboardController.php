@@ -14,6 +14,7 @@ use App\Modules\Finance\Queries\AgendaProjectionQuery;
 use App\Modules\Finance\Queries\BankOptionsQuery;
 use App\Modules\Finance\Queries\CreditCardSummaryQuery;
 use App\Modules\Finance\Queries\ExpectedIncomeQuery;
+use App\Modules\Finance\Queries\SpendingProjectionQuery;
 use App\Modules\Investment\Queries\PortfolioValuationQuery;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -45,7 +46,7 @@ class DashboardController extends Controller
             fn (Transaction $transaction): bool => $transaction->transaction_date->toDateString() > $today->toDateString(),
         );
         $creditCards = (new CreditCardSummaryQuery)->forUser($user);
-        $accounts = $accountSummary->forUser($user)
+        $accounts = $accountSummary->forUser($user, $today->toDateString())
             ->map(function (array $account) use ($creditCards): array {
                 if (isset($creditCards[$account['id']])) {
                     $account['credit_card'] = $creditCards[$account['id']];
@@ -53,6 +54,9 @@ class DashboardController extends Controller
 
                 return $account;
             });
+        $agenda = (new AgendaProjectionQuery)->forUser($user, 30);
+        $cashAccountIds = $accounts->whereIn('type', [FinancialAccountType::Cash->value, FinancialAccountType::Checking->value, FinancialAccountType::Savings->value])->pluck('id')->all();
+        $cashProjections = $agenda['projection']->whereIn('id', $cashAccountIds)->keyBy('id');
         $expectedIncomeByCurrency = $user->expectedIncomes()
             ->whereNull('received_at')
             ->whereDate('expected_date', '>=', $today->toDateString())
@@ -61,7 +65,7 @@ class DashboardController extends Controller
             ->groupBy(fn ($income): string => $income->currency->value)
             ->map(fn ($rows): string => $rows->reduce(fn (string $total, $income): string => bcadd($total, (string) $income->amount, 4), '0.0000'));
 
-        $financialSummaries = collect(Currency::cases())->map(function (Currency $currency) use ($accounts, $realizedMonthTransactions, $plannedMonthTransactions, $expectedIncomeByCurrency, $investments): array {
+        $financialSummaries = collect(Currency::cases())->map(function (Currency $currency) use ($accounts, $realizedMonthTransactions, $plannedMonthTransactions, $expectedIncomeByCurrency, $investments, $cashProjections): array {
             $currencyAccounts = $accounts->where('currency', $currency->value);
             $availableAccounts = $currencyAccounts->whereIn('type', [
                 FinancialAccountType::Cash->value,
@@ -111,6 +115,7 @@ class DashboardController extends Controller
                     '0.0000',
                 ),
                 'available_balance' => $availableBalance,
+                'scheduled_balance' => $availableAccounts->reduce(fn (string $total, array $account): string => bcadd($total, (string) ($cashProjections->get($account['id'])['projected_balance'] ?? $account['balance']), 4), '0.0000'),
                 'investments' => $investmentTotal,
                 'current_invoices' => $currentInvoices,
                 'credit_card_debt' => $creditCardDebt,
@@ -199,6 +204,7 @@ class DashboardController extends Controller
             ->values();
 
         return Inertia::render('Dashboard', [
+            'spendingBaselines' => (new SpendingProjectionQuery)->forUser($user),
             'financialSummaries' => $financialSummaries,
             'monthlyTrends' => $monthlyTrends,
             'expectedIncomes' => $expectedIncome->pendingFor($user, 10),

@@ -26,15 +26,16 @@ class FinancialGoalQuery
      */
     public function forUser(User $user): array
     {
+        $today = now($user->timezone ?? config('app.timezone'))->toDateString();
         $accounts = $user->financialAccounts()
             ->withSum([
-                'transactions as credits' => fn ($query) => $query->whereIn('type', [
+                'transactions as credits' => fn ($query) => $query->whereDate('transaction_date', '<=', $today)->whereIn('type', [
                     TransactionType::Income->value,
                     TransactionType::TransferIn->value,
                 ]),
             ], 'amount')
             ->withSum([
-                'transactions as debits' => fn ($query) => $query->whereIn('type', [
+                'transactions as debits' => fn ($query) => $query->whereDate('transaction_date', '<=', $today)->whereIn('type', [
                     TransactionType::Expense->value,
                     TransactionType::TransferOut->value,
                 ]),

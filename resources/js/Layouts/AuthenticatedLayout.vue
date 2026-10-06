@@ -274,10 +274,23 @@ onMounted(() => {
         </div>
       </div>
 
-      <main id="main-content" tabindex="-1" class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
+      <main id="main-content" tabindex="-1" class="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:py-8">
         <slot />
       </main>
     </div>
+
+    <nav aria-label="Atalhos no celular" class="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-stone-200 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
+      <Link v-for="item in [
+        { label: 'Início', route: 'dashboard', pattern: 'dashboard', icon: LayoutDashboard },
+        { label: 'Movimentos', route: 'transactions.index', pattern: 'transactions.*', icon: ArrowLeftRight },
+        { label: 'Planejar', route: 'agenda.index', pattern: 'agenda.*', icon: CalendarClock },
+        { label: 'Contas', route: 'accounts.index', pattern: 'accounts.*', icon: Landmark },
+      ]" :key="item.route" :href="route(item.route)" :aria-current="route().current(item.pattern) ? 'page' : undefined" class="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-semibold" :class="route().current(item.pattern) ? 'bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300' : 'text-stone-600 dark:text-slate-400'"
+      >
+        <component :is="item.icon" :size="20" aria-hidden="true" />{{ item.label }}
+      </Link>
+      <button type="button" class="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-semibold text-stone-600 dark:text-slate-400" @click="menuOpen = true"><Menu :size="20" aria-hidden="true" />Mais</button>
+    </nav>
 
     <Modal :show="menuOpen" max-width="sm" title="Navegação" @close="menuOpen = false">
       <nav aria-label="Menu principal no celular" class="px-4 pb-5">

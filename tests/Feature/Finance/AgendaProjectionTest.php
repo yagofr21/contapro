@@ -67,6 +67,7 @@ class AgendaProjectionTest extends TestCase
         Transaction::factory()->for($user)->for($account, 'account')->create([
             'type' => TransactionType::Income,
             'amount' => '500.0000',
+            'transaction_date' => '2026-08-31',
         ]);
         TransactionSchedule::factory()->for($user)->create([
             'account_id' => $account->id,
@@ -137,5 +138,21 @@ class AgendaProjectionTest extends TestCase
                 ->where('events.0.description', 'Salário')
                 ->where('projection.0.balance', '1000.0000')
                 ->where('projection.0.projected_balance', '1700.0000'));
+    }
+
+    public function test_future_transactions_are_projected_once_and_do_not_change_today_balance(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-09-01'));
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create(['initial_balance' => '1000.0000']);
+        Transaction::factory()->for($user)->for($account, 'account')->create([
+            'type' => TransactionType::Expense,
+            'amount' => '200.0000',
+            'transaction_date' => '2026-09-10',
+        ]);
+        $this->actingAs($user)->get(route('agenda.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('projection.0.balance', '1000.0000')
+            ->where('projection.0.projected_balance', '800.0000')
+            ->where('events.0.kind', 'transaction'));
     }
 }

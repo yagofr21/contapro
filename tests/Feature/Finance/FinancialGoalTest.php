@@ -4,8 +4,11 @@ namespace Tests\Feature\Finance;
 
 use App\Enums\Currency;
 use App\Models\User;
+use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\FinancialGoal;
+use App\Modules\Finance\Models\Transaction;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -135,5 +138,17 @@ class FinancialGoalTest extends TestCase
             'currency' => Currency::BRL->value,
             'target_date' => '2027-09-01',
         ])->assertForbidden();
+    }
+
+    public function test_future_income_is_not_already_saved_for_a_goal(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-06'));
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create(['initial_balance' => '1000']);
+        FinancialGoal::factory()->for($user)->create(['account_id' => $account->id, 'target_amount' => '2000']);
+        Transaction::factory()->for($user)->for($account, 'account')->create([
+            'transaction_date' => '2026-11-01', 'type' => TransactionType::Income, 'amount' => '700',
+        ]);
+        $this->actingAs($user)->get(route('goals.index'))->assertInertia(fn (Assert $page) => $page->where('goals.0.saved_amount', '1000.0000'));
     }
 }
