@@ -325,7 +325,7 @@ const currentMonthLabel = computed(() => {
         </div>
       </div>
       <p v-else class="relative mt-6 text-sm text-stone-600 dark:text-slate-400">Nenhuma carteira nesta moeda.</p>
-      <p v-if="investment?.price_date" class="mt-4 text-xs text-stone-600 dark:text-slate-400">Cotação mais recente entre as posições: {{ formatDate(investment.price_date) }}. Consulte Ativos para conferir a data de cada cotação.</p>
+      <p v-if="investment?.price_date" class="mt-4 text-xs text-stone-600 dark:text-slate-400">Cotação mais antiga entre os ativos com preço: {{ formatDate(investment.price_date) }}. Consulte Ativos para conferir a data de cada cotação.</p>
       <p v-if="investment?.unpriced_holdings" class="relative mt-4 text-xs text-amber-800 dark:text-amber-300">{{ investment.unpriced_holdings }} posição(ões) sem cotação, avaliada(s) pelo custo médio.</p>
     </section>
 

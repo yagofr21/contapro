@@ -35,7 +35,7 @@ class CreditCardSummaryQuery
         $limitCents = $card->credit_limit !== null ? InstallmentMath::amountToCents($card->credit_limit) : null;
 
         $obligations = $this->obligations($card, $today);
-        $allocation = $this->allocatePayments($obligations, $card);
+        $allocation = $this->allocatePayments($obligations, $card, $today);
         $remaining = $allocation['remaining'];
         $creditCents = $allocation['creditCents'];
 
@@ -109,7 +109,7 @@ class CreditCardSummaryQuery
             'current_purchases' => $this->serializeRows($remaining, $start, $end, ['purchase', 'installment'], false),
             'current_refunds' => $this->serializeRows($remaining, $start, $end, ['refund'], false),
             'future_installments' => $this->serializeRows($remaining, $end->addDay(), null, ['installment'], false),
-            'payments' => $this->payments($card),
+            'payments' => $this->payments($card, $today),
             'history' => $this->history($remaining, $end),
         ];
     }
@@ -136,6 +136,11 @@ class CreditCardSummaryQuery
 
         foreach ($card->transactions()->whereIn('type', [TransactionType::Expense->value, TransactionType::Income->value])->orderBy('transaction_date')->orderBy('id')->get() as $transaction) {
             $date = CarbonImmutable::parse($transaction->transaction_date)->startOfDay();
+
+            if ($transaction->type === TransactionType::Income && $date->gt($today)) {
+                continue;
+            }
+
             $cycleEnd = $this->cycleEndForDate($card, $date);
             $amountCents = InstallmentMath::amountToCents($transaction->amount);
 
@@ -181,7 +186,7 @@ class CreditCardSummaryQuery
      * @param  list<array<string, mixed>>  $rows
      * @return array{remaining: list<array<string, mixed>>, creditCents: int}
      */
-    private function allocatePayments(array $rows, FinancialAccount $card): array
+    private function allocatePayments(array $rows, FinancialAccount $card, CarbonImmutable $today): array
     {
         $generalCredit = 0;
         foreach ($rows as &$row) {
@@ -192,6 +197,7 @@ class CreditCardSummaryQuery
         }
         unset($row);
         $payments = $card->transactions()->where('type', TransactionType::TransferIn->value)
+            ->whereDate('transaction_date', '<=', $today->toDateString())
             ->orderBy('transaction_date')->orderBy('id')->get();
         foreach ($payments as $payment) {
             $amount = InstallmentMath::amountToCents($payment->amount);
@@ -244,10 +250,11 @@ class CreditCardSummaryQuery
     }
 
     /** @return list<array{date: string, amount: string, description: string|null}> */
-    private function payments(FinancialAccount $card): array
+    private function payments(FinancialAccount $card, CarbonImmutable $today): array
     {
         return $card->transactions()
             ->where('type', TransactionType::TransferIn->value)
+            ->whereDate('transaction_date', '<=', $today->toDateString())
             ->orderByDesc('transaction_date')
             ->orderByDesc('id')
             ->limit(12)

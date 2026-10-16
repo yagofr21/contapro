@@ -143,6 +143,47 @@ class CsvImportTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_transfer_without_currency_rejects_different_account_currencies(): void
+    {
+        $user = User::factory()->create();
+        FinancialAccount::factory()->for($user)->create(['name' => 'Brasil', 'currency' => 'BRL']);
+        FinancialAccount::factory()->for($user)->create(['name' => 'Exterior', 'currency' => 'USD']);
+        $batch = $this->upload($user, 'financial', "Data;Tipo;Descricao;Conta;Conta destino;Categoria;Valor;Moeda\n2026-09-05;Transferencia;Teste;Brasil;Exterior;;100;");
+        $this->assertSame(1, $batch->summary['invalid']);
+        $this->assertSame(0, $batch->summary['valid']);
+    }
+
+    public function test_identical_operations_in_different_portfolios_are_not_duplicates(): void
+    {
+        $user = User::factory()->create();
+        $first = Portfolio::factory()->for($user)->create(['currency' => 'BRL']);
+        $second = Portfolio::factory()->for($user)->create(['currency' => 'BRL']);
+        Asset::factory()->create(['symbol' => 'PETR4', 'market' => 'B3', 'currency' => 'BRL']);
+        $csv = "Data;Tipo;Ativo;Mercado;Corretora;Quantidade;Preço unitário;Taxas;Valor bruto;Valor líquido;Proporção origem;Proporção destino;Observação\n2026-09-05;Compra;PETR4;B3;;10;25;0;;;;;";
+        $batch = $this->upload($user, 'investment', $csv, $first);
+        $this->actingAs($user)->post(route('imports.confirm', $batch), ['skip_invalid' => false])->assertRedirect();
+        $batch = $this->upload($user, 'investment', $csv, $second);
+        $this->assertSame(1, $batch->summary['valid']);
+        $this->actingAs($user)->post(route('imports.confirm', $batch), ['skip_invalid' => false])->assertRedirect();
+        $this->assertSame(1, $second->transactions()->count());
+    }
+
+    public function test_portfolio_currency_change_after_preview_rejects_confirmation(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create(['currency' => 'BRL']);
+        Asset::factory()->create(['symbol' => 'PETR4', 'market' => 'B3', 'currency' => 'BRL']);
+        $csv = "Data;Tipo;Ativo;Mercado;Corretora;Quantidade;Preço unitário;Taxas;Valor bruto;Valor líquido;Proporção origem;Proporção destino;Observação\n2026-09-05;Compra;PETR4;B3;;10;25;0;;;;;";
+        $batch = $this->upload($user, 'investment', $csv, $portfolio);
+        $this->actingAs($user)->put(route('portfolios.update', $portfolio), [
+            'name' => 'USD portfolio',
+            'currency' => 'USD',
+        ])->assertSessionHasNoErrors();
+        $this->actingAs($user)->post(route('imports.confirm', $batch), ['skip_invalid' => false])
+            ->assertSessionHasErrors('portfolio');
+        $this->assertDatabaseCount('asset_transactions', 0);
+    }
+
     private function upload(User $user, string $kind, string $csv, ?Portfolio $portfolio = null): ImportBatch
     {
         $this->actingAs($user)->post(route('imports.store'), [

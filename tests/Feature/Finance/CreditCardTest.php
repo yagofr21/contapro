@@ -384,4 +384,31 @@ class CreditCardTest extends TestCase
         $this->assertSame('paid', $invoices->firstWhere('cycle', '2026-08-15')['status']);
         $this->assertSame('100.0000', $invoices->firstWhere('cycle', '2026-09-15')['amount']);
     }
+
+    public function test_future_payments_and_refunds_do_not_reduce_current_card_debt(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->card($user);
+        foreach ([
+            [TransactionType::Expense, '200.0000', '2026-09-10'],
+            [TransactionType::TransferIn, '75.0000', '2026-09-11'],
+            [TransactionType::Income, '25.0000', '2026-09-12'],
+        ] as [$type, $amount, $date]) {
+            Transaction::factory()->for($user)->for($card, 'account')->create([
+                'type' => $type,
+                'amount' => $amount,
+                'transaction_date' => $date,
+            ]);
+        }
+
+        $query = new CreditCardSummaryQuery;
+        $today = $query->forAccount($card, CarbonImmutable::parse('2026-09-10'));
+        $this->assertSame('200.0000', $today['total_debt']);
+        $this->assertSame([], $today['payments']);
+        $paymentDay = $query->forAccount($card, CarbonImmutable::parse('2026-09-11'));
+        $this->assertSame('125.0000', $paymentDay['total_debt']);
+        $this->assertCount(1, $paymentDay['payments']);
+        $refundDay = $query->forAccount($card, CarbonImmutable::parse('2026-09-12'));
+        $this->assertSame('100.0000', $refundDay['total_debt']);
+    }
 }

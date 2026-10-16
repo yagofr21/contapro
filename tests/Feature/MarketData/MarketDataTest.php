@@ -11,6 +11,7 @@ use App\Modules\Investment\Models\PortfolioHolding;
 use App\Modules\MarketData\Actions\PersistPriceHistory;
 use App\Modules\MarketData\Contracts\MarketDataProvider;
 use App\Modules\MarketData\Data\MarketQuote;
+use App\Modules\MarketData\Exceptions\MarketDataException;
 use App\Modules\MarketData\Exceptions\SymbolNotFound;
 use App\Modules\MarketData\Jobs\SyncQuote;
 use App\Modules\MarketData\Jobs\SyncQuoteHistory;
@@ -46,12 +47,12 @@ class MarketDataTest extends TestCase
         $this->assertSame('2026-09-04', $history[0]->priceDate);
         $this->assertSame('47.11000000', $history[0]->adjustedClose);
         $this->assertSame(29125700, $history[0]->volume);
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
         Http::assertSent(fn (Request $request): bool => str_starts_with($request->url(), 'https://brapi.test/api/quote/PETR4?')
-            && $request['token'] === 'secret-token'
+            && $request->hasHeader('Authorization', 'Bearer secret-token')
+            && ! str_contains($request->url(), 'token=')
             && $request['range'] === '1mo'
-            && $request['interval'] === '1d'
-            && $request['fundamental'] === 'true');
+            && $request['interval'] === '1d');
     }
 
     public function test_price_history_persistence_is_idempotent_and_updates_existing_days(): void
@@ -152,6 +153,43 @@ class MarketDataTest extends TestCase
 
         Queue::assertPushed(SyncQuote::class, 1);
         Queue::assertPushed(SyncQuote::class, fn (SyncQuote $job): bool => $job->assetId === $supported->id);
+    }
+
+    public function test_basic_quote_does_not_require_fundamentals_or_history_permissions_and_keeps_token_out_of_url(): void
+    {
+        Cache::flush();
+        config()->set('services.brapi.url', 'https://brapi.test/api');
+        config()->set('services.brapi.token', 'private-test-token');
+        Http::fake(['brapi.test/*' => Http::response($this->brapiPayload())]);
+        (new BrapiProvider)->quote('PETR4');
+        Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Bearer private-test-token')
+            && ! str_contains($request->url(), 'token=')
+            && ! isset($request['range']) && ! isset($request['fundamental']));
+    }
+
+    public function test_invalid_quote_value_is_rejected_instead_of_becoming_zero(): void
+    {
+        Cache::flush();
+        config()->set('services.brapi.url', 'https://brapi.test/api');
+        $payload = $this->brapiPayload();
+        $payload['results'][0]['regularMarketPrice'] = 'unavailable';
+        Http::fake(['brapi.test/*' => Http::response($payload)]);
+        $this->expectException(MarketDataException::class);
+        (new BrapiProvider)->quote('PETR4');
+    }
+
+    public function test_one_owner_opting_out_does_not_disable_quotes_for_another_owner(): void
+    {
+        Queue::fake();
+        $asset = Asset::factory()->create(['market' => Market::B3, 'is_active' => true]);
+        foreach ([false, true] as $enabled) {
+            $user = User::factory()->create();
+            $portfolio = Portfolio::factory()->for($user)->create();
+            PortfolioHolding::factory()->for($portfolio)->for($asset)->create();
+            AssetPreference::factory()->for($user)->for($asset)->create(['auto_update' => $enabled]);
+        }
+        $this->artisan('market-data:sync')->assertSuccessful();
+        Queue::assertPushed(SyncQuote::class, fn (SyncQuote $job): bool => $job->assetId === $asset->id);
     }
 
     /** @return array<string, mixed> */

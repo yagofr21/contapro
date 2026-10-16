@@ -33,7 +33,7 @@ class RecurringScheduleController extends Controller
                 'category_id' => $schedule->category_id,
                 'category_name' => $schedule->category?->name,
                 'category_color' => $schedule->category?->color,
-                'type' => $schedule->type->value,
+                'type' => $schedule->type === TransactionType::TransferOut ? 'transfer' : $schedule->type->value,
                 'amount' => $schedule->amount,
                 'frequency' => $schedule->frequency->value,
                 'frequency_label' => $schedule->frequency->label(),
@@ -72,7 +72,7 @@ class RecurringScheduleController extends Controller
             ...$this->formOptions($request),
             'schedule' => [
                 'id' => $recurring->id,
-                'type' => $recurring->type->value,
+                'type' => $recurring->type === TransactionType::TransferOut ? 'transfer' : $recurring->type->value,
                 'account_id' => $recurring->account_id,
                 'destination_account_id' => $recurring->destination_account_id,
                 'category_id' => $recurring->category_id,

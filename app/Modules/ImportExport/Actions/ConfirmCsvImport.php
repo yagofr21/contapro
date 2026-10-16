@@ -9,6 +9,7 @@ use App\Modules\ImportExport\Enums\ImportStatus;
 use App\Modules\ImportExport\Models\ImportBatch;
 use App\Modules\ImportExport\Models\ImportRow;
 use App\Modules\Investment\Actions\CreateAssetTransaction;
+use App\Modules\Investment\Models\Asset;
 use App\Modules\Investment\Models\Portfolio;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -34,7 +35,9 @@ class ConfirmCsvImport
                 return $batch;
             }
 
-            $portfolio = $batch->portfolio;
+            $portfolio = $batch->kind === ImportKind::Investment
+                ? Portfolio::query()->whereKey($batch->portfolio_id)->lockForUpdate()->first()
+                : null;
 
             if ($batch->kind === ImportKind::Investment && ! $portfolio instanceof Portfolio) {
                 throw ValidationException::withMessages(['portfolio' => 'A carteira desta importação não está disponível.']);
@@ -54,6 +57,18 @@ class ConfirmCsvImport
                 throw ValidationException::withMessages(['file' => 'Nao existem linhas validas para confirmar.']);
             }
 
+            if ($batch->kind === ImportKind::Investment) {
+                $assetIds = $rows->map(fn ($row) => $row->normalized['asset_id'])->unique();
+                $matchingAssets = Asset::query()->whereIn('id', $assetIds)
+                    ->where('currency', $portfolio->currency->value)->count();
+
+                if ($matchingAssets !== $assetIds->count()) {
+                    throw ValidationException::withMessages([
+                        'portfolio' => 'Os ativos da importação devem existir e usar a moeda atual da carteira. Envie o arquivo novamente.',
+                    ]);
+                }
+            }
+
             $duplicateCount = 0;
 
             foreach ($rows as $key => $row) {
@@ -63,6 +78,7 @@ class ConfirmCsvImport
                     ->whereHas('batch', fn ($query) => $query
                         ->where('user_id', $user->id)
                         ->where('kind', $batch->kind->value)
+                        ->when($batch->kind === ImportKind::Investment, fn ($query) => $query->where('portfolio_id', $batch->portfolio_id))
                         ->where('status', ImportStatus::Confirmed->value))
                     ->exists();
 

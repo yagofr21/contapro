@@ -4,9 +4,11 @@ namespace App\Modules\Finance\Http\Requests;
 
 use App\Http\Requests\NormalizesDecimalInput;
 use App\Modules\Finance\Enums\ScheduleFrequency;
+use App\Modules\Finance\Models\FinancialAccount;
 use App\Modules\Finance\Models\TransactionSchedule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class TransactionScheduleRequest extends FormRequest
 {
@@ -63,5 +65,24 @@ class TransactionScheduleRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->normalizeDecimalInput(['amount']);
+    }
+
+    /** @return array<int, callable> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($this->input('type') !== 'transfer') {
+                return;
+            }
+
+            $source = FinancialAccount::query()->whereBelongsTo($this->user())
+                ->find($this->integer('account_id'));
+            $destination = FinancialAccount::query()->whereBelongsTo($this->user())
+                ->find($this->integer('destination_account_id'));
+
+            if ($source !== null && $destination !== null && $source->currency !== $destination->currency) {
+                $validator->errors()->add('destination_account_id', 'A conta de destino deve usar a mesma moeda da origem.');
+            }
+        }];
     }
 }

@@ -155,4 +155,85 @@ class AgendaProjectionTest extends TestCase
             ->where('projection.0.projected_balance', '800.0000')
             ->where('events.0.kind', 'transaction'));
     }
+
+    public function test_installment_projection_keeps_month_end_dates_without_overflow(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-01-01'));
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create(['initial_balance' => '1000.0000']);
+        Installment::factory()->for($user)->create([
+            'account_id' => $account->id,
+            'type' => TransactionType::Expense,
+            'amount' => '100.0000',
+            'total_amount' => '300.0000',
+            'total_count' => 3,
+            'remaining_count' => 3,
+            'next_due_date' => '2026-01-31',
+        ]);
+
+        $this->actingAs($user)->get(route('agenda.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('events', 2)
+                ->where('events.0.date', '2026-01-31')
+                ->where('events.1.date', '2026-02-28')
+                ->where('projection.0.projected_balance', '800.0000'));
+    }
+
+    public function test_installment_projection_includes_the_final_rounding_remainder(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-09-01'));
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create(['initial_balance' => '100.0000']);
+        Installment::factory()->for($user)->create([
+            'account_id' => $account->id,
+            'type' => TransactionType::Expense,
+            'amount' => '33.3300',
+            'total_amount' => '100.0000',
+            'total_count' => 3,
+            'remaining_count' => 1,
+            'next_due_date' => '2026-09-05',
+        ]);
+
+        $this->actingAs($user)->get(route('agenda.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('events.0.amount', '33.3400')
+                ->where('projection.0.projected_balance', '66.6600'));
+    }
+
+    public function test_recurring_transfer_projects_both_accounts_without_changing_the_total(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-09-01'));
+        $user = User::factory()->create();
+        $source = FinancialAccount::factory()->for($user)->create([
+            'name' => 'A Origem', 'currency' => 'BRL', 'initial_balance' => '1000.0000',
+        ]);
+        $destination = FinancialAccount::factory()->for($user)->create([
+            'name' => 'B Destino', 'currency' => 'BRL', 'initial_balance' => '200.0000',
+        ]);
+        TransactionSchedule::factory()->for($user)->create([
+            'account_id' => $source->id,
+            'destination_account_id' => $destination->id,
+            'category_id' => null,
+            'type' => TransactionType::TransferOut,
+            'amount' => '100.0000',
+            'frequency' => ScheduleFrequency::Monthly,
+            'starts_on' => '2026-09-05',
+            'next_run_date' => '2026-09-05',
+            'ends_on' => '2026-09-05',
+        ]);
+
+        $this->actingAs($user)->get(route('agenda.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('events', 2)
+                ->where('events.0.type', 'transfer_out')
+                ->where('events.0.account_id', $source->id)
+                ->where('events.1.type', 'transfer_in')
+                ->where('events.1.account_id', $destination->id)
+                ->where('events.1.account_name', 'B Destino')
+                ->where('events.1.currency', 'BRL')
+                ->where('events.0.date', '2026-09-05')
+                ->where('events.1.date', '2026-09-05')
+                ->where('projection.0.projected_balance', '900.0000')
+                ->where('projection.1.projected_balance', '300.0000'));
+    }
 }

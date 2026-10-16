@@ -4,7 +4,12 @@ namespace Tests\Feature\Finance;
 
 use App\Models\User;
 use App\Modules\Finance\Enums\FinancialAccountType;
+use App\Modules\Finance\Models\ExpectedIncome;
 use App\Modules\Finance\Models\FinancialAccount;
+use App\Modules\Finance\Models\FinancialGoal;
+use App\Modules\Finance\Models\Installment;
+use App\Modules\Finance\Models\Transaction;
+use App\Modules\Finance\Models\TransactionSchedule;
 use Database\Seeders\BankSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -27,6 +32,61 @@ class FinancialAccountTest extends TestCase
                 ->component('Accounts/Index')
                 ->has('accounts', 1)
                 ->where('accounts.0.name', 'Minha conta'));
+    }
+
+    public function test_currency_change_is_blocked_for_accounts_with_financial_records(): void
+    {
+        $user = User::factory()->create();
+        foreach ([
+            Transaction::class,
+            Installment::class,
+            TransactionSchedule::class,
+            FinancialGoal::class,
+            ExpectedIncome::class,
+        ] as $model) {
+            $account = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+            $model::factory()->create(['user_id' => $user->id, 'account_id' => $account->id]);
+            $this->actingAs($user)->put(route('accounts.update', $account), [
+                'name' => 'Renamed',
+                'type' => 'checking',
+                'currency' => 'USD',
+                'initial_balance' => '0',
+            ])->assertSessionHasErrors('currency');
+            $this->assertSame('BRL', $account->refresh()->currency->value);
+        }
+    }
+
+    public function test_currency_change_is_blocked_for_recurring_transfer_destination(): void
+    {
+        $user = User::factory()->create();
+        $source = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $destination = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        TransactionSchedule::factory()->create([
+            'user_id' => $user->id,
+            'account_id' => $source->id,
+            'destination_account_id' => $destination->id,
+            'type' => 'transfer_out',
+        ]);
+        $this->actingAs($user)->put(route('accounts.update', $destination), [
+            'name' => 'Destination',
+            'type' => 'checking',
+            'currency' => 'USD',
+            'initial_balance' => '0',
+        ])->assertSessionHasErrors('currency');
+        $this->assertSame('BRL', $destination->refresh()->currency->value);
+    }
+
+    public function test_currency_can_change_for_an_account_without_financial_records(): void
+    {
+        $user = User::factory()->create();
+        $account = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $this->actingAs($user)->put(route('accounts.update', $account), [
+            'name' => 'USD',
+            'type' => 'checking',
+            'currency' => 'USD',
+            'initial_balance' => '0',
+        ])->assertSessionHasNoErrors();
+        $this->assertSame('USD', $account->refresh()->currency->value);
     }
 
     public function test_user_can_create_and_update_an_account(): void

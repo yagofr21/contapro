@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Actions;
 
+use App\Modules\Finance\Enums\TransactionType;
 use App\Modules\Finance\Models\TransactionSchedule;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -63,7 +64,7 @@ class GenerateScheduledTransactions
     private function transactionPayload(TransactionSchedule $schedule, CarbonImmutable $dueDate): array
     {
         return [
-            'type' => $schedule->type->value,
+            'type' => $schedule->type === TransactionType::TransferOut ? 'transfer' : $schedule->type->value,
             'account_id' => $schedule->account_id,
             'destination_account_id' => $schedule->destination_account_id,
             'category_id' => $schedule->category_id,

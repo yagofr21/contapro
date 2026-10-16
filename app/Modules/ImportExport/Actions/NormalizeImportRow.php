@@ -72,6 +72,11 @@ class NormalizeImportRow
             }
 
             $destinationAccount = $destination->first();
+
+            if ($sourceAccount !== null && $destinationAccount !== null
+                && $sourceAccount->currency !== $destinationAccount->currency) {
+                $errors[] = 'A conta de destino deve usar a mesma moeda da origem.';
+            }
         }
 
         $category = null;

@@ -104,4 +104,57 @@ class RecurringScheduleTest extends TestCase
         $this->actingAs($user)->delete(route('recurring.destroy', $schedule))->assertForbidden();
         $this->assertDatabaseCount('transaction_schedules', 1);
     }
+
+    public function test_transfer_schedule_can_be_created_and_edited_without_losing_its_type(): void
+    {
+        $user = User::factory()->create();
+        $source = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $destination = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $data = [
+            'type' => 'transfer',
+            'account_id' => $source->id,
+            'destination_account_id' => $destination->id,
+            'amount' => '100.0000',
+            'frequency' => ScheduleFrequency::Monthly->value,
+            'starts_on' => '2026-09-05',
+        ];
+
+        $this->actingAs($user)->post(route('recurring.store'), $data)
+            ->assertRedirect(route('recurring.index'));
+        $schedule = $user->transactionSchedules()->firstOrFail();
+        $this->assertSame(TransactionType::TransferOut, $schedule->type);
+        $this->assertSame($destination->id, $schedule->destination_account_id);
+        $this->get(route('recurring.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('schedules.0.type', 'transfer'));
+        $this->get(route('recurring.edit', $schedule))->assertInertia(fn (Assert $page) => $page
+            ->where('schedule.type', 'transfer')
+            ->where('schedule.destination_account_id', $destination->id));
+
+        $this->put(route('recurring.update', $schedule), [...$data, 'amount' => '150.0000'])
+            ->assertRedirect(route('recurring.index'));
+        $this->assertSame(TransactionType::TransferOut, $schedule->refresh()->type);
+        $this->assertSame('150.0000', $schedule->amount);
+    }
+
+    public function test_transfer_schedule_rejects_accounts_in_different_currencies_on_create_and_update(): void
+    {
+        $user = User::factory()->create();
+        $source = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $destination = FinancialAccount::factory()->for($user)->create(['currency' => 'USD']);
+        $schedule = TransactionSchedule::factory()->for($user)->create(['account_id' => $source->id]);
+        $data = [
+            'type' => 'transfer',
+            'account_id' => $source->id,
+            'destination_account_id' => $destination->id,
+            'amount' => '100.0000',
+            'frequency' => ScheduleFrequency::Monthly->value,
+            'starts_on' => '2026-09-05',
+        ];
+
+        $this->actingAs($user)->post(route('recurring.store'), $data)
+            ->assertSessionHasErrors('destination_account_id');
+        $this->put(route('recurring.update', $schedule), $data)
+            ->assertSessionHasErrors('destination_account_id');
+        $this->assertDatabaseCount('transaction_schedules', 1);
+    }
 }

@@ -17,7 +17,7 @@ class BrapiProvider implements MarketDataProvider
 {
     public function quote(string $symbol): MarketQuote
     {
-        $result = $this->result($symbol, '1mo', '1d');
+        $result = $this->result($symbol);
 
         return new MarketQuote(
             priceDate: CarbonImmutable::parse($this->required($result, 'regularMarketTime'))->toDateString(),
@@ -62,16 +62,14 @@ class BrapiProvider implements MarketDataProvider
     }
 
     /** @return array<string, mixed> */
-    private function result(string $symbol, string $range, string $interval): array
+    private function result(string $symbol, ?string $range = null, ?string $interval = null): array
     {
         $key = sprintf('market-data:brapi:%s:%s:%s', strtoupper($symbol), $range, $interval);
 
         return Cache::remember($key, now()->addMinutes(5), function () use ($symbol, $range, $interval): array {
             $response = $this->request()->get('quote/'.rawurlencode($symbol), array_filter([
-                'token' => config('services.brapi.token'),
                 'range' => $range,
                 'interval' => $interval,
-                'fundamental' => 'true',
             ], fn (mixed $value): bool => $value !== null && $value !== ''));
 
             $this->ensureSuccessful($response, $symbol);
@@ -87,10 +85,14 @@ class BrapiProvider implements MarketDataProvider
 
     private function request(): PendingRequest
     {
-        return Http::baseUrl((string) config('services.brapi.url'))
+        $request = Http::baseUrl((string) config('services.brapi.url'))
             ->acceptJson()
             ->connectTimeout((int) config('services.brapi.connect_timeout'))
             ->timeout((int) config('services.brapi.timeout'));
+
+        $token = (string) config('services.brapi.token');
+
+        return $token !== '' ? $request->withToken($token) : $request;
     }
 
     private function ensureSuccessful(Response $response, string $symbol): void
@@ -121,6 +123,10 @@ class BrapiProvider implements MarketDataProvider
         }
 
         if (! is_int($value) && ! is_float($value) && ! is_string($value)) {
+            throw new MarketDataException('O provedor retornou um preço inválido.');
+        }
+
+        if (! is_numeric($value) || ! is_finite((float) $value)) {
             throw new MarketDataException('O provedor retornou um preço inválido.');
         }
 

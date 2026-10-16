@@ -50,6 +50,7 @@ class StoreCsvImport
                     ->whereHas('batch', fn ($query) => $query
                         ->where('user_id', $user->id)
                         ->where('kind', $kind->value)
+                        ->when($kind === ImportKind::Investment, fn ($query) => $query->where('portfolio_id', $portfolio?->id))
                         ->where('status', ImportStatus::Confirmed->value))
                     ->exists());
                 $status = $result['normalized'] === null ? 'invalid' : ($duplicate ? 'duplicate' : 'valid');

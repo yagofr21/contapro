@@ -81,7 +81,7 @@ class AgendaProjectionQuery
         $events = collect();
 
         $user->transactionSchedules()
-            ->with(['account:id,name,currency', 'category:id,name,color'])
+            ->with(['account:id,name,currency', 'destinationAccount:id,name,currency', 'category:id,name,color'])
             ->where('is_active', true)
             ->get()
             ->each(function (TransactionSchedule $schedule) use ($events, $horizonEnd): void {
@@ -104,6 +104,16 @@ class AgendaProjectionQuery
                         'description' => $schedule->description,
                         'frequency' => $schedule->frequency->value,
                     ]);
+
+                    if ($schedule->type === TransactionType::TransferOut) {
+                        $events->push([
+                            ...$events->last(),
+                            'type' => TransactionType::TransferIn->value,
+                            'account_id' => $schedule->destination_account_id,
+                            'account_name' => $schedule->destinationAccount?->name,
+                            'currency' => $schedule->destinationAccount?->currency->value,
+                        ]);
+                    }
 
                     $cursor = $schedule->frequency->advance($cursor);
                 }
@@ -134,7 +144,7 @@ class AgendaProjectionQuery
                         'date' => $cursor->format('Y-m-d'),
                         'kind' => 'installment',
                         'type' => $installment->type->value,
-                        'amount' => $installment->amount,
+                        'amount' => $installment->amountForOrdinal($paid + $i + 1),
                         'account_id' => $installment->account_id,
                         'account_name' => $installment->account?->name,
                         'currency' => $installment->account?->currency->value,
@@ -143,7 +153,7 @@ class AgendaProjectionQuery
                         'frequency' => 'monthly',
                     ]);
 
-                    $cursor = $cursor->addMonth();
+                    $cursor = $cursor->addMonthNoOverflow();
                 }
             });
 

@@ -30,6 +30,19 @@ class InvestmentTest extends TestCase
                 ->where('portfolios.0.name', 'Minha carteira'));
     }
 
+    public function test_currency_cannot_change_after_portfolio_has_operations(): void
+    {
+        $user = User::factory()->create();
+        $portfolio = Portfolio::factory()->for($user)->create(['currency' => 'BRL']);
+        $asset = Asset::factory()->create(['currency' => 'BRL']);
+        $this->storeOperation($user, $portfolio, $asset, 'buy', '1', '10', '0', '2026-01-01');
+        $this->actingAs($user)->put(route('portfolios.update', $portfolio), [
+            'name' => 'Renamed',
+            'currency' => 'USD',
+        ])->assertSessionHasErrors('currency');
+        $this->assertSame('BRL', $portfolio->refresh()->currency->value);
+    }
+
     public function test_user_can_manage_a_portfolio(): void
     {
         $user = User::factory()->create();

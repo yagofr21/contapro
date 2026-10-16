@@ -107,4 +107,39 @@ class GenerateScheduledTransactionsTest extends TestCase
         $this->assertSame(0, app(GenerateScheduledTransactions::class)->handle(CarbonImmutable::parse('2026-09-15')));
         $this->assertSame(0, Transaction::query()->count());
     }
+
+    public function test_transfer_schedule_generates_both_legs_once_on_its_due_date(): void
+    {
+        $user = User::factory()->create();
+        $source = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $destination = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $schedule = TransactionSchedule::factory()->for($user)->create([
+            'account_id' => $source->id,
+            'destination_account_id' => $destination->id,
+            'category_id' => null,
+            'type' => TransactionType::TransferOut,
+            'amount' => '100.0000',
+            'frequency' => ScheduleFrequency::Monthly,
+            'starts_on' => '2026-09-05',
+            'next_run_date' => '2026-09-05',
+        ]);
+        $action = app(GenerateScheduledTransactions::class);
+        $this->assertSame(0, $action->handle(CarbonImmutable::parse('2026-09-04')));
+        $this->assertSame(1, $action->handle(CarbonImmutable::parse('2026-09-05')));
+        $this->assertSame(0, $action->handle(CarbonImmutable::parse('2026-09-05')));
+
+        $transactions = $user->transactions()->orderBy('id')->get();
+        $this->assertCount(2, $transactions);
+        $this->assertSame(TransactionType::TransferOut, $transactions[0]->type);
+        $this->assertSame(TransactionType::TransferIn, $transactions[1]->type);
+        $this->assertSame($source->id, $transactions[0]->account_id);
+        $this->assertSame($destination->id, $transactions[1]->account_id);
+        $this->assertNotNull($transactions[0]->transfer_id);
+        $this->assertSame($transactions[0]->transfer_id, $transactions[1]->transfer_id);
+        foreach ($transactions as $transaction) {
+            $this->assertSame('100.0000', $transaction->amount);
+            $this->assertSame('2026-09-05', $transaction->transaction_date->toDateString());
+        }
+        $this->assertSame('2026-10-05', $schedule->refresh()->next_run_date->toDateString());
+    }
 }
