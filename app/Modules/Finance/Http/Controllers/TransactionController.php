@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Http\Controllers;
 
+use App\Enums\Currency;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Finance\Actions\CreateInstallment;
@@ -20,6 +21,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,6 +32,7 @@ class TransactionController extends Controller
         $this->authorize('viewAny', Transaction::class);
 
         $filters = $request->validate([
+            'currency' => ['nullable', Rule::enum(Currency::class)],
             'account_id' => ['nullable', 'integer'],
             'category_id' => ['nullable', 'integer'],
             'type' => ['nullable', 'in:income,expense,transfer'],
@@ -43,6 +46,7 @@ class TransactionController extends Controller
         $transactionsQuery = $request->user()->transactions()
             ->with(['account:id,name,currency', 'category:id,name,color'])
             ->where('type', '!=', TransactionType::TransferIn->value)
+            ->when($filters['currency'] ?? null, fn (Builder $query, $currency) => $query->whereHas('account', fn (Builder $account) => $account->where('currency', $currency)))
             ->when($filters['account_id'] ?? null, fn (Builder $query, $id) => $query->where('account_id', $id))
             ->when($filters['category_id'] ?? null, fn (Builder $query, $id) => $query->where('category_id', $id))
             ->when(($filters['status'] ?? null) === 'realized', fn (Builder $query) => $query->whereDate('transaction_date', '<=', $today))
@@ -70,6 +74,7 @@ class TransactionController extends Controller
         return Inertia::render('Transactions/Index', [
             'transactions' => $transactions,
             'filters' => $filters,
+            'currencies' => array_map(fn (Currency $currency): string => $currency->value, Currency::cases()),
             'summaries' => $summaries,
             ...$this->formOptions($request),
         ]);

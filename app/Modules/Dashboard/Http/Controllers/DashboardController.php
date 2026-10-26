@@ -212,6 +212,14 @@ class DashboardController extends Controller
             ->values();
 
         return Inertia::render('Dashboard', [
+            'reference' => [
+                'date' => $today->toDateString(),
+                'calculated_at' => $today->toIso8601String(),
+                'timezone' => $today->timezoneName,
+                'month_start' => $monthStart,
+                'month_end' => $monthEnd,
+                'horizon_end' => $today->copy()->addDays(30)->toDateString(),
+            ],
             'spendingBaselines' => (new SpendingProjectionQuery)->forUser($user),
             'financialSummaries' => $financialSummaries,
             'monthlyTrends' => $monthlyTrends,

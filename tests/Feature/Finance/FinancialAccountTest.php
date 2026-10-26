@@ -10,6 +10,7 @@ use App\Modules\Finance\Models\FinancialGoal;
 use App\Modules\Finance\Models\Installment;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\Finance\Models\TransactionSchedule;
+use Carbon\CarbonImmutable;
 use Database\Seeders\BankSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -165,5 +166,37 @@ class FinancialAccountTest extends TestCase
             ->assertRedirect(route('accounts.index'));
 
         $this->assertSoftDeleted($account);
+    }
+
+    public function test_account_balances_match_dashboard_at_the_users_local_date(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-27 01:00:00', 'UTC'));
+        $user = User::factory()->create(['timezone' => 'America/Sao_Paulo']);
+        $checking = FinancialAccount::factory()->for($user)->create([
+            'name' => 'A Conta', 'type' => FinancialAccountType::Checking,
+            'currency' => 'BRL', 'initial_balance' => '1000.0000',
+        ]);
+        $card = FinancialAccount::factory()->for($user)->creditCard()->create([
+            'name' => 'B Cartao', 'currency' => 'BRL', 'initial_balance' => '0',
+        ]);
+        foreach ([$checking, $card] as $account) {
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => 'expense', 'amount' => '100', 'transaction_date' => '2026-10-26',
+            ]);
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => 'income', 'amount' => '999', 'transaction_date' => '2026-10-27',
+            ]);
+        }
+        $this->actingAs($user)->get(route('accounts.index'))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('asOf', '2026-10-26')
+                ->where('accounts.0.balance', '900.0000')
+                ->where('accounts.1.balance', '-100.0000'));
+        $this->get(route('accounts.show', $card))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('account.balance', '-100.0000'));
+        $this->get(route('dashboard'))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('financialSummaries.0.available_balance', '900.0000')
+                ->where('accounts.0.balance', '900.0000'));
     }
 }

@@ -28,7 +28,8 @@ class FinancialAccountController extends Controller
         $this->authorize('viewAny', FinancialAccount::class);
 
         $creditCards = (new CreditCardSummaryQuery)->forUser($request->user());
-        $accounts = $query->forUser($request->user())
+        $asOf = now($request->user()->timezone ?? config('app.timezone'))->toDateString();
+        $accounts = $query->forUser($request->user(), $asOf)
             ->map(function (array $account) use ($creditCards): array {
                 if (isset($creditCards[$account['id']])) {
                     $account['credit_card'] = $creditCards[$account['id']];
@@ -39,6 +40,7 @@ class FinancialAccountController extends Controller
 
         return Inertia::render('Accounts/Index', [
             'accounts' => $accounts,
+            'asOf' => $asOf,
             ...$this->formOptions(),
         ]);
     }
@@ -68,7 +70,7 @@ class FinancialAccountController extends Controller
                 'credit_limit' => $account->credit_limit,
                 'credit_closing_day' => $account->credit_closing_day,
                 'credit_due_day' => $account->credit_due_day,
-                'balance' => (new AccountSummaryQuery)->forUser($request->user())->firstWhere('id', $account->id)['balance'] ?? '0.0000',
+                'balance' => (new AccountSummaryQuery)->forUser($request->user(), now($request->user()->timezone ?? config('app.timezone'))->toDateString())->firstWhere('id', $account->id)['balance'] ?? '0.0000',
                 'credit_card' => (new CreditCardSummaryQuery)->forAccount($account),
                 'is_archived' => $account->is_archived,
             ],

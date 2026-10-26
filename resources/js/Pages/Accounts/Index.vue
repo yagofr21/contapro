@@ -15,7 +15,7 @@ import { Archive, ArrowUpRight, Landmark, Plus, WalletCards } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue';
 import AccountForm from './Partials/AccountForm.vue';
 
-const props = defineProps<{ accounts: Account[]; types: Option[]; currencies: Option[]; banks: BankOption[] }>();
+const props = defineProps<{ accounts: Account[]; types: Option[]; currencies: Option[]; banks: BankOption[]; asOf: string }>();
 
 const accountView = ref('all');
 const visibleAccounts = computed(() => props.accounts.filter((account) => accountView.value === 'archived' ? account.is_archived : !account.is_archived && (accountView.value === 'all' || (accountView.value === 'cards' ? account.type === 'credit_card' : account.type !== 'credit_card'))));
@@ -101,9 +101,10 @@ const remove = (account: Account) => {
       </template>
     </PageHeader>
 
+    <p class="mt-3 text-sm text-stone-600 dark:text-slate-400">Posição em {{ formatDate(asOf) }} · movimentos futuros ficam na previsão da agenda.</p>
     <FinanceHero title="Cada conta no seu lugar." description="Organize saldos, acompanhe seus cartões e escolha a fatura certa para pagar." kicker="Contas e cartões" />
     <section v-if="balances.length" aria-label="Saldo disponível por moeda" class="cp-card mt-6 flex flex-wrap gap-x-10 gap-y-4 p-5">
-      <div v-for="balance in balances" :key="balance.currency" class="min-w-0"><p class="text-xs text-stone-600 dark:text-slate-400">Saldo disponível · {{ balance.currency }}</p><p class="financial-value mt-1 text-2xl font-bold">{{ formatMoney(balance.balance, balance.currency) }}</p></div>
+      <div v-for="balance in balances" :key="balance.currency" class="min-w-0"><p class="text-xs text-stone-600 dark:text-slate-400">Saldo em contas ativas · {{ balance.currency }}</p><p class="financial-value mt-1 text-2xl font-bold">{{ formatMoney(balance.balance, balance.currency) }}</p></div>
       <p class="w-full text-xs text-stone-600 dark:text-slate-400">Dinheiro, contas correntes e poupanças ativas. Cartões e investimentos apresentados separadamente.</p>
     </section>
     <div class="mt-6 flex flex-wrap gap-2" role="group" aria-label="Exibir contas">

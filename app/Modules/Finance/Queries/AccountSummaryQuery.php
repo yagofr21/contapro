@@ -38,6 +38,8 @@ class AccountSummaryQuery
                 'type' => $account->type->value,
                 'currency' => $account->currency->value,
                 'initial_balance' => $account->initial_balance,
+                'credits' => bcadd((string) ($account->credits ?? 0), '0', 4),
+                'debits' => bcadd((string) ($account->debits ?? 0), '0', 4),
                 'credit_limit' => $account->credit_limit,
                 'credit_closing_day' => $account->credit_closing_day,
                 'credit_due_day' => $account->credit_due_day,

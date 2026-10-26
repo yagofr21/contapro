@@ -327,4 +327,38 @@ class DashboardTest extends TestCase
             ->where('financialSummaries.0.current_invoices', '300.0000')
             ->where('financialSummaries.0.credit_card_debt', '900.0000'));
     }
+
+    public function test_dashboard_explains_balance_composition_and_the_reference_period(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-27 01:00:00', 'UTC'));
+        $user = User::factory()->create(['timezone' => 'America/Sao_Paulo']);
+        $account = FinancialAccount::factory()->for($user)->create([
+            'currency' => 'BRL', 'type' => FinancialAccountType::Checking,
+            'initial_balance' => '1000',
+        ]);
+        foreach ([['income', '200'], ['transfer_in', '50'], ['expense', '100'], ['transfer_out', '25']] as [$type, $amount]) {
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => $type, 'amount' => $amount, 'transaction_date' => '2026-10-26',
+            ]);
+        }
+        Transaction::factory()->for($user)->for($account, 'account')->create([
+            'type' => 'expense', 'amount' => '900', 'transaction_date' => '2026-10-27',
+        ]);
+        FinancialAccount::factory()->create(['currency' => 'BRL', 'initial_balance' => '9999']);
+        $this->actingAs($user)->get(route('dashboard'))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('reference.date', '2026-10-26')
+                ->where('reference.timezone', 'America/Sao_Paulo')
+                ->where('reference.calculated_at', '2026-10-26T22:00:00-03:00')
+                ->where('reference.month_start', '2026-10-01')
+                ->where('reference.month_end', '2026-10-31')
+                ->where('reference.horizon_end', '2026-11-25')
+                ->has('accounts', 1)
+                ->where('accounts.0.credits', '250.0000')
+                ->where('accounts.0.debits', '125.0000')
+                ->where('accounts.0.balance', '1125.0000')
+                ->where('financialSummaries.0.available_balance', '1125.0000')
+                ->where('financialSummaries.0.income', '200.0000')
+                ->where('financialSummaries.0.expenses', '100.0000'));
+    }
 }

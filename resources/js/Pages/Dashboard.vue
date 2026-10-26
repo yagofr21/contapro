@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BalanceComposition from '@/Components/BalanceComposition.vue';
 import SpendingProjection from '@/Components/SpendingProjection.vue';
 import type { SpendingBaseline } from '@/lib/projections';
 import StatCard from '@/Components/StatCard.vue';
@@ -33,6 +34,7 @@ type NextEvent = { date: string; description: string; account_name: string | nul
 
 const chartPalette = useChartPalette();
 const props = defineProps<{
+    reference: { date: string; calculated_at: string; timezone: string; month_start: string; month_end: string; horizon_end: string };
     spendingBaselines: SpendingBaseline[];
     financialSummaries: Summary[];
     monthlyTrends: MonthlyTrend[];
@@ -48,6 +50,8 @@ const props = defineProps<{
     attention: Attention;
 }>();
 const selectedCurrency = ref(props.financialSummaries.find((summary) => summary.currency === 'BRL')?.currency ?? props.financialSummaries[0]?.currency ?? 'BRL');
+const compositionOpen = ref(false);
+const commitmentsOpen = ref(false);
 const modalOpen = ref(false);
 const incomeModalOpen = ref(false);
 const modalTone = ref<false | 'brand' | 'green' | 'rose'>('rose');
@@ -94,6 +98,11 @@ const investment = computed(() => props.investments.find((item) => item.currency
 const selectedCategoryExpenses = computed(() => props.categoryExpenses.filter((item) => item.currency === selectedCurrency.value));
 const selectedCreditCards = computed(() => props.creditCards.filter((card) => card.currency === selectedCurrency.value));
 const selectedAccounts = computed(() => props.accounts.filter((account) => account.currency === selectedCurrency.value && account.type !== 'credit_card' && !account.is_archived));
+const balanceAccounts = computed(() => props.accounts.filter(account => account.currency === selectedCurrency.value && ['cash', 'checking', 'savings'].includes(account.type)));
+const updatedAt = computed(() => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: props.reference.timezone }).format(new Date(props.reference.calculated_at)));
+const realizedTransactions = (type: 'income' | 'expense') => route('transactions.index', {
+    currency: selectedCurrency.value, type, status: 'realized', from: props.reference.month_start, to: props.reference.date,
+});
 const selectedNextEvents = computed(() => props.nextEvents.filter((event) => event.currency === selectedCurrency.value));
 
 const chartOption = computed(() => ({
@@ -151,7 +160,7 @@ const greeting = computed(() => {
     return 'Boa noite';
 });
 const currentMonthLabel = computed(() => {
-    const month = selectedMonthlyTrend.value.months.at(-1)?.month;
+    const month = props.reference.month_start.slice(0, 7);
     return month ? new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-01T12:00:00Z`)) : new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date());
 });
 </script>
@@ -163,7 +172,8 @@ const currentMonthLabel = computed(() => {
       <div>
         <p class="text-sm font-medium text-stone-600 dark:text-slate-400">{{ greeting }}, {{ user?.split(' ')[0] }}</p>
         <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Visão geral</h1>
-        <p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Suas finanças em <span class="font-medium capitalize">{{ currentMonthLabel }}</span></p>
+        <p class="mt-2 text-sm text-stone-600 dark:text-slate-400">Suas finanças em <span class="font-medium capitalize">{{ currentMonthLabel }}</span> · {{ selectedCurrency }}</p>
+        <p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Calculado em {{ updatedAt }} · {{ reference.timezone }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <div class="flex rounded-lg border border-stone-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900" role="group" aria-label="Moeda dos indicadores">
@@ -173,25 +183,21 @@ const currentMonthLabel = computed(() => {
       </div>
     </header>
 
-    <section aria-label="Resumo financeiro do mês" class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard label="Saldo disponível hoje" :value="formatMoney(summary.available_balance, selectedCurrency)" tone="brand" bar-class="bg-brand-600">
-        <template #footer>Dinheiro, corrente e poupança · até hoje</template>
-      </StatCard>
-      <StatCard label="Receitas realizadas" :value="formatMoney(summary.income, selectedCurrency)" :icon="ArrowDownLeft" tone="positive">
-        <template #footer>A receber: {{ formatMoney(summary.planned_income, selectedCurrency) }}</template>
-      </StatCard>
-      <StatCard label="Despesas realizadas" :value="formatMoney(summary.expenses, selectedCurrency)" :icon="ArrowUpRight" tone="negative">
-        <template #footer>A pagar: {{ formatMoney(summary.planned_expenses, selectedCurrency) }}</template>
-      </StatCard>
-      <StatCard label="Previsto em 30 dias" :value="formatMoney(summary.scheduled_balance, selectedCurrency)" :icon="TrendingUp" :tone="Number(summary.scheduled_balance) >= 0 ? 'positive' : 'negative'">
-        <template #footer><Link :href="route('agenda.index')" class="underline">Somente movimentos cadastrados · ver agenda</Link></template>
-      </StatCard>
-    </section>
+    <EmptyState v-if="!accounts.length" class="mt-6" title="Comece pelas suas contas" description="Cadastre onde seu dinheiro está para acompanhar saldos e compromissos."><template #action><Link :href="route('accounts.create')" class="cp-button">Cadastrar conta</Link></template></EmptyState>
 
-    <section aria-label="Composição do patrimônio" class="cp-card mt-4 grid divide-y divide-stone-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-slate-800">
-      <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Patrimônio líquido</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.net_worth, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Disponível + investimentos − dívida dos cartões</p></div>
-      <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Investimentos</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.investments, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Contas de investimento e carteiras</p></div>
-      <div class="min-w-0 p-4"><p class="text-xs text-stone-600 dark:text-slate-400">Faturas em aberto</p><p class="financial-value mt-1 text-lg font-semibold text-rose-700 dark:text-rose-300">{{ formatMoney(summary.open_invoices, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Vencidas, fechadas e em formação · Dívida com ciclos futuros: {{ formatMoney(summary.credit_card_debt, selectedCurrency) }}</p></div>
+    <section aria-label="Posição financeira de hoje" class="mt-6 grid gap-4 md:grid-cols-3">
+      <StatCard label="Saldo em contas hoje" :value="formatMoney(summary.available_balance, selectedCurrency)" tone="brand" bar-class="bg-brand-600">
+        <template #footer>Dinheiro, corrente e poupança até {{ formatDate(reference.date) }}. Compromissos ainda não descontados.</template>
+        <template #action><button type="button" class="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline dark:text-brand-300" @click="compositionOpen = true">Ver composição do saldo</button></template>
+      </StatCard>
+      <StatCard label="Reservado exclusivamente" value="Não definido" tone="muted" value-class="text-xl text-stone-900 dark:text-white">
+        <template #footer>Metas acompanham saldos, mas não separam dinheiro em uma reserva exclusiva.</template>
+        <template #action><Link :href="route('goals.index')" class="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline dark:text-brand-300">Acompanhar metas</Link></template>
+      </StatCard>
+      <StatCard label="Faturas pendentes" :value="formatMoney(summary.open_invoices, selectedCurrency)" tone="negative">
+        <template #footer>Vencidas, fechadas e em formação. Parcelas de ciclos futuros ficam separadas.</template>
+        <template #action><button type="button" class="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline dark:text-brand-300" @click="commitmentsOpen = true">Conferir composição das faturas</button></template>
+      </StatCard>
     </section>
 
     <section class="mt-5 rounded-2xl p-4 sm:p-5 transition-colors" :class="hasAttention ? 'border border-amber-200/70 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/30' : 'border border-emerald-200/60 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20'">
@@ -207,6 +213,29 @@ const currentMonthLabel = computed(() => {
         </Link>
       </div>
       <p v-else class="mt-1.5 text-xs text-emerald-600/80 dark:text-emerald-400/70">Nenhum vencimento, orçamento estourado ou posição sem cotação.</p>
+    </section>
+
+    <section aria-label="Realizado no mês e previsão" class="mt-4 grid gap-4 md:grid-cols-3">
+      <StatCard label="Receitas realizadas no mês" :value="formatMoney(summary.income, selectedCurrency)" :icon="ArrowDownLeft" tone="positive">
+        <template #footer>{{ formatDate(reference.month_start) }} a {{ formatDate(reference.date) }} · transferências excluídas.</template>
+        <template #action><Link :href="realizedTransactions('income')" class="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline dark:text-brand-300">Ver receitas do indicador</Link></template>
+      </StatCard>
+      <StatCard label="Despesas realizadas no mês" :value="formatMoney(summary.expenses, selectedCurrency)" :icon="ArrowUpRight" tone="negative">
+        <template #footer>{{ formatDate(reference.month_start) }} a {{ formatDate(reference.date) }} · compras no cartão incluídas.</template>
+        <template #action><Link :href="realizedTransactions('expense')" class="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline dark:text-brand-300">Ver despesas do indicador</Link></template>
+      </StatCard>
+      <StatCard label="Saldo previsto em 30 dias" :value="formatMoney(summary.scheduled_balance, selectedCurrency)" :icon="TrendingUp" tone="default">
+        <template #footer>Estimativa até {{ formatDate(reference.horizon_end) }}. Somente movimentos e previsões cadastrados.</template>
+        <template #action><Link :href="route('agenda.index')" class="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline dark:text-brand-300">Conferir agenda e premissas</Link></template>
+      </StatCard>
+    </section>
+    <p class="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-4 text-sm leading-relaxed text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"><CalendarClock :size="18" class="mt-0.5 shrink-0" aria-hidden="true" /><span>O saldo previsto não representa dinheiro livre para guardar: pagamentos de cartão ainda não agendados não são descontados automaticamente. Confira também as faturas pendentes.</span></p>
+
+    <section aria-label="Patrimônio e valores futuros" class="cp-card mt-4 grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="min-w-0"><p class="text-xs text-stone-600 dark:text-slate-400">Patrimônio líquido</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.net_worth, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Saldo em contas + investimentos − dívida total dos cartões</p></div>
+      <div class="min-w-0"><p class="text-xs text-stone-600 dark:text-slate-400">Investimentos</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.investments, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Contas de investimento e carteiras</p></div>
+      <div class="min-w-0"><p class="text-xs text-stone-600 dark:text-slate-400">Receitas previstas até {{ formatDate(reference.month_end) }}</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.planned_income, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Lançamentos futuros e receitas a confirmar no restante do mês</p></div>
+      <div class="min-w-0"><p class="text-xs text-stone-600 dark:text-slate-400">Despesas futuras lançadas até {{ formatDate(reference.month_end) }}</p><p class="financial-value mt-1 text-lg font-semibold">{{ formatMoney(summary.planned_expenses, selectedCurrency) }}</p><p class="mt-1 text-xs text-stone-600 dark:text-slate-400">Não inclui recorrências e parcelas ainda não lançadas. Consulte a agenda.</p></div>
     </section>
 
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
@@ -359,6 +388,28 @@ const currentMonthLabel = computed(() => {
       <p v-else class="py-8 text-center text-sm text-stone-600 dark:text-slate-400">Cadastre uma conta para iniciar seu painel</p>
     </section>
 
+    <Modal :show="compositionOpen" title="Composição do saldo em contas" @close="compositionOpen = false">
+      <BalanceComposition :accounts="balanceAccounts" :as-of="reference.date" :currency="selectedCurrency" />
+    </Modal>
+    <Modal :show="commitmentsOpen" title="Composição das faturas pendentes" @close="commitmentsOpen = false">
+      <div class="p-5 sm:p-6">
+        <p class="text-sm text-stone-600 dark:text-slate-400">Posição em {{ formatDate(reference.date) }} · {{ selectedCurrency }}. A soma de vencidas, fechadas e em formação compõe o indicador.</p>
+        <ul class="mt-4 divide-y divide-stone-200 dark:divide-slate-700">
+          <li v-for="card in selectedCreditCards" :key="card.id" class="py-4">
+            <h3 class="font-semibold">{{ card.name }}</h3>
+            <dl class="mt-3 space-y-2 text-sm">
+              <div class="flex flex-wrap justify-between gap-2"><dt>Vencidas</dt><dd>{{ formatMoney(card.overdue_balance, selectedCurrency) }}</dd></div>
+              <div class="flex flex-wrap justify-between gap-2"><dt>Fechadas a vencer</dt><dd>{{ formatMoney(card.closed_balance, selectedCurrency) }}</dd></div>
+              <div class="flex flex-wrap justify-between gap-2"><dt>Em formação</dt><dd>{{ formatMoney(card.current_invoice, selectedCurrency) }}</dd></div>
+              <div class="flex flex-wrap justify-between gap-2 border-t border-stone-200 pt-2 dark:border-slate-700"><dt>Outros ciclos futuros · fora do indicador</dt><dd>{{ formatMoney(card.future_invoices, selectedCurrency) }}</dd></div>
+              <div class="flex flex-wrap justify-between gap-2 font-semibold"><dt>Dívida total, incluindo futuros</dt><dd>{{ formatMoney(card.total_debt, selectedCurrency) }}</dd></div>
+            </dl>
+            <Link :href="route('accounts.show', card.id)" class="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline dark:text-brand-300">Ver faturas de {{ card.name }}</Link>
+          </li>
+        </ul>
+        <p v-if="!selectedCreditCards.length" class="py-6 text-sm text-stone-600 dark:text-slate-400">Nenhum cartão nesta moeda.</p>
+      </div>
+    </Modal>
     <Modal :show="modalOpen" max-width="2xl" :gradient="modalTone" title="Novo lançamento" @close="closeModal">
       <TransactionForm v-if="modalOpen" :accounts="formAccounts" :categories="categories" from-dashboard embedded @cancel="closeModal" @saved="closeModal" @type-change="onTypeChange" />
     </Modal>

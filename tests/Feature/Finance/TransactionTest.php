@@ -309,4 +309,31 @@ class TransactionTest extends TestCase
             'transaction_date' => '2026-09-04',
         ])->assertForbidden();
     }
+
+    public function test_indicator_drill_down_filters_currency_and_period_without_leaking_other_users(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 12:00:00'));
+        $user = User::factory()->create();
+        $brl = FinancialAccount::factory()->for($user)->create(['currency' => 'BRL']);
+        $usd = FinancialAccount::factory()->for($user)->create(['currency' => 'USD']);
+        $kept = Transaction::factory()->for($user)->for($brl, 'account')->create([
+            'type' => 'income', 'amount' => '125', 'transaction_date' => '2026-10-25',
+        ]);
+        foreach ([[$brl, '2026-10-27'], [$brl, '2026-09-25'], [$usd, '2026-10-25']] as [$account, $date]) {
+            Transaction::factory()->for($user)->for($account, 'account')->create([
+                'type' => 'income', 'amount' => '900', 'transaction_date' => $date,
+            ]);
+        }
+        Transaction::factory()->create(['type' => 'income', 'transaction_date' => '2026-10-25']);
+        $this->actingAs($user)->get(route('transactions.index', [
+            'currency' => 'BRL', 'type' => 'income', 'from' => '2026-10-01',
+            'to' => '2026-10-26', 'status' => 'realized',
+        ]))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('filters.currency', 'BRL')
+            ->has('transactions.data', 1)
+            ->where('transactions.data.0.id', $kept->id)
+            ->where('summaries.0.currency', 'BRL')
+            ->where('summaries.0.income', '125.0000'));
+        $this->get(route('transactions.index', ['currency' => 'XYZ']))->assertSessionHasErrors('currency');
+    }
 }

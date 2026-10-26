@@ -54,6 +54,8 @@ export type Account = {
     currency: string;
     initial_balance: string;
     balance?: string;
+    credits?: string;
+    debits?: string;
     credit_limit?: string | null;
     credit_closing_day?: number | null;
     credit_due_day?: number | null;

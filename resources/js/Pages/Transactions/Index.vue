@@ -12,7 +12,7 @@ import { onMounted, reactive, ref } from 'vue';
 import TransactionForm from './Partials/TransactionForm.vue';
 
 type AccountOption = { id: number; name: string; currency: string };
-type Filters = { account_id?: number; category_id?: number; type?: string; status?: string; from?: string; to?: string; search?: string };
+type Filters = { currency?: string; account_id?: number; category_id?: number; type?: string; status?: string; from?: string; to?: string; search?: string };
 type Summary = { currency: string; income: string; expenses: string; transfers: string; net: string; transaction_count: number };
 
 const props = defineProps<{
@@ -20,6 +20,7 @@ const props = defineProps<{
     accounts: AccountOption[];
     categories: Category[];
     filters: Filters;
+    currencies: string[];
     summaries: Summary[];
 }>();
 
@@ -60,6 +61,7 @@ onMounted(() => {
 });
 
 const form = reactive({
+    currency: props.filters.currency ?? '',
     account_id: props.filters.account_id ? String(props.filters.account_id) : '',
     category_id: props.filters.category_id ? String(props.filters.category_id) : '',
     type: props.filters.type ?? '',
@@ -86,7 +88,7 @@ const paginationLabel = (label: string) => label
     .replace('&laquo;', '‹')
     .replace('&raquo;', '›');
 const clearFilters = () => {
-    Object.assign(form, { account_id: '', category_id: '', type: '', status: '', from: '', to: '', search: '' });
+    Object.assign(form, { currency: '', account_id: '', category_id: '', type: '', status: '', from: '', to: '', search: '' });
     applyFilters();
 };
 const remove = (transaction: Transaction) => {
@@ -121,9 +123,14 @@ const typePresentation = (transaction: Transaction) => {
         <input v-model="form.from" type="text" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" class="rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="dd/mm/aaaa" aria-label="Data inicial no formato dia mês ano" />
         <input v-model="form.to" type="text" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" class="rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="dd/mm/aaaa" aria-label="Data final no formato dia mês ano" />
       </div>
-      <div class="mt-3 flex items-center justify-end gap-2">
-        <button type="button" class="rounded-xl px-3 py-2 text-xs font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800" @click="clearFilters">Limpar</button>
-        <button class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white dark:bg-brand-600"><Filter :size="14" />Filtrar</button>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <label class="flex items-center gap-3 text-sm font-semibold">Moeda
+          <SelectInput v-model="form.currency" aria-label="Moeda"><option value="">Todas as moedas</option><option v-for="currency in currencies" :key="currency" :value="currency">{{ currency }}</option></SelectInput>
+        </label>
+        <div class="flex items-center gap-2">
+          <button type="button" class="rounded-xl px-3 py-2 text-xs font-semibold text-stone-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800" @click="clearFilters">Limpar</button>
+          <button class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white dark:bg-brand-600"><Filter :size="14" />Filtrar</button>
+        </div>
       </div>
     </form>
 
