@@ -236,4 +236,41 @@ class AgendaProjectionTest extends TestCase
                 ->where('projection.0.projected_balance', '900.0000')
                 ->where('projection.1.projected_balance', '300.0000'));
     }
+
+    public function test_agenda_preserves_currency_for_events_from_soft_deleted_accounts(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-26'));
+        $user = User::factory()->create();
+        $source = FinancialAccount::factory()->for($user)->create(['currency' => 'USD']);
+        $destination = FinancialAccount::factory()->for($user)->create(['currency' => 'USD']);
+        ExpectedIncome::factory()->for($user)->create([
+            'account_id' => $source->id, 'currency' => 'USD', 'amount' => '25',
+            'expected_date' => '2026-10-27', 'received_at' => null,
+        ]);
+        TransactionSchedule::factory()->for($user)->create([
+            'account_id' => $source->id, 'destination_account_id' => $destination->id,
+            'type' => TransactionType::TransferOut, 'amount' => '10',
+            'frequency' => ScheduleFrequency::Monthly, 'next_run_date' => '2026-10-28',
+            'starts_on' => '2026-10-28', 'ends_on' => '2026-10-28', 'is_active' => true,
+        ]);
+        Installment::factory()->for($user)->create([
+            'account_id' => $source->id, 'amount' => '30', 'total_count' => 1,
+            'remaining_count' => 1, 'next_due_date' => '2026-10-29',
+        ]);
+        $source->delete();
+        $destination->delete();
+
+        $this->actingAs($user)->get(route('agenda.index'))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('events', 4)
+                ->where('events.0.currency', 'USD')
+                ->where('events.0.account_name', $source->name)
+                ->where('events.1.currency', 'USD')
+                ->where('events.1.account_name', $source->name)
+                ->where('events.2.currency', 'USD')
+                ->where('events.2.account_name', $destination->name)
+                ->where('events.3.currency', 'USD')
+                ->where('events.3.account_name', $source->name)
+                ->has('projection', 0));
+    }
 }

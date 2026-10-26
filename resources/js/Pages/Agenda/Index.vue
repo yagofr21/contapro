@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDate, formatDecimal, formatMoney } from '@/lib/format';
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowDownLeft, CalendarClock, CalendarDays, History, Plus, Repeat } from '@lucide/vue';
 import { computed } from 'vue';
@@ -11,8 +11,8 @@ type AgendaEvent = {
     type: string;
     amount: string;
     account_id: number;
-    account_name: string;
-    currency: string;
+    account_name: string | null;
+    currency: string | null;
     category_name: string | null;
     description: string | null;
     frequency: string | null;
@@ -74,10 +74,10 @@ const eventTone = (kind: AgendaEvent['kind']) => kind === 'schedule'
               <span class="grid h-8 w-8 place-items-center rounded-xl" :class="eventTone(event.kind)"><component :is="eventIcon(event.kind)" :size="15" /></span>
               <div>
                 <p class="text-sm font-semibold">{{ event.description ?? 'Sem descrição' }}</p>
-                <p class="text-xs text-stone-600 dark:text-slate-400">{{ eventKindLabel(event.kind) }} · {{ event.account_name }}{{ event.category_name ? ' · ' + event.category_name : '' }}</p>
+                <p class="text-xs text-stone-600 dark:text-slate-400">{{ eventKindLabel(event.kind) }} · {{ event.account_name ?? 'Conta indisponível' }}{{ event.category_name ? ' · ' + event.category_name : '' }}</p>
               </div>
             </div>
-            <p class="text-sm font-bold" :class="['expense', 'transfer_out'].includes(event.type) ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'">{{ ['expense', 'transfer_out'].includes(event.type) ? '-' : '+' }}{{ formatMoney(event.amount, event.currency) }}</p>
+            <p class="text-sm font-bold" :class="['expense', 'transfer_out'].includes(event.type) ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'">{{ ['expense', 'transfer_out'].includes(event.type) ? '-' : '+' }}{{ event.currency ? formatMoney(event.amount, event.currency) : `${formatDecimal(event.amount, 2, 4)} · moeda indisponível` }}</p>
           </li>
         </ul>
       </div>

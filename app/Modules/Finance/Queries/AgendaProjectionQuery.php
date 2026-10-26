@@ -81,7 +81,11 @@ class AgendaProjectionQuery
         $events = collect();
 
         $user->transactionSchedules()
-            ->with(['account:id,name,currency', 'destinationAccount:id,name,currency', 'category:id,name,color'])
+            ->with([
+                'account' => fn ($query) => $query->withTrashed()->select(['id', 'name', 'currency']),
+                'destinationAccount' => fn ($query) => $query->withTrashed()->select(['id', 'name', 'currency']),
+                'category:id,name,color',
+            ])
             ->where('is_active', true)
             ->get()
             ->each(function (TransactionSchedule $schedule) use ($events, $horizonEnd): void {
@@ -128,7 +132,10 @@ class AgendaProjectionQuery
         $events = collect();
 
         $user->installments()
-            ->with(['account:id,name,currency', 'category:id,name,color'])
+            ->with([
+                'account' => fn ($query) => $query->withTrashed()->select(['id', 'name', 'currency']),
+                'category:id,name,color',
+            ])
             ->where('remaining_count', '>', 0)
             ->get()
             ->each(function (Installment $installment) use ($events, $horizonEnd): void {
@@ -178,7 +185,10 @@ class AgendaProjectionQuery
         $events = collect();
 
         $user->expectedIncomes()
-            ->with(['account:id,name,currency', 'category:id,name,color'])
+            ->with([
+                'account' => fn ($query) => $query->withTrashed()->select(['id', 'name', 'currency']),
+                'category:id,name,color',
+            ])
             ->whereNull('received_at')
             ->whereDate('expected_date', '>=', $today->toDateString())
             ->whereDate('expected_date', '<=', $horizonEnd->toDateString())
@@ -193,7 +203,7 @@ class AgendaProjectionQuery
                     'amount' => $income->amount,
                     'account_id' => $income->account_id,
                     'account_name' => $income->account?->name,
-                    'currency' => $income->account?->currency->value,
+                    'currency' => $income->currency->value,
                     'category_name' => $income->category?->name,
                     'description' => $income->description,
                     'frequency' => null,
